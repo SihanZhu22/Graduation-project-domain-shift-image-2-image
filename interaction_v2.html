@@ -7,6 +7,7 @@
 
 <!-- Create a div where the graph will take place -->
 <div id="my_dataviz"></div>
+<div id="imgView"></div>
 
 <!-- style of selected circles -->
 <style>
@@ -15,7 +16,18 @@
     stroke: rgb(0, 0, 0);
     stroke-width: 1px;
   }
-  </style>
+  #my_dataviz{
+    float:left;
+    width:45%;
+    height:95%;
+  }
+  #imgView{
+    float:right;
+    width:45%;
+    height:95%;
+    outline:1px solid black;
+  }
+</style>
 
 <script>
 
@@ -34,10 +46,9 @@ var svg = d3.select("#my_dataviz")
           "translate(" + margin.left + "," + margin.top + ")");
 
 // Create a separate SVG element to hold the images
-var images = d3.select("#my_dataviz")
-        .append("div")
-        .attr("width", 1200)
-        .attr("height", 300);
+var images = d3.select("#imgView")
+        // .attr("width", 1200)
+        // .attr("height", 300);
 
 // // Show an example image with 
 // var myimage = images.append("svg")
@@ -119,25 +130,31 @@ d3.csv("input_df.csv", function(data) {
   function updateChart() {
     extent = d3.event.selection
     myPoint.classed("selected", function(d){ return isBrushed(extent, x(d.pca_1), y(d.pca_2) ) } ) // The points are classed to be either true or false
-    // TODO: some action here to add the filtered data points to the images
-    var filteredData = data.filter(function(d){return isBrushed(extent, x(d.pca_1), y(d.pca_2))})
+    // // TODO: some action here to add the filtered data points to the images
+    const filteredData = data.filter(function(d){return isBrushed(extent, x(d.pca_1), y(d.pca_2))})
     // This probably does not work because it is inside an svg.call instead of something else
-    let maxImages = filteredData.length < 5 ? filteredData.length : 5;
+    const maxImages = 12;
+    images.selectAll("*").remove();
     for (let i=0 ; i < maxImages; i++) {
+      if (filteredData.length <= i) {
+        break
+      }
       images.append("svg")
+        .attr("width",150)
+        .attr("height",150)
+        .attr("outline","1px solid white")
         .insert('image')
         .attr('xlink:href', filteredData[i].path)
-        .attr("width",300)
-        .attr("height",300)
     }
   }
 
   function isBrushed(brush_coords, cx, cy) {
-       var x0 = brush_coords[0][0],
-           x1 = brush_coords[1][0],
-           y0 = brush_coords[0][1],
-           y1 = brush_coords[1][1];
-      return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;    // This return TRUE or FALSE depending on if the points is in the selected area
+    const x0 = brush_coords[0][0],
+          x1 = brush_coords[1][0],
+          y0 = brush_coords[0][1],
+          y1 = brush_coords[1][1];
+
+    return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;    // This return TRUE or FALSE depending on if the points is in the selected area
   }
 })
 
