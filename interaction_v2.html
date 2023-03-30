@@ -39,7 +39,7 @@ var margin = {top: 40, right: 40, bottom: 60, left: 80},
 // append the svg object to the body of the page
 var svg = d3.select("#my_dataviz")
   .append("svg")
-    .attr("width", width + margin.left + margin.right)
+    .attr("width", width + margin.left + margin.right)//tried adding an additional 100 to make the svg bigger->did not solve the issue
     .attr("height", height + margin.top + margin.bottom)
   .append("g")
     .attr("transform",
