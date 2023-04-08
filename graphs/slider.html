@@ -1,13 +1,14 @@
 <!-- Code from d3-graph-gallery.com -->
 <!DOCTYPE html>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- Load d3.js -->
 <script src="https://d3js.org/d3.v4.js"></script>
 
 <!-- Add a slider -->
 <!-- "value" is the current value of the slider -->
-<input type="range" name="noise_slider" id=mySlider min="0" max="0.3" step = "0.1" value="0" oninput="this.nextElementSibling.value = this.value">
+<input type="range" name="noise_slider" id=mySlider min="0" max="0.3" step = "0.1" value="0" oninput="this.nextElementSibling.value = this.value" class="slider">
 <output>0</output>
 
 <!-- Create a div where the graph will take place -->
@@ -16,16 +17,40 @@
 <style>
   .initialHighlight{
     /* !important gives a higher priority for the fill color here, otherwise the color could never have been changed*/
-    fill: tomato !important; 
+    fill: red !important; 
     stroke: black;
-    stroke-width: 0.5px;
+    stroke-width: 0.25px;
   }
 
   .currentDomain{
     /* !important gives a higher priority for the fill color here, otherwise the color could never have been changed*/
-    fill: tomato !important; 
+    fill: red !important; 
     stroke: black;
-    stroke-width: 0.5px;
+    stroke-width: 0.25px;
+  }
+
+  .slider{
+    -webkit-appearance: none;
+    width: 15%;
+    height: 25px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+  }
+
+  .slider::-webkit-slider-thumb{
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    background: #04AA6D;
+    cursor: pointer;
+  }
+
+  .slider:hover {
+    opacity: 1;
   }
 </style>
 
@@ -76,20 +101,21 @@ d3.csv("instance_activations_df.csv", function(data) {
   activation_svg.append("g")
       .call(d3.axisLeft(y));
   
-  // Add x-axis label
-  activation_svg.append("text")
-    .attr("text-anchor", "middle")
-    .attr("x", width/2)
-    .attr("y", height + margin.top + 10)
-    .text("tsne_1");
+  // no label is required because its not real information
+  // // Add x-axis label
+  // activation_svg.append("text")
+  //   .attr("text-anchor", "middle")
+  //   .attr("x", width/2)
+  //   .attr("y", height + margin.top + 10)
+  //   .text("tsne_1");
 
-  // Add y-axis label
-  activation_svg.append("text")
-    .attr("text-anchor", "middle")
-    .attr("transform", "rotate(-90)")
-    .attr("x", -(height/2))
-    .attr("y", -margin.left + 20)
-    .text("tsne_2");
+  // // Add y-axis label
+  // activation_svg.append("text")
+  //   .attr("text-anchor", "middle")
+  //   .attr("transform", "rotate(-90)")
+  //   .attr("x", -(height/2))
+  //   .attr("y", -margin.left + 20)
+  //   .text("tsne_2");
 
   // Scatter plot
   var activation_point = activation_svg.append('g')
@@ -99,7 +125,7 @@ d3.csv("instance_activations_df.csv", function(data) {
       .append("circle")
         .attr("cx", function (d) { return x(d.tsne_1); } )
         .attr("cy", function (d) { return y(d.tsne_2); } )
-        .attr("r", 1.5)
+        .attr("r", 2.5)
         .style("fill","#808080")
         .classed("initialHighlight", function(d){ return isCurrentDomain(defaultNoiseLevel, d) })
 
