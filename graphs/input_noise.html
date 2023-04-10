@@ -52,7 +52,7 @@ var svg = d3.select("#inputView")
           "translate(" + margin.left + "," + margin.top + ")");
 
 //Read the data
-d3.csv("input_noise_level_pca.csv", function(data) {
+d3.csv("input_noise_level.csv", function(data) {
   // Convert the values in the "tsne_1" and "tsne_2" column to numbers (numbers originally)
   data.forEach(function(d) {
     d.tsne_1 = +d.tsne_1;
