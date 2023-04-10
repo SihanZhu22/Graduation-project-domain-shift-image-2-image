@@ -4,6 +4,8 @@
 
 <!-- Load d3.js -->
 <script src="https://d3js.org/d3.v4.js"></script>
+<!-- Initialize a select button -->
+<select id="selectButton"></select>
 
 <!-- Create a div where the graph will be -->
 <div id="inputView"></div>
@@ -68,14 +70,26 @@ var current_images = d3.select("#imgCurrentDomain")
 //   .attr("height",300)
 
 //Read the data
-d3.csv("input_df_v4.csv", function(data) {
+d3.csv("input_df.csv", function(data) {
+  // List of groups for selection
+  var available_domains = ["Cityscapes", "Synthia"]
+
+  // add the options to the button
+  d3.select("#selectButton")
+    .selectAll('myOptions')
+    .data(available_domains)
+    .enter()
+    .append('option')
+    .text(function (d) { return d; }) // text showed in the menu
+    .attr("value", function (d) { return d; }) // corresponding value returned by the button
+
   // Convert the values in the "tsne_1" and "tsne_2" column to numbers (numbers originally)
   data.forEach(function(d) {
     d.pca_1 = +d.pca_1;
     d.pca_2 = +d.pca_2
   });
 
-  var currentDomain = "Synthia"
+  var currentDomain = "Cityscapes"
 
   // min and max for each dimension
   const min_dim_1 = d3.min(data,function(d) { return d.pca_1; });
@@ -129,7 +143,13 @@ d3.csv("input_df_v4.csv", function(data) {
         .on("brush start", updateChart) // Each time the brush selection changes, trigger the 'updateChart' function
         // .on('brush end', updateBrush) //placeholder currently
       )
-  
+  // When the button is changed, run the updateChart function
+  d3.select("#selectButton").on("change", function(d) {
+        // recover the option that has been chosen
+        currentDomain = d3.select(this).property("value")
+        // run the updateChart function with this selected option
+        // update(selectedOption)
+    })
   
   // Function that is triggered when brushing is performed
   function updateChart() {
@@ -153,19 +173,12 @@ d3.csv("input_df_v4.csv", function(data) {
         .attr("outline","1px solid white")
         .insert('image')
         .attr('xlink:href', filteredData[i].similar_image_path)
-      
       current_images.append("svg")
         .attr("width",150)
         .attr("height",150)
         .attr("outline","1px solid white")
         .insert('image')
-        .attr('xlink:href', "D:\zsh\graduation\graduation_dataset\SYNTHIA_256\image")
-      // current_images.append("svg")
-      //   .attr("width",150)
-      //   .attr("height",150)
-      //   .attr("outline","1px solid white")
-      //   .insert('image')
-      //   .attr('xlink:href',  filteredData[i].path)
+        .attr('xlink:href',  filteredData[i].path)
     }
   }
 
