@@ -17,16 +17,18 @@
 <style>
   .initialHighlight{
     /* !important gives a higher priority for the fill color here, otherwise the color could never have been changed*/
-    fill: red !important; 
+    fill: #377e9d !important; 
     stroke: black;
-    stroke-width: 0.25px;
+    stroke-width: 0.25px
+    /* z-index:-1 !important */
   }
 
   .currentDomain{
     /* !important gives a higher priority for the fill color here, otherwise the color could never have been changed*/
-    fill: red !important; 
+    fill: #377e9d !important; 
     stroke: black;
-    stroke-width: 0.25px;
+    stroke-width: 0.25px
+    /* z-index:-1  */
   }
 
   .slider{
@@ -125,8 +127,8 @@ d3.csv("instance_activations_df.csv", function(data) {
       .append("circle")
         .attr("cx", function (d) { return x(d.tsne_1); } )
         .attr("cy", function (d) { return y(d.tsne_2); } )
-        .attr("r", 2.5)
-        .style("fill","#808080")
+        .attr("r", 2)
+        .style("fill","#e0d1d1")
         .classed("initialHighlight", function(d){ return isCurrentDomain(defaultNoiseLevel, d) })
 
   // A function that update the chart when slider is moved?
@@ -135,6 +137,12 @@ d3.csv("instance_activations_df.csv", function(data) {
     console.log(noiseLevel)
     activation_point.classed("initialHighlight",false)
     activation_point.classed("currentDomain", function(d){ return isCurrentDomain(noiseLevel, d) } )
+
+    // // select all points with specific CSS class
+    // var specific_points = d3.selectAll(".initial_highlights");
+
+    // // bring the selected points to the front
+    // specific_points.raise();
   }
 
   function isCurrentDomain(noiseLevel,d) {
