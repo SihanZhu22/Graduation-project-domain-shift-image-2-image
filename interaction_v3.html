@@ -5,9 +5,12 @@
 <!-- Load d3.js -->
 <script src="https://d3js.org/d3.v4.js"></script>
 
-<!-- Create a div where the graph will take place -->
+<!-- Create a div where the graph will be -->
 <div id="inputView"></div>
-<div id="imgView"></div>
+<div id="imgView">
+  <div id = "imgOriginalDomain"></div>
+  <div id = "imgCurrentDomain"></div>
+</div>
 
 <!-- style of selected circles -->
 <style>
@@ -21,10 +24,16 @@
     width:45%;
     height:95%;
   }
-  #imgView{
+  #imgOriginalDomain{
     float:right;
     width:45%;
-    height:95%;
+    height:20%;
+    outline:1px solid black;
+  }
+  #imgCurrentDomain{
+    float:right;
+    width:45%;
+    height:20%;
     outline:1px solid black;
   }
 </style>
@@ -46,9 +55,10 @@ var svg = d3.select("#inputView")
           "translate(" + margin.left + "," + margin.top + ")");
 
 // Create a separate SVG element to hold the images
-var images = d3.select("#imgView")
+var original_images = d3.select("#imgOriginalDomain")
         // .attr("width", 1200)
         // .attr("height", 300);
+var current_images = d3.select("#imgCurrentDomain")
 
 // // Show an example image with 
 // var myimage = images.append("svg")
@@ -58,12 +68,14 @@ var images = d3.select("#imgView")
 //   .attr("height",300)
 
 //Read the data
-d3.csv("input_df_v2.csv", function(data) {
+d3.csv("input_df_v4.csv", function(data) {
   // Convert the values in the "tsne_1" and "tsne_2" column to numbers (numbers originally)
   data.forEach(function(d) {
     d.pca_1 = +d.pca_1;
     d.pca_2 = +d.pca_2
   });
+
+  var currentDomain = "Synthia"
 
   // min and max for each dimension
   const min_dim_1 = d3.min(data,function(d) { return d.pca_1; });
@@ -85,22 +97,7 @@ d3.csv("input_df_v2.csv", function(data) {
     .range([ height, 0]);
   svg.append("g")
     .call(d3.axisLeft(y));
-
-  // Add labels: https://d3-graph-gallery.com/graph/custom_axis.html
-  // Add X axis label:
-//   svg.append("text")
-//       .attr("text-anchor", "end")
-//       .attr("x", width)
-//       .attr("y", height + margin.top + 15)
-    //   .text("Principal Component 1");
-
-  // Y axis label:
-//   svg.append("text")
-//       .attr("text-anchor", "end")
-//       .attr("transform", "rotate(-90)")
-//       .attr("y", -margin.left+20)
-//       .attr("x", -margin.top)
-//       .text("Principal Component 2")
+  
   // Add title: http://www.d3noob.org/2013/01/adding-title-to-your-d3js-graph.html
   svg.append("text")
           .attr("x", (width / 2))             
@@ -137,32 +134,48 @@ d3.csv("input_df_v2.csv", function(data) {
   // Function that is triggered when brushing is performed
   function updateChart() {
     extent = d3.event.selection
-    myPoint.classed("selected", function(d){ return isBrushed(extent, x(d.pca_1), y(d.pca_2)) } ) // The points are classed to be either true or false
-    // // update the corresponding images, leave out initially 
-    // const filteredData = data.filter(function(d){return isBrushed(extent, x(d.pca_1), y(d.pca_2))})
-    // // This probably does not work because it is inside an svg.call instead of something else
-    // const maxImages = 12;
-    // images.selectAll("*").remove();
-    // for (let i=0 ; i < maxImages; i++) {
-    //   if (filteredData.length <= i) {
-    //     break
-    //   }
-    //   images.append("svg")
-    //     .attr("width",150)
-    //     .attr("height",150)
-    //     .attr("outline","1px solid white")
-    //     .insert('image')
-    //     .attr('xlink:href', filteredData[i].path)
-    // }
+    myPoint.classed("selected", function(d){ return isBrushed(extent, x(d.pca_1), y(d.pca_2),(d.dataset))} ) // The points are classed to be either true or false
+    // update the corresponding images, leave out initially 
+    const filteredData = data.filter(function(d){return isBrushed(extent, x(d.pca_1), y(d.pca_2),(d.dataset))})
+    // This probably does not work because it is inside an svg.call instead of something else
+    const maxImages = 4;
+    original_images.selectAll("*").remove();
+    current_images.selectAll("*").remove()
+    for (let i=0 ; i < maxImages; i++) {
+      if (filteredData.length <= i) {
+        break
+      }
+      // console.log(filteredData[i].similar_image_path)
+      // console.log(filteredData[i].path)
+      original_images.append("svg")
+        .attr("width",150)
+        .attr("height",150)
+        .attr("outline","1px solid white")
+        .insert('image')
+        .attr('xlink:href', filteredData[i].similar_image_path)
+      
+      current_images.append("svg")
+        .attr("width",150)
+        .attr("height",150)
+        .attr("outline","1px solid white")
+        .insert('image')
+        .attr('xlink:href', "D:\zsh\graduation\graduation_dataset\SYNTHIA_256\image")
+      // current_images.append("svg")
+      //   .attr("width",150)
+      //   .attr("height",150)
+      //   .attr("outline","1px solid white")
+      //   .insert('image')
+      //   .attr('xlink:href',  filteredData[i].path)
+    }
   }
 
-  function isBrushed(brush_coords, cx, cy) {
+  function isBrushed(brush_coords, cx, cy,dataset) {
     const x0 = brush_coords[0][0],
           x1 = brush_coords[1][0],
           y0 = brush_coords[0][1],
           y1 = brush_coords[1][1];
 
-    return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;    // This return TRUE or FALSE depending on if the points is in the selected area
+    return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1 && dataset==currentDomain;    // This return TRUE or FALSE depending on if the points is in the selected area
   }
 })
 
