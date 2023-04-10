@@ -1,0 +1,173 @@
+<!-- Code adapted from d3-graph-gallery.com -->
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+<!-- Initialize a select button -->
+
+<!-- Create a div where the graph will be -->
+<div id="inputView"></div>
+<div id="imgView">
+  <div id = "imgCityscapes"></div>
+  <div id = "imgSynthia"></div>
+</div>
+
+<!-- style of selected circles -->
+<style>
+  .selected {
+    opacity: 1 !important;
+    stroke: rgb(0, 0, 0);
+    stroke-width: 1.5px;
+  }
+  #inputView{
+    float:left;
+    width:45%;
+    height:95%;
+  }
+  #imgCityscapes{
+    float:right;
+    width:45%;
+    height:20%;
+    outline:1px solid black;
+  }
+  #imgSynthia{
+    float:right;
+    width:45%;
+    height:20%;
+    outline:1px solid black;
+  }
+</style>
+
+<script>
+
+// set the dimensions and margins of the graph
+var margin = {top: 40, right: 40, bottom: 60, left: 80},
+    width = 560 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select("#inputView")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)//tried adding an additional 100 to make the svg bigger->did not solve the issue
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+// Create a separate SVG element to hold the images
+var cityscape_images = d3.select("#imgCityscapes")
+        // .attr("width", 1200)
+        // .attr("height", 300);
+var synthia_images = d3.select("#imgSynthia")
+
+//Read the data
+d3.csv("input_df.csv", function(data) {
+  // Convert the values in the "tsne_1" and "tsne_2" column to numbers (numbers originally)
+  data.forEach(function(d) {
+    d.tsne_1 = +d.tsne_1;
+    d.tsne_2 = +d.tsne_2
+  });
+  
+  // min and max for each dimension
+  const min_dim_1 = d3.min(data,function(d) { return d.tsne_1; });
+  const max_dim_1 = d3.max(data,function(d) { return d.tsne_1; });
+  const min_dim_2 = d3.min(data,function(d) { return d.tsne_2; });
+  const max_dim_2 = d3.max(data,function(d) { return d.tsne_2; });
+
+  // Add X axis
+  var x = d3.scaleLinear()
+    .domain([min_dim_1 - 0.1*Math.abs(min_dim_1) , 1.1*max_dim_1])
+    .range([ 0, width]);
+  svg.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .call(d3.axisBottom(x));
+
+  // Add Y axis
+  var y = d3.scaleLinear()
+    .domain([min_dim_2 - 0.1*Math.abs(min_dim_2) , 1.1*max_dim_2])
+    .range([ height, 0]);
+  svg.append("g")
+    .call(d3.axisLeft(y));
+
+    // Color scale: give me a specie name, I return a color
+  var color = d3.scaleOrdinal()
+    .domain(["Cityscapes", "Synthia" ])
+    .range([ "#003f5c", "#ffa600"])
+
+  // Add dots
+  var myPoint = svg.append('g')
+    .selectAll("dot")
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("cx", function (d) { return x(d.tsne_1)} )
+    .attr("cy", function (d) { return y(d.tsne_2)} )
+    .attr("r", 2.5)
+    .style("fill", function (d) { return color(d.dataset) } )
+
+  // Add brushing
+  svg
+      .call( d3.brush()                 // Add the brush feature using the d3.brush function
+        .extent( [ [0,0], [width,height] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+        .on("brush start", updateChart) // Each time the brush selection changes, trigger the 'updateChart' function
+        // .on('brush end', updateBrush) //placeholder currently
+      )
+  
+  // Function that is triggered when brushing is performed
+  function updateChart() {
+    extent = d3.event.selection
+    myPoint.classed("selected", function(d){ return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))} ) // The points are classed to be either true or false
+    // update the corresponding images, leave out initially 
+    const filteredData = data.filter(function(d){return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))})
+    // This probably does not work because it is inside an svg.call instead of something else
+    const maxImages = 100;
+    var numCityscapes = 0;
+    var numSynthia = 0; 
+    cityscape_images.selectAll("*").remove();
+    synthia_images.selectAll("*").remove()
+    //selected images for cityscapes and synthia
+    for (let i=0 ; i < maxImages; i++) {
+    //   console.log(filteredData[i].path)
+      if (filteredData.length <= i || (numCityscapes>=4 && numSynthia>=4)) {
+        break
+      }
+      if (filteredData[i].dataset=="Cityscapes"){
+        if (numCityscapes<4){
+            // console.log(filteredData[i].path)
+          cityscape_images.append("svg")
+            .attr("width",150)
+            .attr("height",150)
+            .attr("outline","1px solid white")
+            .insert('image')
+            .attr('xlink:href', filteredData[i].path)
+          numCityscapes = numCityscapes+1
+        }
+      }
+      else {
+        if (numSynthia<16){
+        // console.log(filteredData[i].path)
+          synthia_images.append("svg")
+            .attr("width",150)
+            .attr("height",150)
+            .attr("outline","1px solid white")
+            .insert('image')
+            .attr('xlink:href',  filteredData[i].path)
+          numSynthia = numSynthia+1
+        }
+      }
+    //   console.log(filteredData[i].similar_image_path)
+    }
+  }
+
+  function isBrushed(brush_coords, cx,cy) {
+    const x0 = brush_coords[0][0],
+          x1 = brush_coords[1][0],
+          y0 = brush_coords[0][1],
+          y1 = brush_coords[1][1];
+
+    return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;    // This return TRUE or FALSE depending on if the points is in the selected area
+  }
+})
+
+</script>
