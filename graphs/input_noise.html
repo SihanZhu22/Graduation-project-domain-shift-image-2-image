@@ -1,0 +1,100 @@
+<!-- Code adapted from d3-graph-gallery.com -->
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+<!-- Initialize a select button -->
+
+<!-- Create a div where the graph will be -->
+<div id="inputView"></div>
+
+<!-- style of selected circles -->
+<style>
+  .selected {
+    opacity: 1 !important;
+    stroke: rgb(0, 0, 0);
+    stroke-width: 1.5px;
+  }
+  #inputView{
+    float:left;
+    width:45%;
+    height:95%;
+  }
+  #imgCityscapes{
+    float:right;
+    width:45%;
+    height:20%;
+    outline:1px solid black;
+  }
+  #imgSynthia{
+    float:right;
+    width:45%;
+    height:20%;
+    outline:1px solid black;
+  }
+</style>
+
+<script>
+
+// set the dimensions and margins of the graph
+var margin = {top: 40, right: 40, bottom: 60, left: 80},
+    width = 560 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select("#inputView")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)//tried adding an additional 100 to make the svg bigger->did not solve the issue
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+//Read the data
+d3.csv("input_noise_level_pca.csv", function(data) {
+  // Convert the values in the "tsne_1" and "tsne_2" column to numbers (numbers originally)
+  data.forEach(function(d) {
+    d.tsne_1 = +d.tsne_1;
+    d.tsne_2 = +d.tsne_2
+  });
+  
+  // min and max for each dimension
+  const min_dim_1 = d3.min(data,function(d) { return d.tsne_1; });
+  const max_dim_1 = d3.max(data,function(d) { return d.tsne_1; });
+  const min_dim_2 = d3.min(data,function(d) { return d.tsne_2; });
+  const max_dim_2 = d3.max(data,function(d) { return d.tsne_2; });
+
+  // Add X axis
+  var x = d3.scaleLinear()
+    .domain([min_dim_1 - 0.1*Math.abs(min_dim_1) , 1.1*max_dim_1])
+    .range([ 0, width]);
+  svg.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .call(d3.axisBottom(x));
+
+  // Add Y axis
+  var y = d3.scaleLinear()
+    .domain([min_dim_2 - 0.1*Math.abs(min_dim_2) , 1.1*max_dim_2])
+    .range([ height, 0]);
+  svg.append("g")
+    .call(d3.axisLeft(y));
+
+    // Color scale: give me a specie name, I return a color
+  var color = d3.scaleOrdinal()
+    .domain(["0", "0.1","0.2","0.3" ])
+    .range([ "#004c6d", "#386a8a","#5f89a9","#85aac8"])
+
+  // Add dots
+  var myPoint = svg.append('g')
+    .selectAll("dot")
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("cx", function (d) { return x(d.tsne_1)} )
+    .attr("cy", function (d) { return y(d.tsne_2)} )
+    .attr("r", 2.5)
+    .style("fill", function (d) { return color(d.noise_level) } )
+})
+
+</script>
