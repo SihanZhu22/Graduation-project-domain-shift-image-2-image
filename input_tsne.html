@@ -62,7 +62,9 @@ var cityscape_images = d3.select("#imgCityscapes")
 var synthia_images = d3.select("#imgSynthia")
 
 //Read the data
-d3.csv("input_df.csv", function(data) {
+// data: input_df.csv
+// alternative: df_input_discrete_embedding_by_classfier.csv
+d3.csv("df_input_discrete_embedding_by_classfier.csv", function(data) {
   // Convert the values in the "tsne_1" and "tsne_2" column to numbers (numbers originally)
   data.forEach(function(d) {
     d.tsne_1 = +d.tsne_1;
