@@ -1,0 +1,312 @@
+<!-- Code adapted from d3-graph-gallery.com -->
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+<!-- Initialize a select button -->
+
+<!-- Create a div where the graph will be -->
+<div id="inputView"></div>
+<div id="imgView">
+  <div id = "imgCityscapes"></div>
+  <div id = "imgSynthia"></div>
+</div>
+<div id="modelView"></div>
+
+<!-- style of selected circles -->
+<style>
+  .selected {
+    opacity: 1 !important;
+    stroke: rgb(0, 0, 0);
+    stroke-width: 1.5px;
+  }
+
+  .selectedImage {
+    /* Define the styles for the selected image */
+    border-color: red !important;
+    border: 1px solid #ccc ;
+    /* Add other highlighting styles as needed */
+  }
+
+  #inputView{
+    float:left;
+    width:45%;
+    height:95%;
+  }
+  #imgCityscapes{
+    float:right;
+    width:45%;
+    height:20%;
+    outline:1px solid black;
+  }
+  #imgSynthia{
+    float:right;
+    width:45%;
+    height:20%;
+    outline:1px solid black;
+  }
+  #modelView{
+    /* to make it fixed on the bottom right: position, bottom and right*/
+    position: absolute;
+    bottom: 60px;
+    right: 30px;
+    /* float:right; */
+    width:45%;
+    height:40%;
+    /* clear: right; */
+    /*set clear property to ensure that modelView goes under the imgView*/
+  }
+</style>
+
+<script>
+
+// setup for input view
+
+// set the dimensions and margins of the graph
+const margin_of_input = {top: 40, right: 40, bottom: 60, left: 80},
+    inputWidth = 560 - margin_of_input.left - margin_of_input.right,
+    inputHeight = 500 - margin_of_input.top - margin_of_input.bottom;
+
+// append the svg object to the body of the page
+const svg = d3.select("#inputView")
+  .append("svg")
+    .attr("width", inputWidth + margin_of_input.left + margin_of_input.right)//tried adding an additional 100 to make the svg bigger->did not solve the issue
+    .attr("height", inputHeight + margin_of_input.top + margin_of_input.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin_of_input.left + "," + margin_of_input.top + ")");
+
+// Setup for image view
+
+// Use the separate divs to hold the images
+var cityscape_images = d3.select("#imgCityscapes")
+        // .attr("width", 1200)
+        // .attr("height", 300);
+var synthia_images = d3.select("#imgSynthia")
+
+// Setup for activation view
+
+var margin_of_activation = {top: 30, right: 30, bottom: 50, left: 60},
+    activationWidth = 460 - margin_of_activation.left - margin_of_activation.right,
+    activationHeight = 420 - margin_of_activation.top - margin_of_activation.bottom;
+
+var activation_svg = d3.select("#modelView")
+  .append("svg")
+    .attr("width", activationWidth + margin_of_activation.left + margin_of_activation.right)
+    .attr("height", activationHeight + margin_of_activation.top + margin_of_activation.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin_of_activation.left + "," + margin_of_activation.top + ")");
+
+//Read the data
+// data: input_df.csv
+// alternative: df_input_discrete_embedding_by_classfier.csv
+d3.csv("df_linked.csv", function(data) {
+  // Convert the values in the "tsne_1" and "tsne_2" column to numbers (numbers originally)
+  data.forEach(function(d) {
+    d.tsne_1 = +d.tsne_1;
+    d.tsne_2 = +d.tsne_2
+  });
+  
+  // input view: range for each dimension
+  const min_dim_1 = d3.min(data,function(d) { return d.tsne_1; });
+  const max_dim_1 = d3.max(data,function(d) { return d.tsne_1; });
+  const min_dim_2 = d3.min(data,function(d) { return d.tsne_2; });
+  const max_dim_2 = d3.max(data,function(d) { return d.tsne_2; });
+
+  // Add X axis
+  var x = d3.scaleLinear()
+    .domain([min_dim_1 - 0.1*Math.abs(min_dim_1) , 1.1*max_dim_1])
+    .range([ 0, inputWidth]);
+  svg.append("g")
+    .attr("transform", "translate(0," + inputHeight + ")")
+    .call(d3.axisBottom(x));
+
+  // Add Y axis
+  var y = d3.scaleLinear()
+    .domain([min_dim_2 - 0.1*Math.abs(min_dim_2) , 1.1*max_dim_2])
+    .range([inputHeight, 0]);
+  svg.append("g")
+    .call(d3.axisLeft(y));
+
+    // Color scale: give me a specie name, I return a color
+  var color = d3.scaleOrdinal()
+    .domain(["Cityscapes", "Synthia" ])
+    .range([ "#003f5c", "#ffa600"])
+
+  // Add dots
+  var myPoint = svg.append('g')
+    .selectAll("dot")
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("cx", function (d) { return x(d.tsne_1)} )
+    .attr("cy", function (d) { return y(d.tsne_2)} )
+    .attr("r", 2.5)
+    .style("fill", function (d) { return color(d.dataset) } )
+
+  // For model activations view:
+  instance = data[0];
+  var instance_activations = instance.bottleneck_activations_embedding;
+  var second_instance_path = instance.similar_image_paths;
+  console.log(second_instance_path);
+  var second_instance = data.find(function(d) {
+    return d.path === second_instance_path;
+  });
+  // console.log(second_instance);
+  var second_instance_activations = second_instance.bottleneck_activations_embedding;
+  activation_list_to_graph(instance_activations,second_instance_activations,instance.dataset,instance.IoU_score)
+  
+
+  // Add brushing
+  svg
+      .call( d3.brush()                 // Add the brush feature using the d3.brush function
+        .extent( [ [0,0], [inputWidth,inputHeight] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+        .on("brush start", updateChart) // Each time the brush selection changes, trigger the 'updateChart' function
+        // .on('brush end', updateBrush) //placeholder currently
+      )
+  
+  // Function that is triggered when brushing is performed
+  function updateChart() {
+    extent = d3.event.selection
+    myPoint.classed("selected", function(d){ return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))} ) // The points are classed to be either true or false
+    // update the corresponding images, leave out initially 
+    var filteredData = data.filter(function(d){return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))})
+    updateImages(filteredData)
+    // console.log(filteredData)
+    updateActivations(filteredData)
+  }
+
+  function updateImages(filteredData){
+    // This probably does not work because it is inside an svg.call instead of something else
+    const maxImages = 100;
+    var numCityscapes = 0;
+    var numSynthia = 0; 
+    cityscape_images.selectAll("*").remove();
+    synthia_images.selectAll("*").remove();
+    //selected images for cityscapes and synthia
+    for (let i=0 ; i < maxImages; i++) {
+    //   console.log(filteredData[i].path)
+      if (filteredData.length <= i || (numCityscapes>=4 && numSynthia>=4)) {
+        break
+      }
+      if (filteredData[i].dataset=="Cityscapes"){
+        if (numCityscapes<4){
+            // console.log(filteredData[i].path)
+          var current_image = cityscape_images.append("svg")
+            .attr("width",150)
+            .attr("height",150)
+            .attr("outline","1px solid white")
+            .insert('image')
+            .attr('xlink:href', filteredData[i].path)
+          numCityscapes = numCityscapes+1
+        }
+      }
+      else {
+        if (numSynthia<4){
+        // console.log(filteredData[i].path)
+          var current_image = synthia_images.append("svg")
+            .attr("width",150)
+            .attr("height",150)
+            .attr("outline","1px solid white")
+            .insert('image')
+            .attr('xlink:href',  filteredData[i].path)
+          numSynthia = numSynthia+1
+        }
+      }
+      //temporary solution, should link the image and activations
+      if (i==0){
+        // d3.select(current_image).
+        // console.log(current_image)
+        current_image.classed("selectedImage",true)
+        console.log(current_image)
+      }
+    //   console.log(filteredData[i].similar_image_path)
+    }
+  }
+
+  function updateActivations(filteredData){
+    if (filteredData.length>0){
+        instance = filteredData[0];
+
+        second_instance_path = instance.similar_image_paths;
+        var second_instance = data.find(function(d) {
+          return d.path === second_instance_path;
+        });
+        activation_svg.selectAll("*").remove();
+        // console.log(filteredData.length)
+        // console.log(filteredData[0])
+        activation_list_to_graph(instance.bottleneck_activations_embedding,second_instance.bottleneck_activations_embedding,instance.dataset,instance.IoU_score)
+    }
+    
+  }
+
+  function isBrushed(brush_coords, cx,cy) {
+    const x0 = brush_coords[0][0],
+          x1 = brush_coords[1][0],
+          y0 = brush_coords[0][1],
+          y1 = brush_coords[1][1];
+
+    return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;    // This return TRUE or FALSE depending on if the points is in the selected area
+  }
+
+  function activation_list_to_graph(data_list,second_activations,dataset_type,similarScore){
+    dataset_types = ["Cityscapes", "Synthia" ];
+    var second_dataset_type = dataset_types.find(function(element) {
+      return element !== dataset_type;
+    });
+
+    parsed_list = JSON.parse(data_list);
+    second_activations_parsed = JSON.parse(second_activations);
+    // use the combined list to find the range of graph
+    var combinedList = parsed_list.concat(second_activations_parsed);
+
+    // input view: range for each dimension
+    let min_1 = d3.min(combinedList,function(d) { return d[0]; });
+    let max_1 = d3.max(combinedList,function(d) { return d[0]; });
+    let min_2 = d3.min(combinedList,function(d) { return d[1]; });
+    let max_2 = d3.max(combinedList,function(d) { return d[1]; });
+
+    activation_svg.append("text")
+    .text("Similarity score for masks:"+similarScore);
+
+    // Add X axis
+    var x = d3.scaleLinear()
+        .domain([min_1 - 0.1*Math.abs(min_1) , 1.1*max_1])
+        .range([ 0, activationWidth]);
+    activation_svg.append("g")
+        .attr("transform", "translate(0," + activationHeight + ")")
+        .call(d3.axisBottom(x));
+
+    // Add Y axis
+    var y = d3.scaleLinear()
+        .domain([min_2 - 0.1*Math.abs(min_2) , 1.1*max_2])
+        .range([ activationHeight, 0]);
+    activation_svg.append("g")
+        .call(d3.axisLeft(y));
+    
+    // Add dots
+    var myPoint = activation_svg.append('g')
+        .selectAll("dot")
+        .data(parsed_list)
+        .enter()
+        .append("circle")
+        .attr("cx", function (d) { return x(d[0])} )
+        .attr("cy", function (d) { return y(d[1])} )
+        .attr("r", 2.5)
+        .style("fill", function (d) { return color(dataset_type) } )
+    
+    var myPoint = activation_svg.append('g')
+        .selectAll("dot")
+        .data(second_activations_parsed)
+        .enter()
+        .append("circle")
+        .attr("cx", function (d) { return x(d[0])} )
+        .attr("cy", function (d) { return y(d[1])} )
+        .attr("r", 2.5)
+        .style("fill", function (d) { return color(second_dataset_type) } )
+  }
+})
+
+</script>
