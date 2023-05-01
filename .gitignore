@@ -1,3 +1,4 @@
 dataset/
 models/
-jupyter/.ipynb_checkpoints/
+jupyter/.ipynb_checkpoints
+*.pkl
