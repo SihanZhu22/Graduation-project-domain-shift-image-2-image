@@ -12,7 +12,10 @@
   <div id = "imgCityscapes"></div>
   <div id = "imgSynthia"></div>
 </div>
-<div id="modelView"></div>
+<div id="modelView">
+  <div id = "activationsScatter"></div>
+  <div id = "maskSimilarity"></div>
+</div>
 
 <!-- style of selected circles -->
 <style>
@@ -24,8 +27,15 @@
 
   .selectedImage {
     /* Define the styles for the selected image */
-    border-color: red !important;
-    border: 1px solid #ccc ;
+    border: 2px solid red !important;
+    /* Add other highlighting styles as needed */
+  }
+
+  .image.selected {
+    /* Define the styles for the selected image */
+    /* border-color: red !important; */
+    /* border: 2px solid red !important ; */
+    border-color: red;
     /* Add other highlighting styles as needed */
   }
 
@@ -37,13 +47,13 @@
   #imgCityscapes{
     float:right;
     width:45%;
-    height:20%;
+    height:160px;
     outline:1px solid black;
   }
   #imgSynthia{
     float:right;
     width:45%;
-    height:20%;
+    height:160px;
     outline:1px solid black;
   }
   #modelView{
@@ -54,9 +64,23 @@
     /* float:right; */
     width:45%;
     height:40%;
+    display: flex;
     /* clear: right; */
     /*set clear property to ensure that modelView goes under the imgView*/
   }
+
+  /* #activationsScatter{
+    flex: 1; 
+  } */
+
+  #maskSimilarity {
+    /* flexible display in the column */
+    display: flex; /* Add this to enable flexbox layout */
+    flex-direction: column; /* Display images vertically */
+    height: 400px; /*make it bigger so that the images and the spacing in between could fit*/
+  }
+
+
 </style>
 
 <script>
@@ -91,7 +115,7 @@ var margin_of_activation = {top: 30, right: 30, bottom: 50, left: 60},
     activationWidth = 460 - margin_of_activation.left - margin_of_activation.right,
     activationHeight = 420 - margin_of_activation.top - margin_of_activation.bottom;
 
-var activation_svg = d3.select("#modelView")
+var activation_svg = d3.select("#activationsScatter")
   .append("svg")
     .attr("width", activationWidth + margin_of_activation.left + margin_of_activation.right)
     .attr("height", activationHeight + margin_of_activation.top + margin_of_activation.bottom)
@@ -102,7 +126,7 @@ var activation_svg = d3.select("#modelView")
 //Read the data
 // data: input_df.csv
 // alternative: df_input_discrete_embedding_by_classfier.csv
-d3.csv("df_linked.csv", function(data) {
+d3.csv("df_linked_v2.csv", function(data) {
   // Convert the values in the "tsne_1" and "tsne_2" column to numbers (numbers originally)
   data.forEach(function(d) {
     d.tsne_1 = +d.tsne_1;
@@ -147,28 +171,29 @@ d3.csv("df_linked.csv", function(data) {
     .style("fill", function (d) { return color(d.dataset) } )
 
   // For model activations view:
-  instance = data[0];
-  var instance_activations = instance.bottleneck_activations_embedding;
-  var second_instance_path = instance.similar_image_paths;
-  console.log(second_instance_path);
-  var second_instance = data.find(function(d) {
-    return d.path === second_instance_path;
-  });
-  // console.log(second_instance);
-  var second_instance_activations = second_instance.bottleneck_activations_embedding;
-  activation_list_to_graph(instance_activations,second_instance_activations,instance.dataset,instance.IoU_score)
+  // instance = data[0];
+  // var instance_activations = instance.bottleneck_activations_embedding;
+  // var second_instance_path = instance.similar_image_paths;
+  // console.log(second_instance_path);
+  // var second_instance = data.find(function(d) {
+  //   return d.path === second_instance_path;
+  // });
+  // // console.log(second_instance);
+  // var second_instance_activations = second_instance.bottleneck_activations_embedding;
+  // activation_list_to_graph(instance_activations,second_instance_activations,instance.dataset,instance.IoU_score)
   
 
   // Add brushing
   svg
       .call( d3.brush()                 // Add the brush feature using the d3.brush function
         .extent( [ [0,0], [inputWidth,inputHeight] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
-        .on("brush start", updateChart) // Each time the brush selection changes, trigger the 'updateChart' function
-        // .on('brush end', updateBrush) //placeholder currently
+        .on("brush start", updateChart_start) // Each time the brush selection changes, trigger the 'updateChart' function
+        // .on('brush end', updateChart_end) //placeholder currently
       )
   
   // Function that is triggered when brushing is performed
-  function updateChart() {
+  function updateChart_start() {
+    // console.log("update") // the chart is update many times with the selection it seems like
     extent = d3.event.selection
     myPoint.classed("selected", function(d){ return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))} ) // The points are classed to be either true or false
     // update the corresponding images, leave out initially 
@@ -177,6 +202,9 @@ d3.csv("df_linked.csv", function(data) {
     // console.log(filteredData)
     updateActivations(filteredData)
   }
+  // function updateChart_end(){
+
+  // }
 
   function updateImages(filteredData){
     // This probably does not work because it is inside an svg.call instead of something else
@@ -191,15 +219,28 @@ d3.csv("df_linked.csv", function(data) {
       if (filteredData.length <= i || (numCityscapes>=4 && numSynthia>=4)) {
         break
       }
+      if (i==0){
+        console.log("red border for the first image")
+        console.log(filteredData[i].image_path)
+        current_class = "selectedImage"
+      }
+      else{
+        current_class = "image"
+      }
       if (filteredData[i].dataset=="Cityscapes"){
         if (numCityscapes<4){
             // console.log(filteredData[i].path)
           var current_image = cityscape_images.append("svg")
             .attr("width",150)
             .attr("height",150)
-            .attr("outline","1px solid white")
+            // .attr("outline","1px solid white")
+            .classed(current_class,true)
             .insert('image')
-            .attr('xlink:href', filteredData[i].path)
+            .attr('xlink:href', filteredData[i].image_path)
+            .attr('width', '100%')
+            .attr('height', '100%')
+            .attr('preserveAspectRatio', 'xMinYMin meet');
+          
           numCityscapes = numCityscapes+1
         }
       }
@@ -209,19 +250,29 @@ d3.csv("df_linked.csv", function(data) {
           var current_image = synthia_images.append("svg")
             .attr("width",150)
             .attr("height",150)
-            .attr("outline","1px solid white")
+            // .attr("outline","1px solid white")
+            .classed(current_class,true)
             .insert('image')
-            .attr('xlink:href',  filteredData[i].path)
+            .attr('xlink:href',  filteredData[i].image_path)
+            .attr('width', '100%')
+            .attr('height', '100%')
+            .attr('preserveAspectRatio', 'xMinYMin meet');
+          
           numSynthia = numSynthia+1
         }
       }
       //temporary solution, should link the image and activations
-      if (i==0){
-        // d3.select(current_image).
-        // console.log(current_image)
-        current_image.classed("selectedImage",true)
-        console.log(current_image)
-      }
+      
+      // AAAAAAAAAAAAAAAA
+      // if (i==0){
+      //   // d3.select(current_image).
+      //   console.log("You should see red borders")
+        
+      //   console.log(current_image)
+      //   // current_image.classed("image",false)
+      //   // current_image.classed("selectedImage",true)
+      //   // current_image.style("border", "2px solid red")
+      // }
     //   console.log(filteredData[i].similar_image_path)
     }
   }
@@ -232,12 +283,79 @@ d3.csv("df_linked.csv", function(data) {
 
         second_instance_path = instance.similar_image_paths;
         var second_instance = data.find(function(d) {
-          return d.path === second_instance_path;
+          return d.image_path === second_instance_path;
         });
+        d3.select("#maskSimilarity").selectAll("*").remove();
         activation_svg.selectAll("*").remove();
+        // clear the existing mask for the previous image, to make way for printing new masks
         // console.log(filteredData.length)
         // console.log(filteredData[0])
         activation_list_to_graph(instance.bottleneck_activations_embedding,second_instance.bottleneck_activations_embedding,instance.dataset,instance.IoU_score)
+        
+        // measuere the height of a div
+        // var offsetHeight = document.getElementById('maskSimilarity').offsetHeight;
+        // console.log(offsetHeight) //increased to 400
+        
+        var imageSize = 150;
+        var spacing = 20;
+
+        var mask = d3.select("#maskSimilarity").append("svg")
+          .attr("width", imageSize)
+          .attr("height", imageSize + spacing)
+          .attr("outline", "1px solid white")
+          .append('g') // Create a group element to contain the image and title
+          .attr("transform", "translate(0, " + spacing + ")"); // Adjust the y-coordinate for spacing
+
+          // both of the methods below for extra spacing does not seem to work
+          
+          // .style("margin-bottom", spacing/2 + "px")
+
+        mask.append('image')
+          .attr('xlink:href', instance.label_path)
+          .attr('width', imageSize)
+          .attr('height', imageSize);
+        
+        // tried to add background color for text, but didn't work due to one of the colors are too dark
+        // mask.append('rect') // Add background rectangle
+        //   .attr('x', 0)
+        //   .attr('y', -15)
+        //   .attr('width', imageSize)
+        //   .attr('height', 20)
+        //   .style('fill', color(instance.dataset));
+
+        mask.append('text') // Add title text
+          .text("Current: ("+instance.dataset+")")
+          .attr('x', imageSize / 2) //center it horizontally within the container
+          .attr('y', -5)
+          .attr('text-anchor', 'middle')
+          .attr('font-size', '12px')
+          .style("fill", color(instance.dataset)); //but I want background color
+
+        var second_mask = d3.select("#maskSimilarity").append("svg")
+          .attr("width", imageSize)
+          .attr("height", imageSize + spacing)
+          .attr("outline", "1px solid white")
+          .append('g') // Create a group element to contain the image and title
+          .attr("transform", "translate(0, " + spacing + ")"); // Adjust the y-coordinate for spacing
+
+        second_mask.append('image')
+          .attr('xlink:href', second_instance.label_path)
+          .attr('width', imageSize)
+          .attr('height', imageSize);
+
+        second_mask.append('text') // Add title text
+          .text("Corresponding: ("+second_instance.dataset+")")
+          .attr('x', imageSize / 2) //center it horizontally within the container
+          .attr('y', -5)
+          .attr('text-anchor', 'middle')
+          .attr('font-size', '12px')
+          .style("fill", color(second_instance.dataset));
+        // var current_image = synthia_images.append("svg")
+        //     .attr("width",150)
+        //     .attr("height",150)
+        //     .attr("outline","1px solid white")
+        //     .insert('image')
+        //     .attr('xlink:href',  filteredData[i].path)
     }
     
   }
@@ -287,7 +405,7 @@ d3.csv("df_linked.csv", function(data) {
         .call(d3.axisLeft(y));
     
     // Add dots
-    var myPoint = activation_svg.append('g')
+    activation_svg.append('g')
         .selectAll("dot")
         .data(parsed_list)
         .enter()
@@ -297,7 +415,8 @@ d3.csv("df_linked.csv", function(data) {
         .attr("r", 2.5)
         .style("fill", function (d) { return color(dataset_type) } )
     
-    var myPoint = activation_svg.append('g')
+    //todo: maybe change this to a differnet name?
+    activation_svg.append('g')
         .selectAll("dot")
         .data(second_activations_parsed)
         .enter()
