@@ -25,7 +25,12 @@
     stroke-width: 1.5px;
   }
 
-  .image {
+  .image{
+    width: 150px;
+    height: 150px
+  }
+
+  .notSelectedImage {
     /* Define the styles for the selected image */
     /* border-color: white !important; */
     border: 2px solid white !important;
@@ -126,7 +131,7 @@ var activation_svg = d3.select("#activationsScatter")
 //Read the data
 // data: input_df.csv
 // alternative: df_input_discrete_embedding_by_classfier.csv
-d3.csv("df_linked_v2.csv", function(data) {
+d3.csv("df_linked_v3.csv", function(data) {
   // Convert the values in the "tsne_1" and "tsne_2" column to numbers (numbers originally)
   data.forEach(function(d) {
     d.tsne_1 = +d.tsne_1;
@@ -196,12 +201,19 @@ d3.csv("df_linked_v2.csv", function(data) {
     d3.selectAll(".image").on("click", function updateImageAndActivations() {
       // Change the class of the previous selected image to just "image"
       // Make it "image" before removing it from "selectedImage"
-      d3.select(".selectedImage").classed("image", true);
+      d3.select(".selectedImage").classed("notSelectedImage", true);
       d3.select(".selectedImage").classed("selectedImage", false);
 
       // Change the class of the clicked image to "selectedImage"
-      d3.select(this).classed("image", false);
+      d3.select(this).classed("notSelectedImage", false);
       d3.select(this).classed("selectedImage", true);
+
+      // Get the ID of the clicked image
+      var id = d3.select(this).attr("id").split("-")[1]; 
+
+      // Find the corresponding data in your dataset
+      var instance = data.filter(function(d) { return d.id == id; })[0];
+      instanceActivations(instance)
     })
   }
   
@@ -243,21 +255,27 @@ d3.csv("df_linked_v2.csv", function(data) {
         current_class = "selectedImage"
       }
       else{
-        current_class = "image"
+        current_class = "notSelectedImage"
       }
       if (filteredData[i].dataset=="Cityscapes"){
         if (numCityscapes<4){
             // console.log(filteredData[i].path)
           var current_image = cityscape_images.append("svg")
-            .attr("width",150)
-            .attr("height",150)
+            // .attr("width",150)
+            // .attr("height",150)
             // .attr("outline","1px solid white")
+            .classed("image",true)
             .classed(current_class,true)
+            .attr("id", "image-" + filteredData[i].id) // assign an ID to the image element
             .insert('image')
             .attr('xlink:href', filteredData[i].image_path)
             .attr('width', '100%')
             .attr('height', '100%')
             .attr('preserveAspectRatio', 'xMinYMin meet');
+          
+          if (i==0){
+            current_image.classed("selectedImage")
+          }
           
           numCityscapes = numCityscapes+1
         }
@@ -266,10 +284,12 @@ d3.csv("df_linked_v2.csv", function(data) {
         if (numSynthia<4){
         // console.log(filteredData[i].path)
           var current_image = synthia_images.append("svg")
-            .attr("width",150)
-            .attr("height",150)
+            // .attr("width",150)
+            // .attr("height",150)
             // .attr("outline","1px solid white")
+            .classed("image",true)
             .classed(current_class,true)
+            .attr("id", "image-" + filteredData[i].id) // assign an ID to the image element
             .insert('image')
             .attr('xlink:href',  filteredData[i].image_path)
             .attr('width', '100%')
@@ -279,27 +299,19 @@ d3.csv("df_linked_v2.csv", function(data) {
           numSynthia = numSynthia+1
         }
       }
-      //temporary solution, should link the image and activations
-      
-      // AAAAAAAAAAAAAAAA
-      // if (i==0){
-      //   // d3.select(current_image).
-      //   console.log("You should see red borders")
-        
-      //   console.log(current_image)
-      //   // current_image.classed("image",false)
-      //   // current_image.classed("selectedImage",true)
-      //   // current_image.style("border", "2px solid red")
-      // }
-    //   console.log(filteredData[i].similar_image_path)
     }
   }
 
   function updateActivations(filteredData){
     if (filteredData.length>0){
+      //call the first instance in filterData as default
         instance = filteredData[0];
+        instanceActivations(instance)
+    }
+  }
 
-        second_instance_path = instance.similar_image_paths;
+  function instanceActivations(instance){
+    second_instance_path = instance.similar_image_paths;
         var second_instance = data.find(function(d) {
           return d.image_path === second_instance_path;
         });
@@ -374,8 +386,6 @@ d3.csv("df_linked_v2.csv", function(data) {
         //     .attr("outline","1px solid white")
         //     .insert('image')
         //     .attr('xlink:href',  filteredData[i].path)
-    }
-    
   }
 
   function isBrushed(brush_coords, cx,cy) {
