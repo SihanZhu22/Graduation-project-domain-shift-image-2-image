@@ -25,19 +25,19 @@
     stroke-width: 1.5px;
   }
 
+  .image {
+    /* Define the styles for the selected image */
+    /* border-color: white !important; */
+    border: 2px solid white !important;
+    /* Add other highlighting styles as needed */
+  }
+
   .selectedImage {
     /* Define the styles for the selected image */
     border: 2px solid red !important;
     /* Add other highlighting styles as needed */
   }
-
-  .image.selected {
-    /* Define the styles for the selected image */
-    /* border-color: red !important; */
-    /* border: 2px solid red !important ; */
-    border-color: red;
-    /* Add other highlighting styles as needed */
-  }
+  
 
   #inputView{
     float:left;
@@ -191,6 +191,21 @@ d3.csv("df_linked_v2.csv", function(data) {
         // .on('brush end', updateChart_end) //placeholder currently
       )
   
+  // Add interaction with clicking
+  function clickImage(){
+    d3.selectAll(".image").on("click", function updateImageAndActivations() {
+      // Change the class of the previous selected image to just "image"
+      // Make it "image" before removing it from "selectedImage"
+      d3.select(".selectedImage").classed("image", true);
+      d3.select(".selectedImage").classed("selectedImage", false);
+
+      // Change the class of the clicked image to "selectedImage"
+      d3.select(this).classed("image", false);
+      d3.select(this).classed("selectedImage", true);
+    })
+  }
+  
+  
   // Function that is triggered when brushing is performed
   function updateChart_start() {
     // console.log("update") // the chart is update many times with the selection it seems like
@@ -201,6 +216,9 @@ d3.csv("df_linked_v2.csv", function(data) {
     updateImages(filteredData)
     // console.log(filteredData)
     updateActivations(filteredData)
+    // allow clicking images after adding all the images to image view
+    // (the listeners have to be added after the images have been appended to the DOM)
+    clickImage()
   }
   // function updateChart_end(){
 
@@ -220,8 +238,8 @@ d3.csv("df_linked_v2.csv", function(data) {
         break
       }
       if (i==0){
-        console.log("red border for the first image")
-        console.log(filteredData[i].image_path)
+        // console.log("red border for the first image")
+        // console.log(filteredData[i].image_path)
         current_class = "selectedImage"
       }
       else{
