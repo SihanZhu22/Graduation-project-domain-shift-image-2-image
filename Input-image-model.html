@@ -9,6 +9,17 @@
 <!-- Create a div where the graph will be -->
 <div id="inputView"></div>
 <div id="imgView">
+  <!-- Check box: Selection of several item is possible -->
+  <!-- <br><br><br> -->
+  <div id = "imageCheckBox">
+    <button type="button">Next Set</button>
+    <input type="checkbox" name="Input" checked>
+    <label for="inputCheck">Input</label>
+    <input type="checkbox" name="groundTruthCheck" checked>
+    <label for="groundTruthCheck">Ground Truth</label>
+    <input type="checkbox" name="predictionCheck" checked>
+    <label for="predictionCheck"> Prediction</label>
+  </div>
   <div id = "imgCityscapes"></div>
   <div id = "imgSynthia"></div>
 </div>
@@ -45,21 +56,31 @@
   
 
   #inputView{
-    float:left;
-    width:45%;
-    height:95%;
-  }
-  #imgCityscapes{
-    float:right;
-    width:45%;
-    height:160px;
+    width:30%;
+    height:60%;
+    position: fixed; 
+    /* If need to really scroll down and not see the input distribution: change position to absolute */
+    left: 25%;
     outline:1px solid black;
+    text-align: center;
   }
+
+  #imgView{
+    float:right;
+    width: 41%;
+  }
+
+  #imageCheckBox{
+    /* float:right; */
+    margin-bottom: 10px;
+  }
+  #imgCityscapes,
   #imgSynthia{
-    float:right;
-    width:45%;
+    /* float:right; */
+    width:100%;
     height:160px;
     outline:1px solid black;
+    margin-bottom: 10px; /* add some margin between the images */
   }
   #modelView{
     /* to make it fixed on the bottom right: position, bottom and right*/
@@ -93,10 +114,15 @@
 // setup for input view
 
 // set the dimensions and margins of the graph
-const margin_of_input = {top: 40, right: 40, bottom: 60, left: 80},
-    inputWidth = 560 - margin_of_input.left - margin_of_input.right,
-    inputHeight = 500 - margin_of_input.top - margin_of_input.bottom;
+const margin_of_input = {top: 10, right: 10, bottom: 10, left: 10},
+    inputWidth = 460 - margin_of_input.left - margin_of_input.right,
+    inputHeight = 400 - margin_of_input.top - margin_of_input.bottom;
 
+const titleInputView = d3.select("#inputView")
+  .append("text")
+    .style("font-size", "16px")
+    .style("text-decoration", "underline")
+    .text("Input Distribution View");
 // append the svg object to the body of the page
 const svg = d3.select("#inputView")
   .append("svg")
@@ -126,7 +152,14 @@ var activation_svg = d3.select("#activationsScatter")
     .attr("height", activationHeight + margin_of_activation.top + margin_of_activation.bottom)
   .append("g")
     .attr("transform",
-          "translate(" + margin_of_activation.left + "," + margin_of_activation.top + ")");
+          "translate(" + margin_of_activation.left + "," + margin_of_activation.top + ")")
+  // .append("text")
+  //   .attr("x", (activationWidth / 2))             
+  //   .attr("y", 0 - (margin_of_activation.top / 2))
+  //   .attr("text-anchor", "middle")  
+  //   .style("font-size", "16px") 
+  //   .style("text-decoration", "underline")  
+  //   .text("Instance-level model activaitons");
 
 //Read the data
 // data: input_df.csv
@@ -148,7 +181,7 @@ d3.csv("df_linked_v3.csv", function(data) {
   var x = d3.scaleLinear()
     .domain([min_dim_1 - 0.1*Math.abs(min_dim_1) , 1.1*max_dim_1])
     .range([ 0, inputWidth]);
-  svg.append("g")
+  var xAxis = svg.append("g")
     .attr("transform", "translate(0," + inputHeight + ")")
     .call(d3.axisBottom(x));
 
@@ -156,7 +189,7 @@ d3.csv("df_linked_v3.csv", function(data) {
   var y = d3.scaleLinear()
     .domain([min_dim_2 - 0.1*Math.abs(min_dim_2) , 1.1*max_dim_2])
     .range([inputHeight, 0]);
-  svg.append("g")
+  var yAxis =svg.append("g")
     .call(d3.axisLeft(y));
 
     // Color scale: give me a specie name, I return a color
@@ -174,6 +207,10 @@ d3.csv("df_linked_v3.csv", function(data) {
     .attr("cy", function (d) { return y(d.tsne_2)} )
     .attr("r", 2.5)
     .style("fill", function (d) { return color(d.dataset) } )
+  
+  //remove the x and y axis
+  xAxis.remove()
+  yAxis.remove()
 
   // For model activations view:
   // instance = data[0];
@@ -231,6 +268,7 @@ d3.csv("df_linked_v3.csv", function(data) {
     // allow clicking images after adding all the images to image view
     // (the listeners have to be added after the images have been appended to the DOM)
     clickImage()
+    // todo: add the function to click "next" button
   }
   // function updateChart_end(){
 
@@ -414,14 +452,11 @@ d3.csv("df_linked_v3.csv", function(data) {
     let min_2 = d3.min(combinedList,function(d) { return d[1]; });
     let max_2 = d3.max(combinedList,function(d) { return d[1]; });
 
-    activation_svg.append("text")
-    .text("Similarity score for masks:"+similarScore);
-
     // Add X axis
     var x = d3.scaleLinear()
         .domain([min_1 - 0.1*Math.abs(min_1) , 1.1*max_1])
         .range([ 0, activationWidth]);
-    activation_svg.append("g")
+    var xAxis = activation_svg.append("g")
         .attr("transform", "translate(0," + activationHeight + ")")
         .call(d3.axisBottom(x));
 
@@ -429,10 +464,10 @@ d3.csv("df_linked_v3.csv", function(data) {
     var y = d3.scaleLinear()
         .domain([min_2 - 0.1*Math.abs(min_2) , 1.1*max_2])
         .range([ activationHeight, 0]);
-    activation_svg.append("g")
+    var yAxis =activation_svg.append("g")
         .call(d3.axisLeft(y));
     
-    // Add dots
+    // Add dots for the current dataset
     activation_svg.append('g')
         .selectAll("dot")
         .data(parsed_list)
@@ -443,7 +478,7 @@ d3.csv("df_linked_v3.csv", function(data) {
         .attr("r", 2.5)
         .style("fill", function (d) { return color(dataset_type) } )
     
-    //todo: maybe change this to a differnet name?
+    //Add dots for the other dataset
     activation_svg.append('g')
         .selectAll("dot")
         .data(second_activations_parsed)
@@ -453,6 +488,13 @@ d3.csv("df_linked_v3.csv", function(data) {
         .attr("cy", function (d) { return y(d[1])} )
         .attr("r", 2.5)
         .style("fill", function (d) { return color(second_dataset_type) } )
+    
+    activation_svg.append("text")
+      .text("Similarity score for masks:"+similarScore);
+    
+    // this removes the x and y axis from the scatter plot
+    xAxis.remove()
+    yAxis.remove()
   }
 })
 
