@@ -7,6 +7,27 @@
 <!-- Initialize a select button -->
 
 <!-- Create a div where the graph will be -->
+<div id="domainSelection">
+  <text>
+    <b>Select / update the current domain</b>
+  </text>
+  <br><br>
+  <!-- <select>
+    <label>Domains:</label>
+    <option value="realVSsynthetic">Continuous domain</option>
+    <option value="continuousDomain">Discrete domain</option>
+  </select>  -->
+  <div class="dropdown">
+    <!-- <button class="dropdownButton" type="button" data-toggle="dropdown">label<span class="caret"></span></button> -->
+    <label>Domains</label>
+    <select>
+      <option value="realVSsynthetic">Continuous domain</option>
+      <option value="continuousDomain">Discrete domain</option>
+    </select>
+  </div>
+
+  <br><br>
+</div>
 <div id="inputView"></div>
 <div id="imgView">
   <!-- Check box: Selection of several item is possible -->
@@ -30,6 +51,16 @@
 
 <!-- style of selected circles -->
 <style>
+  .dropdown-submenu {
+    position: relative;
+  }
+
+  .dropdown-submenu .dropdown-menu {
+    top: 0;
+    left: 100%;
+    margin-top: -1px;
+  }
+
   .selected {
     opacity: 1 !important;
     stroke: rgb(0, 0, 0);
@@ -54,6 +85,15 @@
     /* Add other highlighting styles as needed */
   }
   
+  #domainSelection{
+    float: left;
+    width: 15%;
+    height: 30%;
+    /* change the background color to see the div more clearly */
+    /* background-color: grey; */
+    outline:1px solid black;
+    text-align: center;
+  }
 
   #inputView{
     width:30%;
@@ -74,6 +114,7 @@
     /* float:right; */
     margin-bottom: 10px;
   }
+
   #imgCityscapes,
   #imgSynthia{
     /* float:right; */
@@ -85,7 +126,7 @@
   #modelView{
     /* to make it fixed on the bottom right: position, bottom and right*/
     position: absolute;
-    bottom: 60px;
+    bottom: 30px;
     right: 30px;
     /* float:right; */
     width:45%;
@@ -110,6 +151,9 @@
 </style>
 
 <script>
+
+// setup for selection of domains
+
 
 // setup for input view
 
