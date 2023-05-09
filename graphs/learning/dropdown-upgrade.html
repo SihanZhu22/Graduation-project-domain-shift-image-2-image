@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<div>
+    <ul id="menu">
+      <li class="parent"><a href="#">Domains</a>
+        <ul class="child">
+            <li><a href="#">Discrete</a></li>
+            <li class="parent"><a href="#">Continuous<span class="expand">»</span></a>
+                <ul class="child">
+                    <li><a href="#">Brightness</a></li>
+                    <li><a href="#">Noise</a></li>
+                </ul></li>
+        </ul>
+      </li>
+    </ul>
+</div>
+
+<style>
+.parent {
+	display: block;
+	position: relative;
+	float: left;
+	line-height: 30px;
+	background-color: #4FA0D8;
+	border-right: #CCC 1px solid;
+}
+
+.parent a {
+	margin: 10px;
+	color: #FFFFFF;
+	text-decoration: none;
+}
+
+/* when the parent is hovered, show the corresponding child*/
+/* The ">" symbol targets the direct child elements */
+.parent:hover>ul {
+	display: block;
+	position: absolute;
+}
+
+.child {
+	display: none;
+}
+
+.child li {
+	background-color: #E4EFF7;
+	line-height: 30px;
+	border-bottom: #CCC 1px solid;
+	border-right: #CCC 1px solid;
+	width: 100%;
+}
+
+.child li a {
+	color: #000000;
+}
+
+ul {
+	list-style: none;
+	margin: 0;
+	padding: 0px;
+	min-width: 10em;
+}
+
+/* unordered list that is nested three levels deep */
+ul ul ul {
+	left: 100%;
+	top: 0;
+	margin-left: 1px;
+}
+
+/* applies when a list item (<li> element) is hovered over with the mouse */
+li:hover {
+	background-color: #95B4CA;
+}
+
+/* applies when a list item is hovered over and its parent element has the class "parent" */
+.parent li:hover {
+	background-color: #F0F0F0;
+}
+
+/* class "expand" */
+.expand {
+	font-size: 12px;
+	float: right;
+	margin-right: 5px;
+}
+</style>

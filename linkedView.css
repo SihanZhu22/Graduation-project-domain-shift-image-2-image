@@ -1,0 +1,180 @@
+#domainSelection{
+  float: left;
+  width: 22%;
+  height: 250px;
+  /* change the background color to see the div more clearly */
+  /* background-color: grey; */
+  outline:1px solid black;
+  text-align: center;
+}
+
+#dropdown{
+  height: 90px;
+}
+
+/* css elements for drop-down menu */
+.parent {
+	display: block;
+	position: relative;
+	float: left;
+	line-height: 30px;
+	background-color: #4FA0D8;
+	border-right: #CCC 1px solid;
+}
+
+.parent a {
+	margin: 10px;
+	color: #FFFFFF;
+	text-decoration: none;
+}
+
+.parent:hover>ul {
+	display: block;
+	position: absolute;
+}
+
+.child {
+	display: none;
+}
+
+.child li {
+	background-color: #E4EFF7;
+	line-height: 30px;
+	border-bottom: #CCC 1px solid;
+	border-right: #CCC 1px solid;
+	width: 100%;
+}
+
+.child li a {
+	color: #000000;
+}
+
+ul {
+	list-style: none;
+	margin: 0;
+	padding: 0px;
+	min-width: 10em;
+}
+
+ul ul ul {
+	left: 100%;
+	top: 0;
+	margin-left: 1px;
+}
+
+li:hover {
+	background-color: #95B4CA;
+}
+
+.parent li:hover {
+	background-color: #F0F0F0;
+}
+
+.expand {
+	font-size: 12px;
+	float: right;
+	margin-right: 5px;
+}
+/* END for drop-down menu */
+
+/* slider for selecting the level for continuous domains */
+.slider{
+  -webkit-appearance: none;
+  width: 75%;
+  height: 25px;
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider::-webkit-slider-thumb{
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  background: #04AA6D;
+  cursor: pointer;
+}
+
+.slider:hover {
+  opacity: 1;
+}
+/* END: slider */
+
+.selected {
+  opacity: 1 !important;
+  stroke: rgb(0, 0, 0);
+  stroke-width: 1.5px;
+}
+
+.image{
+  width: 150px;
+  height: 150px
+}
+
+.notSelectedImage {
+  /* Define the styles for the selected image */
+  /* border-color: white !important; */
+  border: 2px solid white !important;
+  /* Add other highlighting styles as needed */
+}
+
+.selectedImage {
+  /* Define the styles for the selected image */
+  border: 2px solid red !important;
+  /* Add other highlighting styles as needed */
+}
+
+#inputView{
+  width:30%;
+  height:60%;
+  position: fixed; 
+  /* If need to really scroll down and not see the input distribution: change position to absolute */
+  left: 25%;
+  outline:1px solid black;
+  text-align: center;
+}
+
+#imgView{
+  float:right;
+  width: 41%;
+}
+
+#imageCheckBox{
+  /* float:right; */
+  margin-bottom: 10px;
+}
+
+#imgCityscapes,
+#imgSynthia{
+  /* float:right; */
+  width:100%;
+  height:160px;
+  outline:1px solid black;
+  margin-bottom: 10px; /* add some margin between the images */
+}
+#modelView{
+  /* to make it fixed on the bottom right: position, bottom and right*/
+  position: absolute;
+  bottom: 30px;
+  right: 30px;
+  /* float:right; */
+  width:45%;
+  height:40%;
+  display: flex;
+  /* clear: right; */
+  /*set clear property to ensure that modelView goes under the imgView*/
+}
+
+/* #activationsScatter{
+  flex: 1; 
+} */
+
+#maskSimilarity {
+  /* flexible display in the column */
+  display: flex; /* Add this to enable flexbox layout */
+  flex-direction: column; /* Display images vertically */
+  height: 400px; /*make it bigger so that the images and the spacing in between could fit*/
+}

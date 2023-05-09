@@ -1,0 +1,67 @@
+<!DOCTYPE html> 
+<meta charset="utf-8">
+
+<html> 
+  <head> 
+    <link rel="stylesheet" href="linkedView.css">
+    <!-- bootstrap css for drop-down specifically -->
+  </head> 
+  <body>
+    <div id="domainSelection">
+      <text>
+        <b>Select / update the current domain</b>
+      </text>
+      <br><br>
+      <!-- <div class="dropdown">
+        <label>Domains</label>
+        <select>
+          <option value="realVSsynthetic">Continuous domain</option>
+          <option value="continuousDomain">Discrete domain</option>
+        </select>
+      </div> -->
+      <div id="dropdown">
+        <ul id="menu">
+          <li class="parent"><a href="#">Domains</a>
+            <ul class="child">
+                <li><a href="#">Discrete</a></li>
+                <li class="parent"><a href="#">Continuous<span class="expand">»</span></a>
+                    <ul class="child">
+                        <li><a href="#">Brightness</a></li>
+                        <li><a href="#">Noise</a></li>
+                    </ul></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <br><br>
+      <div id="slider">
+        <input type="range" name="noise_slider" id=mySlider min="0" max="0.3" step = "0.1" value="0" oninput="this.nextElementSibling.value = this.value" class="slider">
+        <output>0</output>
+      </div>
+    </div>
+    <div id="inputView"></div>
+    <div id="imgView">
+      <!-- Check box: Selection of several item is possible -->
+      <!-- <br><br><br> -->
+      <div id = "imageCheckBox">
+        <button type="button">Next Set</button>
+        <input type="checkbox" name="Input" checked>
+        <label for="inputCheck">Input</label>
+        <input type="checkbox" name="groundTruthCheck" checked>
+        <label for="groundTruthCheck">Ground Truth</label>
+        <input type="checkbox" name="predictionCheck" checked>
+        <label for="predictionCheck"> Prediction</label>
+      </div>
+      <div id = "imgCityscapes"></div>
+      <div id = "imgSynthia"></div>
+    </div>
+    <div id="modelView">
+      <div id = "activationsScatter"></div>
+      <div id = "maskSimilarity"></div>
+    </div>
+
+    <!-- add sources -->
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <script src="linkedView.js"></script>
+  </body> 
+</html> 
