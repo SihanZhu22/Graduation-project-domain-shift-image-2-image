@@ -39,10 +39,32 @@
         <output>0</output>
       </div>
     </div>
+    <div id="classDist">
+      <div id="classDistTitle"></div>
+      <div id="classDistPlot"></div>
+      <div id="classDropdown">
+        <ul id="classMenu">
+          <li class="parent"><a href="#">Classes</a>
+            <ul class="child">
+                <li><a href="#">Road</a></li>
+                <li><a href="#">Sidewalk</a></li>
+                <li><a href="#">Vegetation</a></li>
+                <li><a href="#">Sky</a></li>
+                <li><a href="#">Car</a></li>
+                <li><a href="#">Others</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div id="performanceView">
+      <div id="performanceViewTitle"></div>
+    </div>
     <div id="inputView"></div>
     <div id="imgView">
       <!-- Check box: Selection of several item is possible -->
       <!-- <br><br><br> -->
+      <div id="imageViewTitle"></div>
       <div id = "imageCheckBox">
         <button type="button">Next Set</button>
         <input type="checkbox" name="Input" checked>
@@ -52,12 +74,27 @@
         <input type="checkbox" name="predictionCheck" checked>
         <label for="predictionCheck"> Prediction</label>
       </div>
-      <div id = "imgCityscapes"></div>
-      <div id = "imgSynthia"></div>
+      <div id="imgViewContainer">
+        <div id="imgDatasetNames">
+          <svg width="100" height="150">
+            <text x="50%" y="50%" text-anchor="middle">Cityscapes</text>
+          </svg>
+          <svg width="100" height="150">
+            <text x="50%" y="50%" text-anchor="middle">Synthia</text>
+          </svg>
+        </div>
+        <div id="imgContainer">
+          <div id = "imgCityscapes"></div>
+          <div id = "imgSynthia"></div>
+        </div>
+      </div>
     </div>
     <div id="modelView">
-      <div id = "activationsScatter"></div>
-      <div id = "maskSimilarity"></div>
+      <div id="modelViewTitle"></div>
+      <div id="modelViewContainer">
+        <div id = "activationsScatter"></div>
+        <div id = "maskSimilarity"></div>
+      </div>
     </div>
 
     <!-- add sources -->

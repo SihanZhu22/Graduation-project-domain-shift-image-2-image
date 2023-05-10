@@ -1,5 +1,22 @@
 // setup for selection of domains
 
+// class distributions
+// add title
+
+//placeholder for now
+const titleClassDist = d3.select("#classDistTitle")
+  .append("text")
+    .style("font-size", "16px")
+    .style("font-weight",700)
+    .style("text-decoration", "underline")
+    .text("Distribution of classes (placeholder)");
+var classDistribution = d3.select("#classDistPlot")
+  .append("svg")
+  .insert('image')
+  .attr('xlink:href',  "imgs/violinplotExample.png")
+  .attr("width", "120%")
+  .attr("height","120%");
+
 // setup for input view
 
 // set the dimensions and margins of the graph
@@ -10,6 +27,7 @@ const margin_of_input = {top: 10, right: 10, bottom: 10, left: 10},
 const titleInputView = d3.select("#inputView")
   .append("text")
     .style("font-size", "16px")
+    .style("font-weight",700)
     .style("text-decoration", "underline")
     .text("Input Distribution View");
 // append the svg object to the body of the page
@@ -21,12 +39,37 @@ const svg = d3.select("#inputView")
     .attr("transform",
           "translate(" + margin_of_input.left + "," + margin_of_input.top + ")");
 
+// Setup for performance view
+const titlePerformanceView = d3.select("#performanceViewTitle")
+  .append("text")
+    .style("font-size", "16px")
+    .style("font-weight",700)
+    .style("text-decoration", "underline")
+    .text("Performance View (placeholder)");
+
+var performance = d3.select("#performanceView")
+  .append("svg")
+  .attr("width", 300)
+  .attr("height", 300)
+  .insert('image')
+  .attr('xlink:href',  "imgs/performanceExample.jpg")
+  .attr("width", "100%")
+  .attr("height","100%");
+
 // Setup for image view
+
+const titleImageView = d3.select("#imageViewTitle")
+  .append("text")
+    .style("font-size", "16px")
+    .style("font-weight",700)
+    .style("text-decoration", "underline")
+    .text("Image View");
 
 // Use the separate divs to hold the images
 var cityscape_images = d3.select("#imgCityscapes")
         // .attr("width", 1200)
         // .attr("height", 300);
+
 var synthia_images = d3.select("#imgSynthia")
 
 // Setup for activation view
@@ -34,6 +77,13 @@ var synthia_images = d3.select("#imgSynthia")
 var margin_of_activation = {top: 30, right: 30, bottom: 50, left: 60},
     activationWidth = 460 - margin_of_activation.left - margin_of_activation.right,
     activationHeight = 420 - margin_of_activation.top - margin_of_activation.bottom;
+
+const titleModelView = d3.select("#modelViewTitle")
+  .append("text")
+    .style("font-size", "16px")
+    .style("font-weight",700)
+    .style("text-decoration", "underline")
+    .text("Model View: Instance-level model activations");
 
 var activation_svg = d3.select("#activationsScatter")
   .append("svg")
@@ -185,7 +235,7 @@ d3.csv("df_linked_v3.csv", function(data) {
         current_class = "notSelectedImage"
       }
       if (filteredData[i].dataset=="Cityscapes"){
-        if (numCityscapes<4){
+        if (numCityscapes<3){
             // console.log(filteredData[i].path)
           var current_image = cityscape_images.append("svg")
             // .attr("width",150)
@@ -208,7 +258,7 @@ d3.csv("df_linked_v3.csv", function(data) {
         }
       }
       else {
-        if (numSynthia<4){
+        if (numSynthia<3){
         // console.log(filteredData[i].path)
           var current_image = synthia_images.append("svg")
             // .attr("width",150)

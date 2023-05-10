@@ -133,39 +133,117 @@ li:hover {
   position: fixed; 
   /* If need to really scroll down and not see the input distribution: change position to absolute */
   left: 25%;
+  text-align: center;
+}
+
+#performanceView{
+  width:30%;
+  height:40%;
+  position: fixed; 
+  top: 61%;
+  left: 25%;
+  outline:1px solid blue;
+}
+
+#performanceViewTitle{
+  text-align: center;
+}
+
+#classDist{
+  width: 21%;
+  height: 250px;
+  position: absolute;
+  left: 0.5%;
+  top: 45%;
   outline:1px solid black;
   text-align: center;
 }
 
+#classDropdown {
+  width: 100%;
+  text-align: center;
+}
+
+#classMenu {
+  /* centered within the parent container */
+  display: inline-block;
+}
+
 #imgView{
-  float:right;
-  width: 41%;
+  /* float:right; */
+  position:absolute;
+  top:0px;
+  right:0px;
+  width: 45%;
+  /* should not have text-align here because it affects everything */
+  /* text-align: center; */
+}
+
+#imgViewContainer{
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+#imgViewContainer{
+  width: 700px;
+}
+
+#imageViewTitle{
+  text-align:center;
 }
 
 #imageCheckBox{
   /* float:right; */
   margin-bottom: 10px;
+  text-align:center;
+}
+
+#imgDatasetNames{
+  width:110px;
+  height:310px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  /* flex-shrink: 0; prevent shrinking */
+  /* flex-grow: 0; prevent growing */
+}
+
+
+#imgContainer{
+  width:75%;
+  min-width: 460px;
+  height:310px;
+  /* display: inline-flex; */
+  /* flex-wrap: wrap; */
+  /* justify-content: space-between; */
 }
 
 #imgCityscapes,
 #imgSynthia{
   /* float:right; */
   width:100%;
-  height:160px;
-  outline:1px solid black;
+  height:155px;
+  /* outline:1px solid black; */
+  display: inline-block;
   margin-bottom: 10px; /* add some margin between the images */
 }
 #modelView{
   /* to make it fixed on the bottom right: position, bottom and right*/
   position: absolute;
-  bottom: 30px;
-  right: 30px;
-  /* float:right; */
+  bottom: 0px;
+  right: 0px;
+  /* outline:1px solid black; */
+  float:right;
   width:45%;
   height:40%;
-  display: flex;
   /* clear: right; */
   /*set clear property to ensure that modelView goes under the imgView*/
+}
+#modelViewTitle{
+  text-align: center;
+}
+#modelViewContainer{
+  display: flex;
 }
 
 /* #activationsScatter{
@@ -174,7 +252,11 @@ li:hover {
 
 #maskSimilarity {
   /* flexible display in the column */
+  float:right;
   display: flex; /* Add this to enable flexbox layout */
   flex-direction: column; /* Display images vertically */
   height: 400px; /*make it bigger so that the images and the spacing in between could fit*/
 }
+
+
+
