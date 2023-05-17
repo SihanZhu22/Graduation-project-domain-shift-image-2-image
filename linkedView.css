@@ -15,8 +15,11 @@
 /* css elements for drop-down menu */
 .parent {
 	display: block;
-	position: relative;
+	position: relative; 
 	float: left;
+  /* the absolute position does not work, leave for now */
+  /* position: absolute;
+  left:50%; */
 	line-height: 30px;
 	background-color: #4FA0D8;
 	border-right: #CCC 1px solid;
@@ -133,6 +136,9 @@ li:hover {
   position: fixed; 
   /* If need to really scroll down and not see the input distribution: change position to absolute */
   left: 25%;
+}
+
+#inputViewTitle{
   text-align: center;
 }
 

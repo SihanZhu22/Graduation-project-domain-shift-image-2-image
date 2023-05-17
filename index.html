@@ -60,18 +60,31 @@
     <div id="performanceView">
       <div id="performanceViewTitle"></div>
     </div>
-    <div id="inputView"></div>
+    <div id="inputView">
+      <div id="inputViewTitle"></div>
+      <div id = "selectionEmbedding">
+        <ul id="embeddingMethods">
+          <li class="parent"><a href="#">Embedding approach:</a>
+            <ul class="child">
+                <li><a href="#">PCA + t-SNE</a></li>
+                <li><a href="#">Classifier embedding</a></li>
+            </ul>
+          </li>
+        </ul>
+        <div id="currentEmbeddingMethod"></div>
+      </div>
+    </div>
     <div id="imgView">
       <!-- Check box: Selection of several item is possible -->
       <!-- <br><br><br> -->
       <div id="imageViewTitle"></div>
       <div id = "imageCheckBox">
         <button type="button">Next Set</button>
-        <input type="checkbox" name="Input" checked>
+        <input type="checkbox" name="imageCheck" checked>
         <label for="inputCheck">Input</label>
-        <input type="checkbox" name="groundTruthCheck" checked>
+        <input type="checkbox" name="groundTruthCheck">
         <label for="groundTruthCheck">Ground Truth</label>
-        <input type="checkbox" name="predictionCheck" checked>
+        <input type="checkbox" name="predictionCheck">
         <label for="predictionCheck"> Prediction</label>
       </div>
       <div id="imgViewContainer">
