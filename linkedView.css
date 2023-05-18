@@ -112,6 +112,12 @@ li:hover {
   stroke-width: 1.5px;
 }
 
+.instance-point {
+  opacity: 1 !important;
+  stroke: red;
+  stroke-width: 2px;
+}
+
 .image{
   width: 150px;
   height: 150px

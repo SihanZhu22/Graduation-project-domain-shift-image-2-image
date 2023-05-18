@@ -189,7 +189,7 @@ d3.csv("system_df_full.csv", function(data) {
   });
   
   // Add interaction with clicking
-  function clickImage(countCheckbox){
+  function clickImage(){
     d3.selectAll(".image").on("click", function updateImageAndActivations() {
       // Change the class of the previous selected image to just "image"
       // Make it "image" before removing it from "selectedImage"
@@ -217,6 +217,12 @@ d3.csv("system_df_full.csv", function(data) {
       // Find the corresponding data in your dataset
       var instance = data.filter(function(d) { return d.id == id; })[0];
       instanceActivations(instance)
+
+      d3.selectAll(".selected").classed("instance-point", function(d) {
+        // console.log("d:", d.tsne_1); // Check the value of d in the console
+        // console.log("instance:", instance.tsne_1); // Check the value of filteredData in the console
+        return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2 
+      });
     })
   }
   
@@ -228,20 +234,87 @@ d3.csv("system_df_full.csv", function(data) {
     myPoint.classed("selected", function(d){ return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))} ) // The points are classed to be either true or false
     // update the corresponding images, leave out initially 
     var filteredData = data.filter(function(d){return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))})
+    // remove all the red boundaries first (before adding new one later)
+    myPoint.classed("instance-point", function() {
+      return false;
+    });
+    updateMultipleViews(filteredData)
+  }
+  // function updateChart_end(){
+
+  // }
+
+  function updateMultipleViews(filteredData){
     if (filteredData.length>0){
+      // mark the initial point in red
+      d3.selectAll(".selected").classed("instance-point", function(d) {
+        // console.log("d:", d); // Check the value of d in the console
+        // console.log("filteredData:", filteredData); // Check the value of filteredData in the console
+        if (filteredData.length>0){
+          return d.tsne_1 === filteredData[0].tsne_1 && d.tsne_2 === filteredData[0].tsne_2
+        } else {
+          return false;
+        }
+      });
       updateImages(filteredData)
       // console.log(filteredData)
       updateActivations(filteredData)
       // allow clicking images after adding all the images to image view
       // (the listeners have to be added after the images have been appended to the DOM)
-      clickImage(countCheckbox)
+      clickImage()
+      // change of image/label/prediction selection
+      var checkboxes = d3.selectAll('input[name="imageCheck"], input[name="groundTruthCheck"], input[name="predictionCheck"]');
+      // "filter(":checked")": filters the selection to include only the checkboxes that are checked
+      var checkedCount = checkboxes.filter(":checked").size(); 
+      checkboxes.on("change", function(){
+        updateMultipleViews(filteredData)
+      }); // this function(){} is necessary to have, otherwise the updateMultipleViews will be immediately called
+      
+      // next button: 
+      var nextButton = d3.select("#imageCheckBox button"); // name of div + button
+      nextButton.on("click",function(){
+        var cityscapesData = filteredData.filter(function(d) {
+          return d.dataset === "Cityscapes";
+        });
+        var synthiaData = filteredData.filter(function(d) {
+          return d.dataset === "Synthia";
+        });
+        var parentDiv = d3.select(".selectedImage").node().parentNode;
+        var parentDivId = parentDiv.id;
+        // switch the cityscapes or synthia based on the div with 
+        if (checkedCount == 1){
+          if (parentDivId =="imgCityscapes"){
+            var firstThreeElements = cityscapesData.slice(0, 3); // Get the first three elements
+            var remainingElements = cityscapesData.slice(3); // Get the remaining elements
+            cityscapesData = remainingElements.concat(firstThreeElements); // Concatenate the remaining elements with the first three elements
+            var newFilteredData = cityscapesData.concat(synthiaData)
+          }
+          else{
+            var firstThreeElements = synthiaData.slice(0, 3); // Get the first three elements
+            var remainingElements = synthiaData.slice(3); // Get the remaining elements
+            synthiaData = remainingElements.concat(firstThreeElements); // Concatenate the remaining elements with the first three elements
+            var newFilteredData = synthiaData.concat(cityscapesData);
+          }
+        }
+        else{
+          console.log(parentDivId)
+          if (parentDivId =="imgCityscapes"){
+            var firstElement = cityscapesData.shift();
+            cityscapesData.push(firstElement);
+            var newFilteredData = cityscapesData.concat(synthiaData)
+          }
+          else{
+            var firstElement = synthiaData.shift();
+            synthiaData.push(firstElement);
+            var newFilteredData = synthiaData.concat(cityscapesData);
+          }
+        }
+        // var firstElement = filteredData.shift();
+        // filteredData.push(firstElement);
+        updateMultipleViews(newFilteredData);
+      })
     }
-    
-    // todo: add the function to click "next" button
   }
-  // function updateChart_end(){
-
-  // }
 
   function updateImages(filteredData){
     // This probably does not work because it is inside an svg.call instead of something else
