@@ -30,8 +30,20 @@ const titleInputView = d3.select("#inputViewTitle")
     .style("font-weight",700)
     .style("text-decoration", "underline")
     .text("Input Distribution View");
+
+// var legend = d3.select("#inputScatterPlot").append("svg")
+//   .attr("width", 100)
+//   .attr("height", 50)
+//   .append("g");
+
+// legend.classed("legend");
+// legend.append("circle").attr("cx",40).attr("cy",10).attr("r", 6).style("fill", "#003f5c")
+// legend.append("circle").attr("cx",40).attr("cy",40).attr("r", 6).style("fill", "#ffa600")
+// legend.append("text").attr("x", 60).attr("y", 10).text("Cityscapes").style("font-size", "15px").attr("alignment-baseline","middle")
+// legend.append("text").attr("x",60).attr("y", 40).text("Synthia").style("font-size", "15px").attr("alignment-baseline","middle")
+
 // append the svg object to the body of the page
-var svg = d3.select("#inputView")
+var svg = d3.select("#inputScatterPlot")
   .append("svg")
     .attr("width", inputWidth + margin_of_input.left + margin_of_input.right)//tried adding an additional 100 to make the svg bigger->did not solve the issue
     .attr("height", inputHeight + margin_of_input.top + margin_of_input.bottom)
@@ -45,16 +57,29 @@ const titlePerformanceView = d3.select("#performanceViewTitle")
     .style("font-size", "16px")
     .style("font-weight",700)
     .style("text-decoration", "underline")
-    .text("Performance View (placeholder)");
+    .text("Performance View ");
 
-var performance = d3.select("#performanceView")
-  .append("svg")
-  .attr("width", 300)
-  .attr("height", 300)
-  .insert('image')
-  .attr('xlink:href',  "imgs/performanceExample.jpg")
-  .attr("width", "100%")
-  .attr("height","100%");
+// var performance = d3.select("#performanceView")
+//   .append("svg")
+//   .attr("width", 300)
+//   .attr("height", 300)
+//   .insert('image')
+//   .attr('xlink:href',  "imgs/performanceExample.jpg")
+//   .attr("width", "100%")
+//   .attr("height","100%");
+// setup for heatmap view
+var heatmapMargin = {top: 15, right: 25, bottom: 30, left: 60},
+      heatmapWidth = 450 - heatmapMargin.left - heatmapMargin.right,
+      heatmapHeight = 220 - heatmapMargin.top - heatmapMargin.bottom;
+
+// append the svg object to the body of the page
+var heatmap_svg = d3.select("#performanceView")
+.append("svg")
+  .attr("width", heatmapWidth + heatmapMargin.left + heatmapMargin.right)
+  .attr("height", heatmapHeight + heatmapMargin.top + heatmapMargin.bottom)
+.append("g")
+  .attr("transform",
+        "translate(" + heatmapMargin.left + "," + heatmapMargin.top + ")");
 
 // Setup for image view
 
@@ -173,11 +198,13 @@ d3.csv("system_df_full.csv", function(data) {
       .extent( [ [0,0], [inputWidth,inputHeight] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
       .on("brush start", function() {
         updateChart_start(myPoint, x, y); // Invoke the function inside the event handler
-      })
+      }),{ passive: true }
       // .on('brush end', updateChart_end) //placeholder currently
   )}
   
+  // initialize some views
   makeInputView(data,"Classifier embedding");
+  makePerformanceView(data)
   const embeddingMethodsItems = d3.selectAll('#embeddingMethods .child li');
 
   // embeddingMethods: Add click event listener to each menu item
@@ -246,7 +273,7 @@ d3.csv("system_df_full.csv", function(data) {
 
   function updateMultipleViews(filteredData){
     if (filteredData.length>0){
-      // mark the initial point in red
+      // mark the initial selected point in red
       d3.selectAll(".selected").classed("instance-point", function(d) {
         // console.log("d:", d); // Check the value of d in the console
         // console.log("filteredData:", filteredData); // Check the value of filteredData in the console
@@ -256,13 +283,15 @@ d3.csv("system_df_full.csv", function(data) {
           return false;
         }
       });
+
       updateImages(filteredData)
-      // console.log(filteredData)
       updateActivations(filteredData)
+      makePerformanceView(data,filteredData)
       // allow clicking images after adding all the images to image view
       // (the listeners have to be added after the images have been appended to the DOM)
       clickImage()
-      // change of image/label/prediction selection
+
+      // event listener: change of image/label/prediction selection
       var checkboxes = d3.selectAll('input[name="imageCheck"], input[name="groundTruthCheck"], input[name="predictionCheck"]');
       // "filter(":checked")": filters the selection to include only the checkboxes that are checked
       var checkedCount = checkboxes.filter(":checked").size(); 
@@ -270,7 +299,7 @@ d3.csv("system_df_full.csv", function(data) {
         updateMultipleViews(filteredData)
       }); // this function(){} is necessary to have, otherwise the updateMultipleViews will be immediately called
       
-      // next button: 
+      // Image View: next button: 
       var nextButton = d3.select("#imageCheckBox button"); // name of div + button
       nextButton.on("click",function(){
         var cityscapesData = filteredData.filter(function(d) {
@@ -297,7 +326,6 @@ d3.csv("system_df_full.csv", function(data) {
           }
         }
         else{
-          console.log(parentDivId)
           if (parentDivId =="imgCityscapes"){
             var firstElement = cityscapesData.shift();
             cityscapesData.push(firstElement);
@@ -315,6 +343,10 @@ d3.csv("system_df_full.csv", function(data) {
       })
     }
   }
+
+  // function updatePerformanceView(filteredData){
+
+  // }
 
   function updateImages(filteredData){
     // This probably does not work because it is inside an svg.call instead of something else
@@ -663,3 +695,149 @@ d3.csv("system_df_full.csv", function(data) {
     yAxis.remove()
   }
 })
+
+// define more functions here 
+function makePerformanceView(data,filteredData){
+  //Add selection for domains later
+  var columnNames = Object.keys(data[0]);
+    var iouColumns = columnNames.filter(function(column) {
+        return column.endsWith("_iou");
+    })
+  // Labels of row and columns -> unique identifier of the column called 'group' and 'variable'
+  var HorizontalVars = iouColumns.map(function(d){return d.slice(0,-4);}) // horizontal
+  var VerticalVars = d3.map(data, function(d){return d.dataset;}).keys()// vertical
+  VerticalVars.push("Selected");
+
+  // separate the data to domains
+  var nestedData = d3.nest()
+    .key(d => d.dataset)
+    .entries(data);
+  
+
+  if (filteredData){
+    // combine the filtered data with the overall data
+    nestedData = nestedData.concat({
+      key: "Selected",
+      values: filteredData
+    });
+  }
+
+  // TODO: add the selected data to the groupData with data.concat
+  var meanValues = new Map();
+  var transformedData = [];
+  // transform the data in order to generate the heatmap
+  nestedData.forEach(group => {
+    var meanObj = {};
+    meanObj.dataset = group.key;
+
+    // Calculate mean for each column
+    meanObj.overall = d3.mean(group.values, d => d.overall_iou);
+    meanObj.other = d3.mean(group.values, d => d.other_iou);
+    meanObj.road = d3.mean(group.values, d => d.road_iou);
+    meanObj.sidewalk = d3.mean(group.values, d => d.sidewalk_iou);
+    meanObj.vegetation = d3.mean(group.values, d => d.vegetation_iou);
+    meanObj.sky = d3.mean(group.values, d => d.sky_iou);
+    meanObj.car = d3.mean(group.values, d => d.car_iou);
+
+    meanValues.set(group.key, meanObj);
+
+    meanValues.forEach((obj, key) => {
+      var dataset = meanObj.dataset;
+
+      Object.keys(obj).forEach(column => {
+        if (column !== "dataset") {
+          var className = column;
+          var value = obj[column];
+
+          transformedData.push({
+            dataset: dataset,
+            class: className,
+            value: value
+          });
+        }
+      });
+    });
+  });
+  // console.log(meanValues);
+  // console.log(transformedData)
+
+  // Build X scales and axis:
+  var x = d3.scaleBand()
+    .range([ 0, heatmapWidth ])
+    .domain(HorizontalVars)
+    .padding(0.05);
+  heatmap_svg.append("g")
+    .style("font-size", 10)
+    .attr("transform", "translate(0," + heatmapHeight + ")")
+    .call(d3.axisBottom(x).tickSize(0))
+    .select(".domain").remove()
+
+  // Build Y scales and axis:
+  var y = d3.scaleBand()
+    .range([ heatmapHeight, 0 ])
+    .domain(VerticalVars)
+    .padding(0.05);
+  heatmap_svg.append("g")
+    .style("font-size", 10)
+    .call(d3.axisLeft(y).tickSize(0))
+    .select(".domain").remove()
+
+  // Build color scale
+  var heatmapColor = d3.scaleSequential()
+    .domain([0,1])
+    .interpolator(d3.interpolateGreens) //interpolate* is sequential single hue
+
+  //TODO: get the tooltip to work
+  // create a tooltip
+  var tooltip = d3.select("#performanceView")
+    .append("div")
+    .style("opacity", 0)
+    .attr("class", "tooltip")
+    .style("background-color", "white")
+    .style("border", "solid")
+    .style("border-width", "2px")
+    .style("border-radius", "5px")
+    .style("padding", "5px")
+
+  // Three function that change the tooltip when user hover / move / leave a cell
+  var mouseover = function(d) {
+    tooltip
+      .style("opacity", 1)
+    d3.select(this)
+      .style("stroke", "black")
+      .style("opacity", 1)
+  }
+  var mousemove = function(d) {
+    tooltip
+      .html("Performance (IoU): " + d.value)
+      .style("left", (d3.mouse(this)[0]+70) + "px")
+      .style("top", (d3.mouse(this)[1]) + "px")
+  }
+  var mouseleave = function(d) {
+    tooltip
+      .style("opacity", 0)
+    d3.select(this)
+      .style("stroke", "none")
+      .style("opacity", 0.8)
+  }
+
+  // add the squares
+  heatmap_svg.selectAll()
+    .data(transformedData, function(d) {return d.class+':'+d.dataset;})
+    .enter()
+    .append("rect")
+      .attr("x", function(d) { return x(d.class) })
+      .attr("y", function(d) { return y(d.dataset) })
+      .attr("rx", 4)
+      .attr("ry", 4)
+      .attr("width", x.bandwidth() )
+      .attr("height", y.bandwidth() )
+      .style("fill", function(d) { return heatmapColor(d.value)} )
+      .style("stroke-width", 4)
+      .style("stroke", "none")
+      .style("opacity", 0.8)
+    .on("mouseover", mouseover)
+    .on("mousemove", mousemove)
+    .on("mouseleave", mouseleave)
+}
+
