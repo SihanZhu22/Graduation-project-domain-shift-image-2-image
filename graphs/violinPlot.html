@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+    <script src='https://cdn.plot.ly/plotly-2.20.0.min.js'></script>
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <div id='myDiv'><!-- Plotly chart will be drawn inside this DIV --></div>
+<script>
+
+    d3.csv("system_df_full.csv", function(data){
+
+        var columnNames = Object.keys(data[0]);
+        var ratioColumns = columnNames.filter(function(column) {
+            return column.endsWith("_iou");
+        })
+
+        function getColumn(data,className) {
+            return data.map(function(d) { return d[className]; });
+        }
+        // function unpack(rows, key) {
+        //     return rows.map(function(row) { return row[key]; });
+        // }
+    // console.log(rows)
+    // console.log(unpack(rows,"day"))
+    console.log(getColumn(data,"dataset"))
+    
+    var data = [{
+        type: 'violin',
+        x: getColumn(data, 'dataset'),
+        y: getColumn(data, 'road_ratio'),
+        points: 'none',
+        box: {
+        visible: true
+        },
+        line: {
+        color: 'green',
+        },
+        meanline: {
+        visible: true
+        },
+        transforms: [{
+            type: 'groupby',
+        groups: getColumn(data, 'dataset'),
+        styles: [
+            {target: 'Cityscapes', value: {line: {color: '#003f5c'}}},
+            {target: 'Selected', value: {line: {color: '#bc5090'}}},
+            {target: 'Synthia', value: {line: {color: '#ffa600'}}},
+            {target: 'Fri', value: {line: {color: 'red'}}}
+        ]
+        }]
+    }]
+    
+    var layout = {
+        title: "Multiple Traces Violin Plot",
+        yaxis: {
+        zeroline: false
+        },
+        width:400,
+        height:400,
+    }
+    
+    Plotly.newPlot('myDiv', data, layout);
+    });
+
+</script>
