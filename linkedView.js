@@ -9,13 +9,14 @@ const titleClassDist = d3.select("#classDistTitle")
     .style("font-size", "16px")
     .style("font-weight",700)
     .style("text-decoration", "underline")
-    .text("Distribution of classes (placeholder)");
-var classDistribution = d3.select("#classDistPlot")
-  .append("svg")
-  .insert('image')
-  .attr('xlink:href',  "imgs/violinplotExample.png")
-  .attr("width", "120%")
-  .attr("height","120%");
+    .text("Distribution of classes");
+// placeholder image
+// var classDistribution = d3.select("#classDistPlot")
+//   .append("svg")
+//   .insert('image')
+//   .attr('xlink:href',  "imgs/violinplotExample.png")
+//   .attr("width", "120%")
+//   .attr("height","120%");
 
 // setup for input view
 
@@ -31,6 +32,7 @@ const titleInputView = d3.select("#inputViewTitle")
     .style("text-decoration", "underline")
     .text("Input Distribution View");
 
+//TODO: create legend for heatmap
 // var legend = d3.select("#inputScatterPlot").append("svg")
 //   .attr("width", 100)
 //   .attr("height", 50)
@@ -71,6 +73,18 @@ const titlePerformanceView = d3.select("#performanceViewTitle")
 var heatmapMargin = {top: 15, right: 25, bottom: 30, left: 60},
       heatmapWidth = 450 - heatmapMargin.left - heatmapMargin.right,
       heatmapHeight = 220 - heatmapMargin.top - heatmapMargin.bottom;
+
+// create a tooltip
+var tooltip = d3.select("#performanceView")
+  .append("div")
+  .style("opacity", 0)
+  .attr("class", "tooltip")
+  .style("background-color", "white")
+  .style("border", "solid")
+  .style("border-width", "2px")
+  .style("border-radius", "5px")
+  .style("padding", "5px")
+  .style("position", "absolute");
 
 // append the svg object to the body of the page
 var heatmap_svg = d3.select("#performanceView")
@@ -204,7 +218,15 @@ d3.csv("system_df_full.csv", function(data) {
   
   // initialize some views
   makeInputView(data,"Classifier embedding");
-  makePerformanceView(data)
+  makePerformanceView(data = data)
+  var currentViolinClass = "Road"
+  makeClassDist(data = data,filteredData = 0,specifiedClassName = currentViolinClass); // always use all the arguments because the missing argument is undefined
+  var classDropdown = d3.selectAll("#classDropdown .child li");
+  classDropdown.on("click",function(){
+    const selectedOption = d3.select(this).text().trim();
+    makeClassDist(data = data,filteredData = 0,specifiedClassName = selectedOption)
+  })
+
   const embeddingMethodsItems = d3.selectAll('#embeddingMethods .child li');
 
   // embeddingMethods: Add click event listener to each menu item
@@ -287,6 +309,14 @@ d3.csv("system_df_full.csv", function(data) {
       updateImages(filteredData)
       updateActivations(filteredData)
       makePerformanceView(data,filteredData)
+      var currentClassViolin = d3.select("#classNameText").text();
+      console.log(currentClassViolin)
+      makeClassDist(data=data,filteredData=filteredData,specifiedClassName=currentClassViolin)
+      var classDropdown = d3.selectAll("#classDropdown .child li");
+      classDropdown.on("click",function(){
+        const selectedOption = d3.select(this).text().trim();
+        makeClassDist(data=data,filteredData = filteredData,specifiedClassName = selectedOption)
+      })
       // allow clicking images after adding all the images to image view
       // (the listeners have to be added after the images have been appended to the DOM)
       clickImage()
@@ -344,9 +374,6 @@ d3.csv("system_df_full.csv", function(data) {
     }
   }
 
-  // function updatePerformanceView(filteredData){
-
-  // }
 
   function updateImages(filteredData){
     // This probably does not work because it is inside an svg.call instead of something else
@@ -536,8 +563,7 @@ d3.csv("system_df_full.csv", function(data) {
     // return countCheckbox;
   }
   
-    
-
+  
   function updateActivations(filteredData){
     if (filteredData.length>0){
       //call the first instance in filterData as default
@@ -698,6 +724,8 @@ d3.csv("system_df_full.csv", function(data) {
 
 // define more functions here 
 function makePerformanceView(data,filteredData){
+  heatmap_svg.selectAll("*").remove();
+
   //Add selection for domains later
   var columnNames = Object.keys(data[0]);
     var iouColumns = columnNames.filter(function(column) {
@@ -787,18 +815,6 @@ function makePerformanceView(data,filteredData){
     .domain([0,1])
     .interpolator(d3.interpolateGreens) //interpolate* is sequential single hue
 
-  //TODO: get the tooltip to work
-  // create a tooltip
-  var tooltip = d3.select("#performanceView")
-    .append("div")
-    .style("opacity", 0)
-    .attr("class", "tooltip")
-    .style("background-color", "white")
-    .style("border", "solid")
-    .style("border-width", "2px")
-    .style("border-radius", "5px")
-    .style("padding", "5px")
-
   // Three function that change the tooltip when user hover / move / leave a cell
   var mouseover = function(d) {
     tooltip
@@ -812,6 +828,8 @@ function makePerformanceView(data,filteredData){
       .html("Performance (IoU): " + d.value)
       .style("left", (d3.mouse(this)[0]+70) + "px")
       .style("top", (d3.mouse(this)[1]) + "px")
+      // .style("left", (d3.event.pageX + 10) + "px") // Position relative to mouse coordinates
+      // .style("top", (d3.event.pageY + 10) + "px")
   }
   var mouseleave = function(d) {
     tooltip
@@ -839,5 +857,96 @@ function makePerformanceView(data,filteredData){
     .on("mouseover", mouseover)
     .on("mousemove", mousemove)
     .on("mouseleave", mouseleave)
+}
+
+function makeClassDist(data,filteredData,specifiedClassName){
+  d3.select("#classDistPlot").selectAll("*").remove();
+  d3.select("#classNameText").selectAll("*").remove();
+
+  d3.select("#classNameText").append("text")
+    .text(specifiedClassName);
+  function getColumn(data,className) {
+    return data.map(function(d) { return d[className]; });
+  }
+  // console.log(getColumn(data,specifiedClassName))
+  var classData = [{
+    type: 'violin',
+    x: getColumn(data, 'dataset'),
+    y: getColumn(data, specifiedClassName.toLowerCase()+"_ratio"),
+    points: 'none',
+    box: {
+    visible: true
+    },
+    line: {
+    color: 'green',
+    },
+    name:"overall",
+    meanline: {
+    visible: true
+    },
+    transforms: [{
+        type: 'groupby',
+    groups: getColumn(data, 'dataset'),
+    styles: [
+        {target: 'Cityscapes', value: {line: {color: '#003f5c'}}},
+        {target: 'Cityscapes (Selected)', value: {line: {color: '#7a5195'}}},
+        {target: 'Synthia', value: {line: {color: '#ffa600'}}},
+        {target: 'Synthia (Selected)', value: {line: {color: '#ef5675'}}}
+    ]
+    }]
+  }]
+
+  if (filteredData){
+    console.log(filteredData)
+    //create a new column called selected and use it later
+    filteredData.forEach(function(d) {
+      // d.selected = d.dataset+" (Selected)";
+      d.selected = "Selected"
+    });
+
+    var selectedClassData = {
+      type: 'violin',
+      x: getColumn(filteredData, 'selected'),
+      y: getColumn(filteredData, specifiedClassName.toLowerCase()+"_ratio"),
+      points: 'none',
+      box: {
+        visible: true
+      },
+      line: {
+        color: 'red'
+      },
+      name: 'partial',
+      // showlegend: false,
+      // legendgroup: 'selected',
+      transforms: [{
+        type: 'groupby',
+        groups: getColumn(filteredData, 'selected'),
+        styles: [
+          { target: 'Cityscapes', value: { line: { color: '#003f5c' } } },
+          { target: 'Synthia', value: { line: { color: '#ffa600' } } },
+          { target: 'Selected', value: { line: { color: '#bc5090' } } }
+        ]
+      }]
+    };
+  
+    classData = classData.concat(selectedClassData); // Concatenate the selected data to the classData array
+  }
+
+  var layout = {
+    // title: "Multiple Traces Violin Plot",
+    yaxis: {
+    zeroline: false
+    },
+    width:380,
+    height:250,
+    margin: {
+      l: 50, // Adjust the left margin
+      r: 10, // Adjust the right margin
+      t: 10, // Adjust the top margin
+      b: 40  // Adjust the bottom margin
+    },
+    plot_bgcolor: 'rgba(0, 0, 0, 0)'
+  }
+  Plotly.newPlot('classDistPlot', classData, layout);
 }
 

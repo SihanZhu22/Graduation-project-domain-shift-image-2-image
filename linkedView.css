@@ -167,23 +167,34 @@ li:hover {
 
 #classDist{
   width: 21%;
-  height: 250px;
+  height: 500px;
   position: absolute;
   left: 0.5%;
   top: 45%;
-  outline:1px solid black;
+  /* outline:1px solid black; */
   text-align: center;
+  /* z-index:1; */
 }
 
 #classDropdown {
   width: 100%;
   text-align: center;
+  /* position: relative; */
+  /* z-index: 9999;  */
+  /* Set a high value to bring the element to the front */
 }
 
 #classMenu {
   /* centered within the parent container */
   display: inline-block;
+  /* position: relative; */
+  /* z-index: 9999; */
 }
+
+/* #classDistPlot{
+  position: relative;
+  z-index: 1;
+} */
 
 #imgView{
   /* float:right; */
