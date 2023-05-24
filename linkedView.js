@@ -10,13 +10,20 @@ const titleClassDist = d3.select("#classDistTitle")
     .style("font-weight",700)
     .style("text-decoration", "underline")
     .text("Distribution of classes");
-// placeholder image
-// var classDistribution = d3.select("#classDistPlot")
-//   .append("svg")
-//   .insert('image')
-//   .attr('xlink:href',  "imgs/violinplotExample.png")
-//   .attr("width", "120%")
-//   .attr("height","120%");
+
+// set the dimensions and margins of the graph
+var violinMargin = {top: 10, right: 30, bottom: 30, left: 40},
+    violinWidth = 350 - violinMargin.left - violinMargin.right,
+    violinHeight = 280 - violinMargin.top - violinMargin.bottom;
+
+// append the svg object to the body of the page
+var violinPlot = d3.select("#classDistPlot")
+  .append("svg")
+    .attr("width", violinWidth + violinMargin.left + violinMargin.right)
+    .attr("height", violinHeight + violinMargin.top + violinMargin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + violinMargin.left + "," + violinMargin.top + ")");
 
 // setup for input view
 
@@ -141,12 +148,9 @@ var activation_svg = d3.select("#activationsScatter")
 
 //Read the data
 d3.csv("system_df_full.csv", function(data) {
-  // Convert the values in the "tsne_1" and "tsne_2" column to numbers (numbers originally)
-
-  // Color scale: give me a specie name, I return a color
   var color = d3.scaleOrdinal()
-  .domain(["Cityscapes", "Synthia" ])
-  .range([ "#003f5c", "#ffa600"])
+  .domain(["Selected","Cityscapes", "Synthia"])
+  .range([ "#bc5090","#003f5c", "#ffa600"])
 
   function makeInputView(data,Option){
     // remove the previous text and add new text
@@ -154,6 +158,7 @@ d3.csv("system_df_full.csv", function(data) {
     d3.select("#currentEmbeddingMethod").append("text")
     .text(Option);
 
+    // Convert the strings in the "tsne_1" and "tsne_2" column to numbers
     if (Option=="PCA + t-SNE"){
       data.forEach(function(d) {
         d.tsne_1 = +d.simple_tsne_1;
@@ -167,7 +172,7 @@ d3.csv("system_df_full.csv", function(data) {
       });
     }
     else{
-      console.log("Error with selection!!")
+      console.warn("Error with selection!!")
     }
     
     // input view: range for each dimension
@@ -220,11 +225,11 @@ d3.csv("system_df_full.csv", function(data) {
   makeInputView(data,"Classifier embedding");
   makePerformanceView(data = data)
   var currentViolinClass = "Road"
-  makeClassDist(data = data,filteredData = 0,specifiedClassName = currentViolinClass); // always use all the arguments because the missing argument is undefined
+  makeClassDist(data = data,filteredData = 0,specifiedClassName = currentViolinClass,color=color); // always use all the arguments because the missing argument is undefined
   var classDropdown = d3.selectAll("#classDropdown .child li");
   classDropdown.on("click",function(){
     const selectedOption = d3.select(this).text().trim();
-    makeClassDist(data = data,filteredData = 0,specifiedClassName = selectedOption)
+    makeClassDist(data = data,filteredData = 0,specifiedClassName = selectedOption,color=color)
   })
 
   const embeddingMethodsItems = d3.selectAll('#embeddingMethods .child li');
@@ -310,12 +315,11 @@ d3.csv("system_df_full.csv", function(data) {
       updateActivations(filteredData)
       makePerformanceView(data,filteredData)
       var currentClassViolin = d3.select("#classNameText").text();
-      console.log(currentClassViolin)
-      makeClassDist(data=data,filteredData=filteredData,specifiedClassName=currentClassViolin)
+      makeClassDist(data=data,filteredData=filteredData,specifiedClassName=currentClassViolin,color=color)
       var classDropdown = d3.selectAll("#classDropdown .child li");
       classDropdown.on("click",function(){
         const selectedOption = d3.select(this).text().trim();
-        makeClassDist(data=data,filteredData = filteredData,specifiedClassName = selectedOption)
+        makeClassDist(data=data,filteredData = filteredData,specifiedClassName = selectedOption,color=color)
       })
       // allow clicking images after adding all the images to image view
       // (the listeners have to be added after the images have been appended to the DOM)
@@ -859,94 +863,186 @@ function makePerformanceView(data,filteredData){
     .on("mouseleave", mouseleave)
 }
 
-function makeClassDist(data,filteredData,specifiedClassName){
+function makeClassDist(data,filteredData,specifiedClassName,color){
   d3.select("#classDistPlot").selectAll("*").remove();
   d3.select("#classNameText").selectAll("*").remove();
 
   d3.select("#classNameText").append("text")
     .text(specifiedClassName);
-  function getColumn(data,className) {
-    return data.map(function(d) { return d[className]; });
-  }
-  // console.log(getColumn(data,specifiedClassName))
-  var classData = [{
-    type: 'violin',
-    x: getColumn(data, 'dataset'),
-    y: getColumn(data, specifiedClassName.toLowerCase()+"_ratio"),
-    points: 'none',
-    box: {
-    visible: true
-    },
-    line: {
-    color: 'green',
-    },
-    name:"overall",
-    meanline: {
-    visible: true
-    },
-    transforms: [{
-        type: 'groupby',
-    groups: getColumn(data, 'dataset'),
-    styles: [
-        {target: 'Cityscapes', value: {line: {color: '#003f5c'}}},
-        {target: 'Cityscapes (Selected)', value: {line: {color: '#7a5195'}}},
-        {target: 'Synthia', value: {line: {color: '#ffa600'}}},
-        {target: 'Synthia (Selected)', value: {line: {color: '#ef5675'}}}
-    ]
-    }]
-  }]
+
+  var violinPlot = d3.select("#classDistPlot")
+  .append("svg")
+    .attr("width", violinWidth + violinMargin.left + violinMargin.right)
+    .attr("height", violinHeight + violinMargin.top + violinMargin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + violinMargin.left + "," + violinMargin.top + ")");
+  
+  // className refer to the specific ratio of the semantic segmentation class
+  var className = specifiedClassName.toLowerCase()+"_ratio";
+  var maxClassRatio= d3.max(data,function(d) {
+     return +d[className]; // need the "+" to make it number
+    })
+  
+  var y = d3.scaleLinear()
+  .domain([0,maxClassRatio])          // Y scale is set manually (here it's [0,1] because of the ratio of classes)
+  .range([violinHeight, 0])
+  violinPlot.append("g").call(d3.axisLeft(y) )  
+
+  // Build and Show the X scale. It is a band scale like for a boxplot: each group has an dedicated RANGE on the axis. This range has a length of x.bandwidth
+  var x = d3.scaleBand()
+  .range([ 0, violinWidth])
+  .domain(["Cityscapes", "Synthia", "Selected"]) //TODO: change this to also fit continuous domains
+  .padding(0.05)     // This is important: it is the space between 2 groups. 0 means no padding. 1 is the maximum.
+  violinPlot.append("g")
+  .attr("transform", "translate(0," + violinHeight + ")")
+  .call(d3.axisBottom(x))
+
+  // Features of the histogram
+  var histogram = d3.histogram()
+        .domain(y.domain())
+        //the original code has 20, use 10 to avoid too detailed range
+        .thresholds(y.ticks(10))    // Important: how many bins approx are going to be made? It is the 'resolution' of the violin plot
+        .value(d => d)
+  
+  data.forEach(function(d) {
+    d.group = d.dataset;
+  });
 
   if (filteredData){
-    console.log(filteredData)
-    //create a new column called selected and use it later
-    filteredData.forEach(function(d) {
-      // d.selected = d.dataset+" (Selected)";
-      d.selected = "Selected"
+    let selectedData = JSON.parse(JSON.stringify(filteredData)) // deepcopy the filterData
+    selectedData.forEach(function(d) {
+      d.group = "Selected";
     });
+    var violinData = data.concat(selectedData)
+  }
+  else{
+    var violinData = data;
+  }
 
-    var selectedClassData = {
-      type: 'violin',
-      x: getColumn(filteredData, 'selected'),
-      y: getColumn(filteredData, specifiedClassName.toLowerCase()+"_ratio"),
-      points: 'none',
-      box: {
-        visible: true
-      },
-      line: {
-        color: 'red'
-      },
-      name: 'partial',
-      // showlegend: false,
-      // legendgroup: 'selected',
-      transforms: [{
-        type: 'groupby',
-        groups: getColumn(filteredData, 'selected'),
-        styles: [
-          { target: 'Cityscapes', value: { line: { color: '#003f5c' } } },
-          { target: 'Synthia', value: { line: { color: '#ffa600' } } },
-          { target: 'Selected', value: { line: { color: '#bc5090' } } }
-        ]
-      }]
-    };
+  // sumstat has the calculated distribution for ratio values in each interval
+  var sumstat = d3.nest()  // nest function allows to group the calculation per level of a factor
+    .key(function(d) { return d.group;})
+    .rollup(function(d) {   // For each key..
+      input = d.map(function(g) { return g[className];})    // use the current selected class
+      bins = histogram(input)   // And compute the binning on it.
+      return(bins)
+    })
+    .entries(violinData)
   
-    classData = classData.concat(selectedClassData); // Concatenate the selected data to the classData array
-  }
+  // What is the biggest number of value in a bin? We need it cause this value will have a width of 100% of the bandwidth.
+  // maxNum is the maximum bandwith for the widest violin, and the range of each violin is defined by the plus and minus of maxNum
+  var maxNum = 0
+  for ( i in sumstat ){
+    allBins = sumstat[i].value
+    lengths  = allBins.map(function(a){return a.length;})
+    largest = d3.max(lengths)
+    if (largest > maxNum) { maxNum = largest }
+    }
+  var xNum = d3.scaleLinear()
+  .range([0, x.bandwidth()])
+  .domain([-maxNum,maxNum]) 
+  
+  // Add the shape to this svg!
+  violinPlot
+    .selectAll("myViolin") // not sure why the "myViolin", but it works somehow (shrug)
+    .data(sumstat)
+    .enter()        // So now we are working group per group
+    .append("g")
+      .attr("transform", function(d){ return("translate(" + x(d.key) +" ,0)") } ) // Translation on the right to be at the group position
+      .style("fill", function (d) { return color(d.key) } )
+    .append("path")
+        .datum(function(d){ return(d.value)})     // So now we are working bin per bin
+        .style("stroke", "none")
+        .attr("d", d3.area()
+            .x0(function(d){ return(xNum(-d.length)) } )
+            .x1(function(d){ return(xNum(d.length)) } )
+            .y(function(d){ return(y(d.x0)) } )
+            .curve(d3.curveCatmullRom)    // This makes the line smoother to give the violin appearance. Try d3.curveStep to see the difference
+        )
+  } 
+  
+  // function getColumn(data,className) {
+  //   return data.map(function(d) { return d[className]; });
+  // }
+  // // console.log(getColumn(data,specifiedClassName))
+  // var classData = [{
+  //   type: 'violin',
+  //   x: getColumn(data, 'dataset'),
+  //   y: getColumn(data, specifiedClassName.toLowerCase()+"_ratio"),
+  //   points: 'none',
+  //   box: {
+  //   visible: true
+  //   },
+  //   line: {
+  //   color: 'green',
+  //   },
+  //   name:"overall",
+  //   meanline: {
+  //   visible: true
+  //   },
+  //   transforms: [{
+  //       type: 'groupby',
+  //   groups: getColumn(data, 'dataset'),
+  //   styles: [
+  //       {target: 'Cityscapes', value: {line: {color: '#003f5c'}}},
+  //       {target: 'Cityscapes (Selected)', value: {line: {color: '#7a5195'}}},
+  //       {target: 'Synthia', value: {line: {color: '#ffa600'}}},
+  //       {target: 'Synthia (Selected)', value: {line: {color: '#ef5675'}}}
+  //   ]
+  //   }]
+  // }]
 
-  var layout = {
-    // title: "Multiple Traces Violin Plot",
-    yaxis: {
-    zeroline: false
-    },
-    width:380,
-    height:250,
-    margin: {
-      l: 50, // Adjust the left margin
-      r: 10, // Adjust the right margin
-      t: 10, // Adjust the top margin
-      b: 40  // Adjust the bottom margin
-    },
-    plot_bgcolor: 'rgba(0, 0, 0, 0)'
-  }
-  Plotly.newPlot('classDistPlot', classData, layout);
-}
+  // if (filteredData){
+  //   console.log(filteredData)
+  //   //create a new column called selected and use it later
+  //   filteredData.forEach(function(d) {
+  //     // d.selected = d.dataset+" (Selected)";
+  //     d.selected = "Selected"
+  //   });
+
+  //   var selectedClassData = {
+  //     type: 'violin',
+  //     x: getColumn(filteredData, 'selected'),
+  //     y: getColumn(filteredData, specifiedClassName.toLowerCase()+"_ratio"),
+  //     points: 'none',
+  //     box: {
+  //       visible: true
+  //     },
+  //     line: {
+  //       color: 'red'
+  //     },
+  //     name: 'partial',
+  //     // showlegend: false,
+  //     // legendgroup: 'selected',
+  //     transforms: [{
+  //       type: 'groupby',
+  //       groups: getColumn(filteredData, 'selected'),
+  //       styles: [
+  //         { target: 'Cityscapes', value: { line: { color: '#003f5c' } } },
+  //         { target: 'Synthia', value: { line: { color: '#ffa600' } } },
+  //         { target: 'Selected', value: { line: { color: '#bc5090' } } }
+  //       ]
+  //     }]
+  //   };
+  
+  //   classData = classData.concat(selectedClassData); // Concatenate the selected data to the classData array
+  // }
+
+  // var layout = {
+  //   // title: "Multiple Traces Violin Plot",
+  //   yaxis: {
+  //   zeroline: false
+  //   },
+  //   width:380,
+  //   height:250,
+  //   margin: {
+  //     l: 50, // Adjust the left margin
+  //     r: 10, // Adjust the right margin
+  //     t: 10, // Adjust the top margin
+  //     b: 40  // Adjust the bottom margin
+  //   },
+  //   plot_bgcolor: 'rgba(0, 0, 0, 0)'
+  // }
+  // Plotly.newPlot('classDistPlot', classData, layout)
 
