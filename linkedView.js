@@ -929,19 +929,47 @@ function makeClassDist(data,filteredData,specifiedClassName,color){
       return(bins)
     })
     .entries(violinData)
+  console.log(JSON.parse(JSON.stringify(sumstat)))
   
   // What is the biggest number of value in a bin? We need it cause this value will have a width of 100% of the bandwidth.
   // maxNum is the maximum bandwith for the widest violin, and the range of each violin is defined by the plus and minus of maxNum
-  var maxNum = 0
-  for ( i in sumstat ){
-    allBins = sumstat[i].value
-    lengths  = allBins.map(function(a){return a.length;})
-    largest = d3.max(lengths)
-    if (largest > maxNum) { maxNum = largest }
-    }
-  var xNum = d3.scaleLinear()
-  .range([0, x.bandwidth()])
-  .domain([-maxNum,maxNum]) 
+  
+  // var maxNum = 0
+  var maxNum = {};
+  // for ( i in sumstat ){
+  //   // console.log(i)
+  //   allBins = sumstat[i].value
+  //   lengths  = allBins.map(function(a){return a.length;})
+  //   largest = d3.max(lengths)
+  //   if (largest > maxNum) { maxNum = largest }
+  //   }
+  sumstat.forEach(function(d) {
+    var allBins = d.value;
+    var lengths = allBins.map(function(a) { return a.length; });
+    allBins.map(function(bin) {bin.group = d.key})
+    // console.log(allBins)
+    // console.log(lengths)
+    maxNum[d.key] = d3.max(lengths);
+  });
+  console.log(JSON.parse(JSON.stringify(sumstat)))
+  // var xNum = d3.scaleLinear()
+  // .range([0, x.bandwidth()])
+  // .domain([-maxNum,maxNum]) 
+  // console.log(sumstat)
+  // var xNum = d3.scaleLinear()
+  // .range([0, x.bandwidth()])
+  // .domain(function() {
+  //   return calculateDomain()
+  // });
+  // Object.values() method returns an array of a given object's value
+  
+  function calculateDomain(length,key) {
+    let xNum = d3.scaleLinear()
+      .range([0, x.bandwidth()])
+      .domain([-maxNum[key],maxNum[key]]) 
+    return xNum(length);
+  }
+  // console.log(maxNum["Cityscapes"])
   
   // Add the shape to this svg!
   violinPlot
@@ -952,97 +980,19 @@ function makeClassDist(data,filteredData,specifiedClassName,color){
       .attr("transform", function(d){ return("translate(" + x(d.key) +" ,0)") } ) // Translation on the right to be at the group position
       .style("fill", function (d) { return color(d.key) } )
     .append("path")
-        .datum(function(d){ return(d.value)})     // So now we are working bin per bin
+        .datum(function(d){ return(d.value)} )     // So now we are working bin per bin
         .style("stroke", "none")
         .attr("d", d3.area()
-            .x0(function(d){ return(xNum(-d.length)) } )
-            .x1(function(d){ return(xNum(d.length)) } )
+            .x0(function(d){ 
+              // return(xNum(-d.length)) 
+              return calculateDomain(-d.length,d.group)
+            })
+            .x1(function(d){ 
+              // return(xNum(d.length)) 
+              return calculateDomain(d.length,d.group)
+            })
             .y(function(d){ return(y(d.x0)) } )
             .curve(d3.curveCatmullRom)    // This makes the line smoother to give the violin appearance. Try d3.curveStep to see the difference
         )
   } 
-  
-  // function getColumn(data,className) {
-  //   return data.map(function(d) { return d[className]; });
-  // }
-  // // console.log(getColumn(data,specifiedClassName))
-  // var classData = [{
-  //   type: 'violin',
-  //   x: getColumn(data, 'dataset'),
-  //   y: getColumn(data, specifiedClassName.toLowerCase()+"_ratio"),
-  //   points: 'none',
-  //   box: {
-  //   visible: true
-  //   },
-  //   line: {
-  //   color: 'green',
-  //   },
-  //   name:"overall",
-  //   meanline: {
-  //   visible: true
-  //   },
-  //   transforms: [{
-  //       type: 'groupby',
-  //   groups: getColumn(data, 'dataset'),
-  //   styles: [
-  //       {target: 'Cityscapes', value: {line: {color: '#003f5c'}}},
-  //       {target: 'Cityscapes (Selected)', value: {line: {color: '#7a5195'}}},
-  //       {target: 'Synthia', value: {line: {color: '#ffa600'}}},
-  //       {target: 'Synthia (Selected)', value: {line: {color: '#ef5675'}}}
-  //   ]
-  //   }]
-  // }]
-
-  // if (filteredData){
-  //   console.log(filteredData)
-  //   //create a new column called selected and use it later
-  //   filteredData.forEach(function(d) {
-  //     // d.selected = d.dataset+" (Selected)";
-  //     d.selected = "Selected"
-  //   });
-
-  //   var selectedClassData = {
-  //     type: 'violin',
-  //     x: getColumn(filteredData, 'selected'),
-  //     y: getColumn(filteredData, specifiedClassName.toLowerCase()+"_ratio"),
-  //     points: 'none',
-  //     box: {
-  //       visible: true
-  //     },
-  //     line: {
-  //       color: 'red'
-  //     },
-  //     name: 'partial',
-  //     // showlegend: false,
-  //     // legendgroup: 'selected',
-  //     transforms: [{
-  //       type: 'groupby',
-  //       groups: getColumn(filteredData, 'selected'),
-  //       styles: [
-  //         { target: 'Cityscapes', value: { line: { color: '#003f5c' } } },
-  //         { target: 'Synthia', value: { line: { color: '#ffa600' } } },
-  //         { target: 'Selected', value: { line: { color: '#bc5090' } } }
-  //       ]
-  //     }]
-  //   };
-  
-  //   classData = classData.concat(selectedClassData); // Concatenate the selected data to the classData array
-  // }
-
-  // var layout = {
-  //   // title: "Multiple Traces Violin Plot",
-  //   yaxis: {
-  //   zeroline: false
-  //   },
-  //   width:380,
-  //   height:250,
-  //   margin: {
-  //     l: 50, // Adjust the left margin
-  //     r: 10, // Adjust the right margin
-  //     t: 10, // Adjust the top margin
-  //     b: 40  // Adjust the bottom margin
-  //   },
-  //   plot_bgcolor: 'rgba(0, 0, 0, 0)'
-  // }
-  // Plotly.newPlot('classDistPlot', classData, layout)
 
