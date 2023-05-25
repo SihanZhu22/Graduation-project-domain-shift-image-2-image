@@ -259,8 +259,6 @@ d3.csv("system_df_full.csv", function(data) {
       else{
         // var selectedImage = d3.select(this);
         var parentDiv = this.parentNode;
-        // console.log("parentDiv:"+parentDiv);
-        // console.log(this.parentNode)
         d3.select(parentDiv).selectAll(".image").classed("notSelectedImage", false);
         d3.select(parentDiv).selectAll(".image").classed("selectedImage", true);
       }
@@ -273,8 +271,6 @@ d3.csv("system_df_full.csv", function(data) {
       instanceActivations(instance)
 
       d3.selectAll(".selected").classed("instance-point", function(d) {
-        // console.log("d:", d.tsne_1); // Check the value of d in the console
-        // console.log("instance:", instance.tsne_1); // Check the value of filteredData in the console
         return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2 
       });
     })
@@ -283,7 +279,7 @@ d3.csv("system_df_full.csv", function(data) {
   
   // Function that is triggered when brushing is performed
   function updateChart_start(myPoint,x,y) {
-    // console.log("update") // the chart is update many times with the selection it seems like
+    // the chart is update many times with the selection it seems like
     extent = d3.event.selection
     myPoint.classed("selected", function(d){ return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))} ) // The points are classed to be either true or false
     // update the corresponding images, leave out initially 
@@ -302,8 +298,6 @@ d3.csv("system_df_full.csv", function(data) {
     if (filteredData.length>0){
       // mark the initial selected point in red
       d3.selectAll(".selected").classed("instance-point", function(d) {
-        // console.log("d:", d); // Check the value of d in the console
-        // console.log("filteredData:", filteredData); // Check the value of filteredData in the console
         if (filteredData.length>0){
           return d.tsne_1 === filteredData[0].tsne_1 && d.tsne_2 === filteredData[0].tsne_2
         } else {
@@ -584,13 +578,10 @@ d3.csv("system_df_full.csv", function(data) {
     d3.select("#maskSimilarity").selectAll("*").remove();
     activation_svg.selectAll("*").remove();
     // clear the existing mask for the previous image, to make way for printing new masks
-    // console.log(filteredData.length)
-    // console.log(filteredData[0])
     activation_list_to_graph(instance.bottleneck_activations_embedding,second_instance.bottleneck_activations_embedding,instance.dataset,instance.similar_IoU_score)
     
     // measuere the height of a div
     // var offsetHeight = document.getElementById('maskSimilarity').offsetHeight;
-    // console.log(offsetHeight) //increased to 400
     
     var imageSize = 150;
     var spacing = 20;
@@ -790,8 +781,6 @@ function makePerformanceView(data,filteredData){
       });
     });
   });
-  // console.log(meanValues);
-  // console.log(transformedData)
 
   // Build X scales and axis:
   var x = d3.scaleBand()
@@ -929,39 +918,17 @@ function makeClassDist(data,filteredData,specifiedClassName,color){
       return(bins)
     })
     .entries(violinData)
-  console.log(JSON.parse(JSON.stringify(sumstat)))
   
-  // What is the biggest number of value in a bin? We need it cause this value will have a width of 100% of the bandwidth.
-  // maxNum is the maximum bandwith for the widest violin, and the range of each violin is defined by the plus and minus of maxNum
-  
-  // var maxNum = 0
+  // What is the biggest number of value in a bin for each group?
+  // maxNum is the dictionary for maximum bandwith for each violin, and the range of each violin is defined by the plus and minus of the corresponding max number
   var maxNum = {};
-  // for ( i in sumstat ){
-  //   // console.log(i)
-  //   allBins = sumstat[i].value
-  //   lengths  = allBins.map(function(a){return a.length;})
-  //   largest = d3.max(lengths)
-  //   if (largest > maxNum) { maxNum = largest }
-  //   }
   sumstat.forEach(function(d) {
     var allBins = d.value;
     var lengths = allBins.map(function(a) { return a.length; });
     allBins.map(function(bin) {bin.group = d.key})
-    // console.log(allBins)
-    // console.log(lengths)
     maxNum[d.key] = d3.max(lengths);
   });
-  console.log(JSON.parse(JSON.stringify(sumstat)))
-  // var xNum = d3.scaleLinear()
-  // .range([0, x.bandwidth()])
-  // .domain([-maxNum,maxNum]) 
-  // console.log(sumstat)
-  // var xNum = d3.scaleLinear()
-  // .range([0, x.bandwidth()])
-  // .domain(function() {
-  //   return calculateDomain()
-  // });
-  // Object.values() method returns an array of a given object's value
+  // console.log(JSON.parse(JSON.stringify(sumstat)))
   
   function calculateDomain(length,key) {
     let xNum = d3.scaleLinear()
@@ -969,7 +936,6 @@ function makeClassDist(data,filteredData,specifiedClassName,color){
       .domain([-maxNum[key],maxNum[key]]) 
     return xNum(length);
   }
-  // console.log(maxNum["Cityscapes"])
   
   // Add the shape to this svg!
   violinPlot
