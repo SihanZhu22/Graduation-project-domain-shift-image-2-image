@@ -77,8 +77,8 @@ const titlePerformanceView = d3.select("#performanceViewTitle")
 //   .attr("width", "100%")
 //   .attr("height","100%");
 // setup for heatmap view
-var heatmapMargin = {top: 15, right: 25, bottom: 30, left: 60},
-      heatmapWidth = 450 - heatmapMargin.left - heatmapMargin.right,
+var heatmapMargin = {top: 15, right: 25, bottom: 30, left: 110},
+      heatmapWidth = 500 - heatmapMargin.left - heatmapMargin.right,
       heatmapHeight = 220 - heatmapMargin.top - heatmapMargin.bottom;
 
 // create a tooltip
@@ -796,12 +796,25 @@ function makePerformanceView(data,filteredData){
   // Build Y scales and axis:
   var y = d3.scaleBand()
     .range([ heatmapHeight, 0 ])
-    .domain(VerticalVars)
+    .domain(["Cityscapes (Overall)","Synthia (Overall)","Selected (Partiall)"])
     .padding(0.05);
   heatmap_svg.append("g")
     .style("font-size", 10)
-    .call(d3.axisLeft(y).tickSize(0))
+    .call(
+      d3.axisLeft(y)
+        .tickSize(0)
+        .tickFormat(
+          d => d.split(" ").map(function(word) {
+            return word.trim();
+          }).join("\n")
+        )
+    )
     .select(".domain").remove()
+
+  // Apply CSS style to the text elements for line breaks
+  heatmap_svg.selectAll(".tick text")
+    .attr("dy", "0.35em") // Adjust vertical alignment as needed
+    .style("white-space", "pre-wrap"); // Allow line breaks to be displayed
 
   // Build color scale
   var heatmapColor = d3.scaleSequential()
@@ -838,7 +851,7 @@ function makePerformanceView(data,filteredData){
     .enter()
     .append("rect")
       .attr("x", function(d) { return x(d.class) })
-      .attr("y", function(d) { return y(d.dataset) })
+      .attr("y", function(d) { return y(getDataScope(d.dataset)) })
       .attr("rx", 4)
       .attr("ry", 4)
       .attr("width", x.bandwidth() )
@@ -881,7 +894,7 @@ function makeClassDist(data,filteredData,specifiedClassName,color){
   // Build and Show the X scale. It is a band scale like for a boxplot: each group has an dedicated RANGE on the axis. This range has a length of x.bandwidth
   var x = d3.scaleBand()
   .range([ 0, violinWidth])
-  .domain(["Cityscapes", "Synthia", "Selected"]) //TODO: change this to also fit continuous domains
+  .domain(["Cityscapes (Overall)", "Synthia (Overall)", "Selected (Partial)"]) //TODO: change this to also fit continuous domains
   .padding(0.05)     // This is important: it is the space between 2 groups. 0 means no padding. 1 is the maximum.
   violinPlot.append("g")
   .attr("transform", "translate(0," + violinHeight + ")")
@@ -943,7 +956,7 @@ function makeClassDist(data,filteredData,specifiedClassName,color){
     .data(sumstat)
     .enter()        // So now we are working group per group
     .append("g")
-      .attr("transform", function(d){ return("translate(" + x(d.key) +" ,0)") } ) // Translation on the right to be at the group position
+      .attr("transform", function(d){ return("translate(" + x(getDataScope(d.key)) +" ,0)") } ) // Translation on the right to be at the group position
       .style("fill", function (d) { return color(d.key) } )
     .append("path")
         .datum(function(d){ return(d.value)} )     // So now we are working bin per bin
@@ -962,3 +975,14 @@ function makeClassDist(data,filteredData,specifiedClassName,color){
         )
   } 
 
+  function getDataScope(key){
+    if (key=="Selected"){
+      // the scope of let is only this "if" function
+      let dataScope="(Partial)"
+      return key+" "+dataScope
+    }
+    else {
+      let dataScope="(Overall)"
+      return key+" "+dataScope
+    } 
+  }
