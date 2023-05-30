@@ -12,9 +12,9 @@ const titleClassDist = d3.select("#classDistTitle")
     .text("Distribution of classes");
 
 // set the dimensions and margins of the graph
-var violinMargin = {top: 10, right: 30, bottom: 30, left: 30},
-    violinWidth = 400 - violinMargin.left - violinMargin.right,
-    violinHeight = 230 - violinMargin.top - violinMargin.bottom;
+var violinMargin = {top: 10, right: 30, bottom: 30, left: 40},
+    violinWidth = 350 - violinMargin.left - violinMargin.right,
+    violinHeight = 280 - violinMargin.top - violinMargin.bottom;
 
 // append the svg object to the body of the page
 var violinPlot = d3.select("#classDistPlot")
@@ -94,7 +94,7 @@ var tooltip = d3.select("#performanceView")
   .style("position", "absolute");
 
 // append the svg object to the body of the page
-var heatmap_svg = d3.select("#performancePlot")
+var heatmap_svg = d3.select("#performanceView")
 .append("svg")
   .attr("width", heatmapWidth + heatmapMargin.left + heatmapMargin.right)
   .attr("height", heatmapHeight + heatmapMargin.top + heatmapMargin.bottom)
@@ -487,8 +487,8 @@ d3.csv("system_df_full.csv", function(data) {
             .attr("id", "image-" + instance.id) // assign an ID to the image element
             .insert('image')
             .attr('xlink:href', instance.image_path)
-            .attr('width', '100%') //TODO: need to change this if the image is larger
-            // .attr('height', "100%")
+            .attr('width', '100%')
+            .attr('height', '100%')
             .attr('preserveAspectRatio', 'xMinYMin meet');
         }
         if (groundTruthValue){
@@ -499,7 +499,7 @@ d3.csv("system_df_full.csv", function(data) {
             .insert('image')
             .attr('xlink:href', instance.label_path)
             .attr('width', '100%')
-            // .attr('height', '100')
+            .attr('height', '100%')
             .attr('preserveAspectRatio', 'xMinYMin meet');
         }
         if (predictionValue){

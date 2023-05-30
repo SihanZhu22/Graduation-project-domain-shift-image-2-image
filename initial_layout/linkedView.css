@@ -1,7 +1,7 @@
 #domainSelection{
   float: left;
   width: 22%;
-  height: 15%;
+  height: 250px;
   /* change the background color to see the div more clearly */
   /* background-color: grey; */
   outline:1px solid black;
@@ -142,9 +142,8 @@ li:hover {
 
 #inputView{
   width:30%;
-  height:45%;
+  height:60%;
   position: absolute; 
-  top:1%;
   /* If need to really scroll down and not see the input distribution: change position to absolute */
   left: 25%;
 }
@@ -152,24 +151,13 @@ li:hover {
 #inputViewTitle{
   text-align: center;
 }
-#selectionEmbedding{
-  width:100%;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center; 
-}
 
 #performanceView{
-  width:45%;
+  width:30%;
   height:40%;
   position: absolute; 
-  top: 55%;
-  right: 1%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center; 
+  top: 61%;
+  left: 25%;
   /* outline:1px solid blue; */
 }
 
@@ -178,25 +166,18 @@ li:hover {
 }
 
 #classDist{
-  width: 30%;
-  height: 35%;
+  width: 21%;
+  height: 500px;
   position: absolute;
-  left: 25%;
-  top: 60%;
+  left: 0.5%;
+  top: 45%;
   /* outline:1px solid black; */
   text-align: center;
   /* z-index:1; */
 }
 
-#classSelection{
-  display: flex;
-  align-items: center;
-  /* justify-content centers horizontally */
-  justify-content: center; 
-}
-
 #classDropdown {
-  width: 25%;
+  width: 100%;
   text-align: center;
   /* position: relative; */
   /* z-index: 9999;  */
@@ -207,37 +188,33 @@ li:hover {
   /* centered within the parent container */
   display: inline-block;
   /* position: relative; */
+  /* z-index: 9999; */
 }
 
 /* #classDistPlot{
   position: relative;
+  z-index: 1;
 } */
 
 #imgView{
   /* float:right; */
   position:absolute;
-  top:25%;
-  left:0%;
-  width: 25%;
+  top:0px;
+  right:0px;
+  width: 45%;
   /* should not have text-align here because it affects everything */
-  text-align: center;
+  /* text-align: center; */
 }
 
-/* #imgViewContainer{
+#imgViewContainer{
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  width: 700px;
-} */
-#imgViewContainer {
-  display: flex;
-  flex-wrap: wrap;
-  flex-direction: column;
-  align-items: center; /* Align items to the top */
-  width: 100%;
-  justify-content:center;
 }
 
+#imgViewContainer{
+  width: 700px;
+}
 
 #imageViewTitle{
   text-align:center;
@@ -245,60 +222,47 @@ li:hover {
 
 #imageCheckBox{
   /* float:right; */
-  margin-bottom: 5px;
+  margin-bottom: 10px;
   text-align:center;
 }
 
 #imgDatasetNames{
-  width:90%;
-  height:auto;
+  width:110px;
+  height:310px;
   overflow: hidden;
-  margin-bottom: 5px;
-  text-align:center;
+  margin-bottom: 20px;
   /* flex-shrink: 0; prevent shrinking */
   /* flex-grow: 0; prevent growing */
 }
 
-/* #imgContainer{
+
+#imgContainer{
   width:75%;
   min-width: 460px;
-  height:auto;
-} */
-#imgContainer {
-  width: 90%; /* Remove fixed width */
-  height: auto; /* Remove fixed height */
-  display: flex;
-  flex-direction: row; /* Change to display images vertically */
-  /* align-items: center;  (not center because the one image would be in the center)*/
-  justify-content: flex-start; /* Align images to the top */
+  height:310px;
+  /* display: inline-flex; */
+  /* flex-wrap: wrap; */
+  /* justify-content: space-between; */
 }
 
-#imgCityscapes{
-  width:100%;
-  height:auto;
-  margin-bottom: 5px; 
-  margin-right: 10px;
-  order: 1;
-}
-
-
+#imgCityscapes,
 #imgSynthia{
+  /* float:right; */
   width:100%;
-  height:auto;
-  margin-bottom: 5px; 
-  order: 2;
+  height:155px;
+  /* outline:1px solid black; */
+  display: inline-block;
+  margin-bottom: 10px; /* add some margin between the images */
 }
-/* add some margin between the images */
-
 #modelView{
   /* to make it fixed on the bottom right: position, bottom and right*/
   position: absolute;
-  top: 1%;
-  right: 0%;
+  bottom: 0px;
+  right: 0px;
   /* outline:1px solid black; */
   float:right;
   width:45%;
-  height:45%;
+  height:40%;
   /* clear: right; */
   /*set clear property to ensure that modelView goes under the imgView*/
 }

@@ -34,29 +34,25 @@
     </div>
     <div id="classDist">
       <div id="classDistTitle"></div>
-      <div id="classSelection">
-        <div id="classDropdown">
-          <ul id="classMenu">
-            <li class="parent"><a href="#">Classes</a>
-              <ul class="child">
-                  <li><a href="#">Road</a></li>
-                  <li><a href="#">Sidewalk</a></li>
-                  <li><a href="#">Vegetation</a></li>
-                  <li><a href="#">Sky</a></li>
-                  <li><a href="#">Car</a></li>
-                  <li><a href="#">Other</a></li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-        <div id ="classNameText"></div>
-      </div>
       <div id="classDistPlot"></div>
-      
+      <div id="classDropdown">
+        <ul id="classMenu">
+          <li class="parent"><a href="#">Classes</a>
+            <ul class="child">
+                <li><a href="#">Road</a></li>
+                <li><a href="#">Sidewalk</a></li>
+                <li><a href="#">Vegetation</a></li>
+                <li><a href="#">Sky</a></li>
+                <li><a href="#">Car</a></li>
+                <li><a href="#">Other</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <div id ="classNameText"></div>
     </div>
     <div id="performanceView">
       <div id="performanceViewTitle"></div>
-      <div id="performancePlot"></div>
     </div>
     <div id="inputView">
       <div id="inputViewTitle"></div>
@@ -88,15 +84,21 @@
       </div>
       <div id="imgViewContainer">
         <div id="imgDatasetNames">
-          <svg width="49%" height="25">
-            <circle cx="30" cy="10" r="6" fill="#003f5c"></circle>
+          <!-- <svg width="100" height="150">
+            <text x="50%" y="50%" text-anchor="middle">Cityscapes</text>
+          </svg>
+          <svg width="100" height="150">
+            <text x="50%" y="50%" text-anchor="middle">Synthia</text>
+          </svg> -->
+          <svg width="100" height="150">
+            <circle cx="20" cy="75" r="6" fill="#003f5c"></circle>
             <!-- could also change to rechtangle if necessary -->
             <!-- <recht cx="14" cy="69" width="12" height="12" fill="#003f5c"></recht> -->
-            <text x="50%" y="15" text-anchor="middle" font-size="14">Cityscapes</text>
+            <text x="30" y="75" text-anchor="start" alignment-baseline="middle">Cityscapes</text>
           </svg>
-          <svg width="49%" height="25">
-            <circle cx="30" cy="10" r="6" fill="#ffa600"></circle>
-            <text x="50%" y="15" text-anchor="middle" font-size="14">Synthia</text>
+          <svg width="100" height="150">
+            <circle cx="20" cy="75" r="6" fill="#ffa600"></circle>
+            <text x="30" y="75" text-anchor="start" alignment-baseline="middle">Synthia</text>
           </svg>
         </div>
         <div id="imgContainer">
