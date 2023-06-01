@@ -1,3 +1,8 @@
+// color setup
+var discreteDomainColor = d3.scaleOrdinal()
+  .domain(["Selected","Cityscapes", "Synthia"])
+  .range([ "#bc5090","#003f5c", "#ffa600"])
+
 // setup for selection of domains
 
 // class distributions
@@ -147,574 +152,647 @@ var activation_svg = d3.select("#activationsScatter")
   //   .text("Instance-level model activaitons");
 
 //Read the data
-d3.csv("system_df_full.csv", function(data) {
-  var color = d3.scaleOrdinal()
-  .domain(["Selected","Cityscapes", "Synthia"])
-  .range([ "#bc5090","#003f5c", "#ffa600"])
-
-  function makeInputView(data,Option){
-    // remove the previous text and add new text
-    d3.select("#currentEmbeddingMethod").selectAll("*").remove();
-    d3.select("#currentEmbeddingMethod").append("text")
-    .text(Option);
-
-    // Convert the strings in the "tsne_1" and "tsne_2" column to numbers
-    if (Option=="PCA + t-SNE"){
-      data.forEach(function(d) {
-        d.tsne_1 = +d.simple_tsne_1;
-        d.tsne_2 = +d.simple_tsne_2
-      });
-    }
-    else if (Option=="Classifier embedding"){
-      data.forEach(function(d) {
-        d.tsne_1 = +d.meaningful_tsne_1;
-        d.tsne_2 = +d.meaningful_tsne_2;
-      });
-    }
-    else{
-      console.warn("Error with selection!!")
-    }
-    
-    // input view: range for each dimension
-    const min_dim_1 = d3.min(data,function(d) { return d.tsne_1; });
-    const max_dim_1 = d3.max(data,function(d) { return d.tsne_1; });
-    const min_dim_2 = d3.min(data,function(d) { return d.tsne_2; });
-    const max_dim_2 = d3.max(data,function(d) { return d.tsne_2; });
-  
-    // Add X axis
-    var x = d3.scaleLinear()
-      .domain([min_dim_1 - 0.1*Math.abs(min_dim_1) , 1.1*max_dim_1])
-      .range([ 0, inputWidth]);
-    var xAxis = svg.append("g")
-      .attr("transform", "translate(0," + inputHeight + ")")
-      .call(d3.axisBottom(x));
-  
-    // Add Y axis
-    var y = d3.scaleLinear()
-      .domain([min_dim_2 - 0.1*Math.abs(min_dim_2) , 1.1*max_dim_2])
-      .range([inputHeight, 0]);
-    var yAxis =svg.append("g")
-      .call(d3.axisLeft(y));
-  
-    // Add dots
-    var myPoint = svg.append('g')
-      .selectAll("dot")
-      .data(data)
-      .enter()
-      .append("circle")
-      .attr("cx", function (d) { return x(d.tsne_1)} )
-      .attr("cy", function (d) { return y(d.tsne_2)} )
-      .attr("r", 2.5)
-      .style("fill", function (d) { return color(d.dataset) } )
-    
-    //remove the x and y axis
-    xAxis.remove()
-    yAxis.remove()
-
-    // Add brushing
-    svg
-    .call(d3.brush()                 // Add the brush feature using the d3.brush function
-      .extent( [ [0,0], [inputWidth,inputHeight] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
-      .on("brush start", function() {
-        updateChart_start(myPoint, x, y); // Invoke the function inside the event handler
-      }),{ passive: true }
-      // .on('brush end', updateChart_end) //placeholder currently
-  )}
-  
-  // initialize some views
-  makeInputView(data,"Classifier embedding");
-  makePerformanceView(data = data)
-  var currentViolinClass = "Road"
-  makeClassDist(data = data,filteredData = 0,specifiedClassName = currentViolinClass,color=color); // always use all the arguments because the missing argument is undefined
-  var classDropdown = d3.selectAll("#classDropdown .child li");
-  classDropdown.on("click",function(){
-    const selectedOption = d3.select(this).text().trim();
-    makeClassDist(data = data,filteredData = 0,specifiedClassName = selectedOption,color=color)
-  })
-
-  const embeddingMethodsItems = d3.selectAll('#embeddingMethods .child li');
-
-  // embeddingMethods: Add click event listener to each menu item
-  embeddingMethodsItems.on('click', function() {
-    // Get the selected option using D3
-    const selectedOption = d3.select(this).text().trim();
-    svg.selectAll("*").remove();
-    makeInputView(data,selectedOption);
-  });
-  
-  // Add interaction with clicking
-  function clickImage(){
-    d3.selectAll(".image").on("click", function updateImageAndActivations() {
-      // Change the class of the previous selected image to just "image"
-      // Make it "image" before removing it from "selectedImage"
-      d3.selectAll(".selectedImage").classed("notSelectedImage", true);
-      d3.selectAll(".selectedImage").classed("selectedImage", false);
-
-      // if only one checkbox is selected, meaning that there are multiple instances:
-      if (countCheckbox ==1){
-        d3.select(this).classed("notSelectedImage", false);
-        d3.select(this).classed("selectedImage", true);
-      }
-      // otherwise, color the boundaries of all the images
-      else{
-        // var selectedImage = d3.select(this);
-        var parentDiv = this.parentNode;
-        d3.select(parentDiv).selectAll(".image").classed("notSelectedImage", false);
-        d3.select(parentDiv).selectAll(".image").classed("selectedImage", true);
-      }
-
-      // Get the ID of the clicked image
-      var id = d3.select(this).attr("id").split("-")[1]; 
-
-      // Find the corresponding data in your dataset
-      var instance = data.filter(function(d) { return d.id == id; })[0];
-      instanceActivations(instance)
-
-      d3.selectAll(".selected").classed("instance-point", function(d) {
-        return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2 
-      });
-    })
-  }
-  
-  
-  // Function that is triggered when brushing is performed
-  function updateChart_start(myPoint,x,y) {
-    // the chart is update many times with the selection it seems like
-    extent = d3.event.selection
-    myPoint.classed("selected", function(d){ return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))} ) // The points are classed to be either true or false
-    // update the corresponding images, leave out initially 
-    var filteredData = data.filter(function(d){return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))})
-    // remove all the red boundaries first (before adding new one later)
-    myPoint.classed("instance-point", function() {
-      return false;
+d3.csv("system_df_v2.csv",function(discreteData){
+  d3.csv("noise_df.csv", function(noiseData) {
+    var currentTypeDomain = "Continuous"
+    var continuousDomain = "Noise"
+    var continuousValue = 0 //todo: change this to finding the min (non-zero) or max of the value
+    // todo: change the slider also
+    noiseData.forEach(function(d) {
+      d.noise_level = +d.noise_level;
     });
-    updateMultipleViews(filteredData)
-  }
-  // function updateChart_end(){
 
-  // }
-
-  function updateMultipleViews(filteredData){
-    if (filteredData.length>0){
-      // mark the initial selected point in red
-      d3.selectAll(".selected").classed("instance-point", function(d) {
-        if (filteredData.length>0){
-          return d.tsne_1 === filteredData[0].tsne_1 && d.tsne_2 === filteredData[0].tsne_2
-        } else {
-          return false;
+    initializeViews()
+    
+    function initializeViews(){
+      // initialize some views
+      if (currentTypeDomain == "Discrete"){
+        makeInputView(discreteData,"Classifier embedding");
+        makePerformanceView(data = discreteData)
+        var currentViolinClass = "Road"
+        makeClassDist(data = discreteData,filteredData = 0,specifiedClassName = currentViolinClass);
+      }
+      else{
+        // change the makeInputView
+        // makeInputView(noiseData,"Classifier embedding")
+        if (continuousDomain=="Noise"){
+          var noiseDataOriginal = noiseData.filter(function(d) {return d.noise_level == 0})
+          if (continuousValue){
+            var noiseDataCurrent = noiseData.filter(function(d) {return d.noise_level == continuousValue})
+            // noiseSelectedData is global
+            noiseSelectedData =  noiseDataOriginal.concat(noiseDataCurrent);
+          }
+          else{
+            noiseSelectedData = noiseDataOriginal
+          }
+          // makePerformanceView(data = noiseSelectedData) //TODO: major improve for this one  
         }
-      });
+      }
+       // always use all the arguments because the missing argument is undefined
+    }
 
-      updateImages(filteredData)
-      updateActivations(filteredData)
-      makePerformanceView(data,filteredData)
-      var currentClassViolin = d3.select("#classNameText").text();
-      makeClassDist(data=data,filteredData=filteredData,specifiedClassName=currentClassViolin,color=color)
-      var classDropdown = d3.selectAll("#classDropdown .child li");
-      classDropdown.on("click",function(){
-        const selectedOption = d3.select(this).text().trim();
-        makeClassDist(data=data,filteredData = filteredData,specifiedClassName = selectedOption,color=color)
-      })
-      // allow clicking images after adding all the images to image view
-      // (the listeners have to be added after the images have been appended to the DOM)
-      clickImage()
+    // event listener for domain selection
+    var domainDropdown = d3.selectAll("#dropdown .child li");
+    domainDropdown.on("click",function(){
+      d3.event.stopPropagation();
+      const selectedDomain = d3.select(this).text().trim();
+      // TODO: make the text more complicated later
+      d3.select("#currentSelectedDomain").selectAll("*").remove();
+      d3.select("#currentSelectedDomain").append("text").text("Current domain type: "+selectedDomain);
+      if (selectedDomain=="Discrete"){
+        currentTypeDomain = "Discrete"
+        initializeViews()
+      }
+      else{
+        currentTypeDomain = "Continuous"
+        initializeViews()
+        // current domain is the specific value?
+      }
+    })
 
-      // event listener: change of image/label/prediction selection
-      var checkboxes = d3.selectAll('input[name="imageCheck"], input[name="groundTruthCheck"], input[name="predictionCheck"]');
-      // "filter(":checked")": filters the selection to include only the checkboxes that are checked
-      var checkedCount = checkboxes.filter(":checked").size(); 
-      checkboxes.on("change", function(){
-        updateMultipleViews(filteredData)
-      }); // this function(){} is necessary to have, otherwise the updateMultipleViews will be immediately called
+    // event listener for slider
+    // think about: combining this with domainDropdown or not?
+    var slider = d3.select("#mySlider");
+    slider.on("input", function() {
+      // Retrieve the selected value from the slider
+      var selectedValue = d3.event.target.value;
       
-      // Image View: next button: 
-      var nextButton = d3.select("#imageCheckBox button"); // name of div + button
-      nextButton.on("click",function(){
+      // Do something with the selected value
+      continuousValue=selectedValue
+      initializeViews()
+    });
+
+    // event listener for class dist
+    var classDropdown = d3.selectAll("#classDropdown .child li");
+    classDropdown.on("click",function(){
+      const selectedOption = d3.select(this).text().trim();
+      makeClassDist(data = data,filteredData = 0,specifiedClassName = selectedOption)
+    })
+
+    const embeddingMethodsItems = d3.selectAll('#embeddingMethods .child li');
+
+    // embeddingMethods: Add click event listener to each menu item
+    embeddingMethodsItems.on('click', function() {
+      // Get the selected option using D3
+      const selectedOption = d3.select(this).text().trim();
+      svg.selectAll("*").remove();
+      makeInputView(data,selectedOption);
+    });
+
+    function makeInputView(data,Option){
+      // remove the previous text and add new text
+      d3.select("#currentEmbeddingMethod").selectAll("*").remove();
+      d3.select("#currentEmbeddingMethod").append("text")
+      .text(Option);
+
+      // Convert the strings in the "tsne_1" and "tsne_2" column to numbers
+      if (Option=="PCA + t-SNE"){
+        data.forEach(function(d) {
+          d.tsne_1 = +d.simple_tsne_1;
+          d.tsne_2 = +d.simple_tsne_2
+        });
+      }
+      else if (Option=="Classifier embedding"){
+        data.forEach(function(d) {
+          d.tsne_1 = +d.meaningful_tsne_1;
+          d.tsne_2 = +d.meaningful_tsne_2;
+        });
+      }
+      else if (Option=="PCA"){
+        data.forEach(function(d) {
+          d.tsne_1 = +d.pca_1; //TODO: change the tsne_1 to something else
+          d.tsne_2 = +d.pca_2;
+        });
+      }
+      else{
+        console.log(Option)
+        console.warn("Error with selection!!")
+      }
+      
+      // input view: range for each dimension
+      const min_dim_1 = d3.min(data,function(d) { return d.tsne_1; });
+      const max_dim_1 = d3.max(data,function(d) { return d.tsne_1; });
+      const min_dim_2 = d3.min(data,function(d) { return d.tsne_2; });
+      const max_dim_2 = d3.max(data,function(d) { return d.tsne_2; });
+    
+      // Add X axis
+      var x = d3.scaleLinear()
+        .domain([min_dim_1 - 0.1*Math.abs(min_dim_1) , 1.1*max_dim_1])
+        .range([ 0, inputWidth]);
+      var xAxis = svg.append("g")
+        .attr("transform", "translate(0," + inputHeight + ")")
+        .call(d3.axisBottom(x));
+    
+      // Add Y axis
+      var y = d3.scaleLinear()
+        .domain([min_dim_2 - 0.1*Math.abs(min_dim_2) , 1.1*max_dim_2])
+        .range([inputHeight, 0]);
+      var yAxis =svg.append("g")
+        .call(d3.axisLeft(y));
+    
+      // Add dots
+      var myPoint = svg.append('g')
+        .selectAll("dot")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("cx", function (d) { return x(d.tsne_1)} )
+        .attr("cy", function (d) { return y(d.tsne_2)} )
+        .attr("r", 2.5)
+        .style("fill", function (d) { return discreteDomainColor(d.dataset) } )
+      
+      //remove the x and y axis
+      xAxis.remove()
+      yAxis.remove()
+
+      // Add brushing
+      // the non-passive event listener is not because of it's within a function; 
+      // however, might still be a nice thing to move it outside of the makeInputView function at some point
+      // issues are with x,y,and myPoint: could declare them to be global, but not sure how that would affect other plots
+      svg
+      .call(d3.brush()                 // Add the brush feature using the d3.brush function
+        .extent( [ [0,0], [inputWidth,inputHeight] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+        .on("brush start", function() {
+          updateChart_start(myPoint, x, y); // Invoke the function inside the event handler
+        }),{ passive: true }
+        // .on('brush end', updateChart_end) //placeholder currently
+      )
+    }
+    
+    // Add interaction with clicking
+    function clickImage(){
+      d3.selectAll(".image").on("click", function updateImageAndActivations() {
+        // Change the class of the previous selected image to just "image"
+        // Make it "image" before removing it from "selectedImage"
+        d3.selectAll(".selectedImage").classed("notSelectedImage", true);
+        d3.selectAll(".selectedImage").classed("selectedImage", false);
+
+        // if only one checkbox is selected, meaning that there are multiple instances:
+        if (countCheckbox ==1){
+          d3.select(this).classed("notSelectedImage", false);
+          d3.select(this).classed("selectedImage", true);
+        }
+        // otherwise, color the boundaries of all the images
+        else{
+          // var selectedImage = d3.select(this);
+          var parentDiv = this.parentNode;
+          d3.select(parentDiv).selectAll(".image").classed("notSelectedImage", false);
+          d3.select(parentDiv).selectAll(".image").classed("selectedImage", true);
+        }
+
+        // Get the ID of the clicked image
+        var id = d3.select(this).attr("id").split("-")[1]; 
+
+        // Find the corresponding data in your dataset
+        var instance = data.filter(function(d) { return d.id == id; })[0];
+        instanceActivations(instance)
+
+        d3.selectAll(".selected").classed("instance-point", function(d) {
+          return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2 
+        });
+      })
+    }
+    
+    
+    // Function that is triggered when brushing is performed
+    function updateChart_start(myPoint,x,y) {
+      // the chart is update many times with the selection it seems like
+      extent = d3.event.selection
+      myPoint.classed("selected", function(d){ return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))} ) // The points are classed to be either true or false
+      // update the corresponding images, leave out initially 
+      var filteredData = data.filter(function(d){return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))})
+      // remove all the red boundaries first (before adding new one later)
+      myPoint.classed("instance-point", function() {
+        return false;
+      });
+      updateMultipleViews(filteredData)
+    }
+    // function updateChart_end(){
+
+    // }
+
+    function updateMultipleViews(filteredData){
+      if (filteredData.length>0){
+        // mark the initial selected point in red
+        d3.selectAll(".selected").classed("instance-point", function(d) {
+          if (filteredData.length>0){
+            return d.tsne_1 === filteredData[0].tsne_1 && d.tsne_2 === filteredData[0].tsne_2
+          } else {
+            return false;
+          }
+        });
+
+        updateImages(filteredData)
+        updateActivations(filteredData)
+        makePerformanceView(data,filteredData)
+        var currentClassViolin = d3.select("#classNameText").text();
+        makeClassDist(data=data,filteredData=filteredData,specifiedClassName=currentClassViolin)
+        var classDropdown = d3.selectAll("#classDropdown .child li");
+        classDropdown.on("click",function(){
+          const selectedOption = d3.select(this).text().trim();
+          makeClassDist(data=data,filteredData = filteredData,specifiedClassName = selectedOption)
+        })
+        // allow clicking images after adding all the images to image view
+        // (the listeners have to be added after the images have been appended to the DOM)
+        clickImage()
+
+        // event listener: change of image/label/prediction selection
+        var checkboxes = d3.selectAll('input[name="imageCheck"], input[name="groundTruthCheck"], input[name="predictionCheck"]');
+        // "filter(":checked")": filters the selection to include only the checkboxes that are checked
+        var checkedCount = checkboxes.filter(":checked").size(); 
+        checkboxes.on("change", function(){
+          updateMultipleViews(filteredData)
+        }); // this function(){} is necessary to have, otherwise the updateMultipleViews will be immediately called
+        
+        // Image View: next button: 
+        var nextButton = d3.select("#imageCheckBox button"); // name of div + button
+        nextButton.on("click",function(){
+          var cityscapesData = filteredData.filter(function(d) {
+            return d.dataset === "Cityscapes";
+          });
+          var synthiaData = filteredData.filter(function(d) {
+            return d.dataset === "Synthia";
+          });
+          var parentDiv = d3.select(".selectedImage").node().parentNode;
+          var parentDivId = parentDiv.id;
+          // switch the cityscapes or synthia based on the div with 
+          if (checkedCount == 1){
+            if (parentDivId =="imgCityscapes"){
+              var firstThreeElements = cityscapesData.slice(0, 3); // Get the first three elements
+              var remainingElements = cityscapesData.slice(3); // Get the remaining elements
+              cityscapesData = remainingElements.concat(firstThreeElements); // Concatenate the remaining elements with the first three elements
+              var newFilteredData = cityscapesData.concat(synthiaData)
+            }
+            else{
+              var firstThreeElements = synthiaData.slice(0, 3); // Get the first three elements
+              var remainingElements = synthiaData.slice(3); // Get the remaining elements
+              synthiaData = remainingElements.concat(firstThreeElements); // Concatenate the remaining elements with the first three elements
+              var newFilteredData = synthiaData.concat(cityscapesData);
+            }
+          }
+          else{
+            if (parentDivId =="imgCityscapes"){
+              var firstElement = cityscapesData.shift();
+              cityscapesData.push(firstElement);
+              var newFilteredData = cityscapesData.concat(synthiaData)
+            }
+            else{
+              var firstElement = synthiaData.shift();
+              synthiaData.push(firstElement);
+              var newFilteredData = synthiaData.concat(cityscapesData);
+            }
+          }
+          // var firstElement = filteredData.shift();
+          // filteredData.push(firstElement);
+          updateMultipleViews(newFilteredData);
+        })
+      }
+    }
+
+
+    function updateImages(filteredData){
+      // This probably does not work because it is inside an svg.call instead of something else
+      const maxImages = 100;
+      var numCityscapes = 0;
+      var numSynthia = 0; 
+      cityscape_images.selectAll("*").remove();
+      synthia_images.selectAll("*").remove();
+
+      // first check the selections
+      // each Checkbox variable contain a True or False value on whether it's checked
+      var imageCheckbox = d3.select('input[name="imageCheck"]').node();
+      var groundTruthCheckbox = d3.select('input[name="groundTruthCheck"]').node();
+      var predictionCheckbox = d3.select('input[name="predictionCheck"]').node();
+
+      var imageValue = imageCheckbox.checked ? 1 : 0;
+      var groundTruthValue = groundTruthCheckbox.checked ? 1 : 0;
+      var predictionValue = predictionCheckbox.checked ? 1 : 0;
+
+      // not initialize the variable so that it's global (Automatically Global (doesn't work if strict mode is on))
+      countCheckbox = imageValue+groundTruthValue+predictionValue;
+      
+      //conditions
+      if (countCheckbox==1){
+        if (imageValue){
+          filteredData.forEach(function(d) {
+            d.path = d.image_path; // no "+", because don't need path to be number here
+          });
+        }
+        else if (groundTruthValue){
+          filteredData.forEach(function(d) {
+            d.path = d.label_path;
+          });
+        }
+        else {
+          filteredData.forEach(function(d) {
+            d.path = d.prediction_path;
+          });
+        }
+        for (let i=0 ; i < maxImages; i++) {
+            if (filteredData.length <= i || (numCityscapes>=4 && numSynthia>=4)) {
+              break
+            }
+            if (i==0){
+              current_class = "selectedImage"
+            }
+            else{
+              current_class = "notSelectedImage"
+            }
+            if (filteredData[i].dataset=="Cityscapes"){
+              if (numCityscapes<3){
+                var current_image = cityscape_images.append("svg")
+                  // .attr("width",150)
+                  // .attr("height",150)
+                  // .attr("outline","1px solid white")
+                  .classed("image",true)
+                  .classed(current_class,true)
+                  .attr("id", "image-" + filteredData[i].id) // assign an ID to the image element
+                  .insert('image')
+                  .attr('xlink:href', filteredData[i].path)
+                  .attr('width', '100%')
+                  .attr('height', '100%')
+                  .attr('preserveAspectRatio', 'xMinYMin meet');
+                
+                if (i==0){
+                  current_image.classed("selectedImage")
+                }
+                
+                numCityscapes = numCityscapes+1
+              }
+            }
+            else {
+              if (numSynthia<3){
+                var current_image = synthia_images.append("svg")
+                  // .attr("width",150)
+                  // .attr("height",150)
+                  // .attr("outline","1px solid white")
+                  .classed("image",true)
+                  .classed(current_class,true)
+                  .attr("id", "image-" + filteredData[i].id) // assign an ID to the image element
+                  .insert('image')
+                  .attr('xlink:href',  filteredData[i].path)
+                  .attr('width', '100%')
+                  .attr('height', '100%')
+                  .attr('preserveAspectRatio', 'xMinYMin meet');
+                
+                numSynthia = numSynthia+1
+              }
+            }
+          }
+        }
+      else{
+        // filter out the cityscapes and synthia data
         var cityscapesData = filteredData.filter(function(d) {
           return d.dataset === "Cityscapes";
         });
         var synthiaData = filteredData.filter(function(d) {
           return d.dataset === "Synthia";
         });
-        var parentDiv = d3.select(".selectedImage").node().parentNode;
-        var parentDivId = parentDiv.id;
-        // switch the cityscapes or synthia based on the div with 
-        if (checkedCount == 1){
-          if (parentDivId =="imgCityscapes"){
-            var firstThreeElements = cityscapesData.slice(0, 3); // Get the first three elements
-            var remainingElements = cityscapesData.slice(3); // Get the remaining elements
-            cityscapesData = remainingElements.concat(firstThreeElements); // Concatenate the remaining elements with the first three elements
-            var newFilteredData = cityscapesData.concat(synthiaData)
+        
+        if (cityscapesData.length>0){
+          instance = cityscapesData[0]
+          if (instance==filteredData[0]){
+            current_class="selectedImage"
           }
           else{
-            var firstThreeElements = synthiaData.slice(0, 3); // Get the first three elements
-            var remainingElements = synthiaData.slice(3); // Get the remaining elements
-            synthiaData = remainingElements.concat(firstThreeElements); // Concatenate the remaining elements with the first three elements
-            var newFilteredData = synthiaData.concat(cityscapesData);
+            current_class="notSelectedImage"
+          }
+          if (imageValue){
+            var current_image = cityscape_images.append("svg")
+              .classed("image",true)
+              .classed(current_class,true)
+              .attr("id", "image-" + instance.id) // assign an ID to the image element
+              .insert('image')
+              .attr('xlink:href', instance.image_path)
+              .attr('width', '100%') //TODO: need to change this if the image is larger
+              // .attr('height', "100%")
+              .attr('preserveAspectRatio', 'xMinYMin meet');
+          }
+          if (groundTruthValue){
+            var current_image = cityscape_images.append("svg")
+              .classed("image",true)
+              .classed(current_class,true)
+              .attr("id", "image-" + instance.id) // assign an ID to the image element
+              .insert('image')
+              .attr('xlink:href', instance.label_path)
+              .attr('width', '100%')
+              // .attr('height', '100')
+              .attr('preserveAspectRatio', 'xMinYMin meet');
+          }
+          if (predictionValue){
+            var current_image = cityscape_images.append("svg")
+              .classed("image",true)
+              .classed(current_class,true)
+              .attr("id", "image-" + instance.id) // assign an ID to the image element
+              .insert('image')
+              .attr('xlink:href', instance.prediction_path)
+              .attr('width', '100%')
+              .attr('height', '100%')
+              .attr('preserveAspectRatio', 'xMinYMin meet');
           }
         }
-        else{
-          if (parentDivId =="imgCityscapes"){
-            var firstElement = cityscapesData.shift();
-            cityscapesData.push(firstElement);
-            var newFilteredData = cityscapesData.concat(synthiaData)
+        if (synthiaData.length>0){
+          instance = synthiaData[0]
+          if (instance==filteredData[0]){
+            current_class="selectedImage"
           }
           else{
-            var firstElement = synthiaData.shift();
-            synthiaData.push(firstElement);
-            var newFilteredData = synthiaData.concat(cityscapesData);
+            current_class ="notSelectedImage"
+          }
+          if (imageValue){
+            var current_image = synthia_images.append("svg")
+              .classed("image",true)
+              .classed(current_class,true)
+              .attr("id", "image-" + instance.id) // assign an ID to the image element
+              .insert('image')
+              .attr('xlink:href', instance.image_path)
+              .attr('width', '100%')
+              .attr('height', '100%')
+              .attr('preserveAspectRatio', 'xMinYMin meet');
+          }
+          if (groundTruthValue){
+            var current_image = synthia_images.append("svg")
+              .classed("image",true)
+              .classed(current_class,true)
+              .attr("id", "image-" + instance.id) // assign an ID to the image element
+              .insert('image')
+              .attr('xlink:href', instance.label_path)
+              .attr('width', '100%')
+              .attr('height', '100%')
+              .attr('preserveAspectRatio', 'xMinYMin meet');
+          }
+          if (predictionValue){
+            var current_image = synthia_images.append("svg")
+              .classed("image",true)
+              .classed(current_class,true)
+              .attr("id", "image-" + instance.id) // assign an ID to the image element
+              .insert('image')
+              .attr('xlink:href', instance.prediction_path)
+              .attr('width', '100%')
+              .attr('height', '100%')
+              .attr('preserveAspectRatio', 'xMinYMin meet');
           }
         }
-        // var firstElement = filteredData.shift();
-        // filteredData.push(firstElement);
-        updateMultipleViews(newFilteredData);
-      })
+        // find all the cityscapes data in filtered data
+      }
+      // return countCheckbox;
     }
-  }
-
-
-  function updateImages(filteredData){
-    // This probably does not work because it is inside an svg.call instead of something else
-    const maxImages = 100;
-    var numCityscapes = 0;
-    var numSynthia = 0; 
-    cityscape_images.selectAll("*").remove();
-    synthia_images.selectAll("*").remove();
-
-    // first check the selections
-    // each Checkbox variable contain a True or False value on whether it's checked
-    var imageCheckbox = d3.select('input[name="imageCheck"]').node();
-    var groundTruthCheckbox = d3.select('input[name="groundTruthCheck"]').node();
-    var predictionCheckbox = d3.select('input[name="predictionCheck"]').node();
-
-    var imageValue = imageCheckbox.checked ? 1 : 0;
-    var groundTruthValue = groundTruthCheckbox.checked ? 1 : 0;
-    var predictionValue = predictionCheckbox.checked ? 1 : 0;
-
-    // not initialize the variable so that it's global (Automatically Global (doesn't work if strict mode is on))
-    countCheckbox = imageValue+groundTruthValue+predictionValue;
     
-    //conditions
-    if (countCheckbox==1){
-      if (imageValue){
-        filteredData.forEach(function(d) {
-          d.path = d.image_path; // no "+", because don't need path to be number here
-        });
+    
+    function updateActivations(filteredData){
+      if (filteredData.length>0){
+        //call the first instance in filterData as default
+          instance = filteredData[0];
+          instanceActivations(instance)
       }
-      else if (groundTruthValue){
-        filteredData.forEach(function(d) {
-          d.path = d.label_path;
-        });
-      }
-      else {
-        filteredData.forEach(function(d) {
-          d.path = d.prediction_path;
-        });
-      }
-      for (let i=0 ; i < maxImages; i++) {
-          if (filteredData.length <= i || (numCityscapes>=4 && numSynthia>=4)) {
-            break
-          }
-          if (i==0){
-            current_class = "selectedImage"
-          }
-          else{
-            current_class = "notSelectedImage"
-          }
-          if (filteredData[i].dataset=="Cityscapes"){
-            if (numCityscapes<3){
-              var current_image = cityscape_images.append("svg")
-                // .attr("width",150)
-                // .attr("height",150)
-                // .attr("outline","1px solid white")
-                .classed("image",true)
-                .classed(current_class,true)
-                .attr("id", "image-" + filteredData[i].id) // assign an ID to the image element
-                .insert('image')
-                .attr('xlink:href', filteredData[i].path)
-                .attr('width', '100%')
-                .attr('height', '100%')
-                .attr('preserveAspectRatio', 'xMinYMin meet');
-              
-              if (i==0){
-                current_image.classed("selectedImage")
-              }
-              
-              numCityscapes = numCityscapes+1
-            }
-          }
-          else {
-            if (numSynthia<3){
-              var current_image = synthia_images.append("svg")
-                // .attr("width",150)
-                // .attr("height",150)
-                // .attr("outline","1px solid white")
-                .classed("image",true)
-                .classed(current_class,true)
-                .attr("id", "image-" + filteredData[i].id) // assign an ID to the image element
-                .insert('image')
-                .attr('xlink:href',  filteredData[i].path)
-                .attr('width', '100%')
-                .attr('height', '100%')
-                .attr('preserveAspectRatio', 'xMinYMin meet');
-              
-              numSynthia = numSynthia+1
-            }
-          }
-        }
-      }
-    else{
-      // filter out the cityscapes and synthia data
-      var cityscapesData = filteredData.filter(function(d) {
-        return d.dataset === "Cityscapes";
+    }
+
+    function instanceActivations(instance){
+      var second_instance_path = instance.similar_image_paths;
+      var second_instance = data.find(function(d) {
+        return d.image_path === second_instance_path;
       });
-      var synthiaData = filteredData.filter(function(d) {
-        return d.dataset === "Synthia";
+      d3.select("#maskSimilarity").selectAll("*").remove();
+      activation_svg.selectAll("*").remove();
+      // clear the existing mask for the previous image, to make way for printing new masks
+      activation_list_to_graph(instance.bottleneck_activations_embedding,second_instance.bottleneck_activations_embedding,instance.dataset,instance.similar_IoU_score)
+      
+      // measuere the height of a div
+      // var offsetHeight = document.getElementById('maskSimilarity').offsetHeight;
+      
+      var imageSize = 150;
+      var spacing = 20;
+
+      var mask = d3.select("#maskSimilarity").append("svg")
+        .attr("width", imageSize)
+        .attr("height", imageSize + spacing)
+        .attr("outline", "1px solid white")
+        .append('g') // Create a group element to contain the image and title
+        .attr("transform", "translate(0, " + spacing + ")"); // Adjust the y-coordinate for spacing
+
+        // both of the methods below for extra spacing does not seem to work
+        
+        // .style("margin-bottom", spacing/2 + "px")
+
+      mask.append('image')
+        .attr('xlink:href', instance.label_path)
+        .attr('width', imageSize)
+        .attr('height', imageSize);
+      
+      // tried to add background color for text, but didn't work due to one of the colors are too dark
+      // mask.append('rect') // Add background rectangle
+      //   .attr('x', 0)
+      //   .attr('y', -15)
+      //   .attr('width', imageSize)
+      //   .attr('height', 20)
+      //   .style('fill', color(instance.dataset));
+
+      mask.append('text') // Add title text
+        .text("Current: ("+instance.dataset+")")
+        .attr('x', imageSize / 2) //center it horizontally within the container
+        .attr('y', -5)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '12px')
+        .style("fill", discreteDomainColor(instance.dataset)); //but I want background color
+
+      var second_mask = d3.select("#maskSimilarity").append("svg")
+        .attr("width", imageSize)
+        .attr("height", imageSize + spacing)
+        .attr("outline", "1px solid white")
+        .append('g') // Create a group element to contain the image and title
+        .attr("transform", "translate(0, " + spacing + ")"); // Adjust the y-coordinate for spacing
+
+      second_mask.append('image')
+        .attr('xlink:href', second_instance.label_path)
+        .attr('width', imageSize)
+        .attr('height', imageSize);
+
+      second_mask.append('text') // Add title text
+        .text("Corresponding: ("+second_instance.dataset+")")
+        .attr('x', imageSize / 2) //center it horizontally within the container
+        .attr('y', -5)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '12px')
+        .style("fill", discreteDomainColor(second_instance.dataset));
+      // var current_image = synthia_images.append("svg")
+      //     .attr("width",150)
+      //     .attr("height",150)
+      //     .attr("outline","1px solid white")
+      //     .insert('image')
+      //     .attr('xlink:href',  filteredData[i].path)
+    }
+
+    function isBrushed(brush_coords, cx,cy) {
+      const x0 = brush_coords[0][0],
+            x1 = brush_coords[1][0],
+            y0 = brush_coords[0][1],
+            y1 = brush_coords[1][1];
+
+      return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;    // This return TRUE or FALSE depending on if the points is in the selected area
+    }
+
+    function activation_list_to_graph(data_list,second_activations,dataset_type,similarScore){
+      dataset_types = ["Cityscapes", "Synthia" ];
+      var second_dataset_type = dataset_types.find(function(element) {
+        return element !== dataset_type;
       });
+
+      parsed_list = JSON.parse(data_list);
+      second_activations_parsed = JSON.parse(second_activations);
+      // use the combined list to find the range of graph
+      var combinedList = parsed_list.concat(second_activations_parsed);
+
+      // input view: range for each dimension
+      let min_1 = d3.min(combinedList,function(d) { return d[0]; });
+      let max_1 = d3.max(combinedList,function(d) { return d[0]; });
+      let min_2 = d3.min(combinedList,function(d) { return d[1]; });
+      let max_2 = d3.max(combinedList,function(d) { return d[1]; });
+
+      // Add X axis
+      var x = d3.scaleLinear()
+          .domain([min_1 - 0.1*Math.abs(min_1) , 1.1*max_1])
+          .range([ 0, activationWidth]);
+      var xAxis = activation_svg.append("g")
+          .attr("transform", "translate(0," + activationHeight + ")")
+          .call(d3.axisBottom(x));
+
+      // Add Y axis
+      var y = d3.scaleLinear()
+          .domain([min_2 - 0.1*Math.abs(min_2) , 1.1*max_2])
+          .range([ activationHeight, 0]);
+      var yAxis =activation_svg.append("g")
+          .call(d3.axisLeft(y));
       
-      if (cityscapesData.length>0){
-        instance = cityscapesData[0]
-        if (instance==filteredData[0]){
-          current_class="selectedImage"
-        }
-        else{
-          current_class="notSelectedImage"
-        }
-        if (imageValue){
-          var current_image = cityscape_images.append("svg")
-            .classed("image",true)
-            .classed(current_class,true)
-            .attr("id", "image-" + instance.id) // assign an ID to the image element
-            .insert('image')
-            .attr('xlink:href', instance.image_path)
-            .attr('width', '100%') //TODO: need to change this if the image is larger
-            // .attr('height', "100%")
-            .attr('preserveAspectRatio', 'xMinYMin meet');
-        }
-        if (groundTruthValue){
-          var current_image = cityscape_images.append("svg")
-            .classed("image",true)
-            .classed(current_class,true)
-            .attr("id", "image-" + instance.id) // assign an ID to the image element
-            .insert('image')
-            .attr('xlink:href', instance.label_path)
-            .attr('width', '100%')
-            // .attr('height', '100')
-            .attr('preserveAspectRatio', 'xMinYMin meet');
-        }
-        if (predictionValue){
-          var current_image = cityscape_images.append("svg")
-            .classed("image",true)
-            .classed(current_class,true)
-            .attr("id", "image-" + instance.id) // assign an ID to the image element
-            .insert('image')
-            .attr('xlink:href', instance.prediction_path)
-            .attr('width', '100%')
-            .attr('height', '100%')
-            .attr('preserveAspectRatio', 'xMinYMin meet');
-        }
-      }
-      if (synthiaData.length>0){
-        instance = synthiaData[0]
-        if (instance==filteredData[0]){
-          current_class="selectedImage"
-        }
-        else{
-          current_class ="notSelectedImage"
-        }
-        if (imageValue){
-          var current_image = synthia_images.append("svg")
-            .classed("image",true)
-            .classed(current_class,true)
-            .attr("id", "image-" + instance.id) // assign an ID to the image element
-            .insert('image')
-            .attr('xlink:href', instance.image_path)
-            .attr('width', '100%')
-            .attr('height', '100%')
-            .attr('preserveAspectRatio', 'xMinYMin meet');
-        }
-        if (groundTruthValue){
-          var current_image = synthia_images.append("svg")
-            .classed("image",true)
-            .classed(current_class,true)
-            .attr("id", "image-" + instance.id) // assign an ID to the image element
-            .insert('image')
-            .attr('xlink:href', instance.label_path)
-            .attr('width', '100%')
-            .attr('height', '100%')
-            .attr('preserveAspectRatio', 'xMinYMin meet');
-        }
-        if (predictionValue){
-          var current_image = synthia_images.append("svg")
-            .classed("image",true)
-            .classed(current_class,true)
-            .attr("id", "image-" + instance.id) // assign an ID to the image element
-            .insert('image')
-            .attr('xlink:href', instance.prediction_path)
-            .attr('width', '100%')
-            .attr('height', '100%')
-            .attr('preserveAspectRatio', 'xMinYMin meet');
-        }
-      }
-      // find all the cityscapes data in filtered data
-    }
-    // return countCheckbox;
-  }
-  
-  
-  function updateActivations(filteredData){
-    if (filteredData.length>0){
-      //call the first instance in filterData as default
-        instance = filteredData[0];
-        instanceActivations(instance)
-    }
-  }
-
-  function instanceActivations(instance){
-    var second_instance_path = instance.similar_image_paths;
-    var second_instance = data.find(function(d) {
-      return d.image_path === second_instance_path;
-    });
-    d3.select("#maskSimilarity").selectAll("*").remove();
-    activation_svg.selectAll("*").remove();
-    // clear the existing mask for the previous image, to make way for printing new masks
-    activation_list_to_graph(instance.bottleneck_activations_embedding,second_instance.bottleneck_activations_embedding,instance.dataset,instance.similar_IoU_score)
-    
-    // measuere the height of a div
-    // var offsetHeight = document.getElementById('maskSimilarity').offsetHeight;
-    
-    var imageSize = 150;
-    var spacing = 20;
-
-    var mask = d3.select("#maskSimilarity").append("svg")
-      .attr("width", imageSize)
-      .attr("height", imageSize + spacing)
-      .attr("outline", "1px solid white")
-      .append('g') // Create a group element to contain the image and title
-      .attr("transform", "translate(0, " + spacing + ")"); // Adjust the y-coordinate for spacing
-
-      // both of the methods below for extra spacing does not seem to work
+      // Add dots for the current dataset
+      activation_svg.append('g')
+          .selectAll("dot")
+          .data(parsed_list)
+          .enter()
+          .append("circle")
+          .attr("cx", function (d) { return x(d[0])} )
+          .attr("cy", function (d) { return y(d[1])} )
+          .attr("r", 2.5)
+          .style("fill", function (d) { return discreteDomainColor(dataset_type) } )
       
-      // .style("margin-bottom", spacing/2 + "px")
-
-    mask.append('image')
-      .attr('xlink:href', instance.label_path)
-      .attr('width', imageSize)
-      .attr('height', imageSize);
-    
-    // tried to add background color for text, but didn't work due to one of the colors are too dark
-    // mask.append('rect') // Add background rectangle
-    //   .attr('x', 0)
-    //   .attr('y', -15)
-    //   .attr('width', imageSize)
-    //   .attr('height', 20)
-    //   .style('fill', color(instance.dataset));
-
-    mask.append('text') // Add title text
-      .text("Current: ("+instance.dataset+")")
-      .attr('x', imageSize / 2) //center it horizontally within the container
-      .attr('y', -5)
-      .attr('text-anchor', 'middle')
-      .attr('font-size', '12px')
-      .style("fill", color(instance.dataset)); //but I want background color
-
-    var second_mask = d3.select("#maskSimilarity").append("svg")
-      .attr("width", imageSize)
-      .attr("height", imageSize + spacing)
-      .attr("outline", "1px solid white")
-      .append('g') // Create a group element to contain the image and title
-      .attr("transform", "translate(0, " + spacing + ")"); // Adjust the y-coordinate for spacing
-
-    second_mask.append('image')
-      .attr('xlink:href', second_instance.label_path)
-      .attr('width', imageSize)
-      .attr('height', imageSize);
-
-    second_mask.append('text') // Add title text
-      .text("Corresponding: ("+second_instance.dataset+")")
-      .attr('x', imageSize / 2) //center it horizontally within the container
-      .attr('y', -5)
-      .attr('text-anchor', 'middle')
-      .attr('font-size', '12px')
-      .style("fill", color(second_instance.dataset));
-    // var current_image = synthia_images.append("svg")
-    //     .attr("width",150)
-    //     .attr("height",150)
-    //     .attr("outline","1px solid white")
-    //     .insert('image')
-    //     .attr('xlink:href',  filteredData[i].path)
-  }
-
-  function isBrushed(brush_coords, cx,cy) {
-    const x0 = brush_coords[0][0],
-          x1 = brush_coords[1][0],
-          y0 = brush_coords[0][1],
-          y1 = brush_coords[1][1];
-
-    return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;    // This return TRUE or FALSE depending on if the points is in the selected area
-  }
-
-  function activation_list_to_graph(data_list,second_activations,dataset_type,similarScore){
-    dataset_types = ["Cityscapes", "Synthia" ];
-    var second_dataset_type = dataset_types.find(function(element) {
-      return element !== dataset_type;
-    });
-
-    parsed_list = JSON.parse(data_list);
-    second_activations_parsed = JSON.parse(second_activations);
-    // use the combined list to find the range of graph
-    var combinedList = parsed_list.concat(second_activations_parsed);
-
-    // input view: range for each dimension
-    let min_1 = d3.min(combinedList,function(d) { return d[0]; });
-    let max_1 = d3.max(combinedList,function(d) { return d[0]; });
-    let min_2 = d3.min(combinedList,function(d) { return d[1]; });
-    let max_2 = d3.max(combinedList,function(d) { return d[1]; });
-
-    // Add X axis
-    var x = d3.scaleLinear()
-        .domain([min_1 - 0.1*Math.abs(min_1) , 1.1*max_1])
-        .range([ 0, activationWidth]);
-    var xAxis = activation_svg.append("g")
-        .attr("transform", "translate(0," + activationHeight + ")")
-        .call(d3.axisBottom(x));
-
-    // Add Y axis
-    var y = d3.scaleLinear()
-        .domain([min_2 - 0.1*Math.abs(min_2) , 1.1*max_2])
-        .range([ activationHeight, 0]);
-    var yAxis =activation_svg.append("g")
-        .call(d3.axisLeft(y));
-    
-    // Add dots for the current dataset
-    activation_svg.append('g')
-        .selectAll("dot")
-        .data(parsed_list)
-        .enter()
-        .append("circle")
-        .attr("cx", function (d) { return x(d[0])} )
-        .attr("cy", function (d) { return y(d[1])} )
-        .attr("r", 2.5)
-        .style("fill", function (d) { return color(dataset_type) } )
-    
-    //Add dots for the other dataset
-    activation_svg.append('g')
-        .selectAll("dot")
-        .data(second_activations_parsed)
-        .enter()
-        .append("circle")
-        .attr("cx", function (d) { return x(d[0])} )
-        .attr("cy", function (d) { return y(d[1])} )
-        .attr("r", 2.5)
-        .style("fill", function (d) { return color(second_dataset_type) } )
-    
-    activation_svg.append("text")
-      .text("Similarity score for masks:"+similarScore);
-    
-    // this removes the x and y axis from the scatter plot
-    xAxis.remove()
-    yAxis.remove()
-  }
+      //Add dots for the other dataset
+      activation_svg.append('g')
+          .selectAll("dot")
+          .data(second_activations_parsed)
+          .enter()
+          .append("circle")
+          .attr("cx", function (d) { return x(d[0])} )
+          .attr("cy", function (d) { return y(d[1])} )
+          .attr("r", 2.5)
+          .style("fill", function (d) { return discreteDomainColor(second_dataset_type) } )
+      
+      activation_svg.append("text")
+        .text("Similarity score for masks:"+similarScore);
+      
+      // this removes the x and y axis from the scatter plot
+      xAxis.remove()
+      yAxis.remove()
+    }
+  })
 })
 
 // define more functions here 
@@ -865,7 +943,7 @@ function makePerformanceView(data,filteredData){
     .on("mouseleave", mouseleave)
 }
 
-function makeClassDist(data,filteredData,specifiedClassName,color){
+function makeClassDist(data,filteredData,specifiedClassName){
   d3.select("#classDistPlot").selectAll("*").remove();
   d3.select("#classNameText").selectAll("*").remove();
 
@@ -957,7 +1035,7 @@ function makeClassDist(data,filteredData,specifiedClassName,color){
     .enter()        // So now we are working group per group
     .append("g")
       .attr("transform", function(d){ return("translate(" + x(getDataScope(d.key)) +" ,0)") } ) // Translation on the right to be at the group position
-      .style("fill", function (d) { return color(d.key) } )
+      .style("fill", function (d) { return discreteDomainColor(d.key) } )
     .append("path")
         .datum(function(d){ return(d.value)} )     // So now we are working bin per bin
         .style("stroke", "none")
