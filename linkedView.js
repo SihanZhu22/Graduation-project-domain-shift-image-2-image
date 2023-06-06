@@ -112,15 +112,14 @@ const titleImageView = d3.select("#imageViewTitle")
   .append("text")
     .style("font-size", "16px")
     .style("font-weight",700)
-    .style("text-decoration", "underline")
     .text("Image View");
 
 // Use the separate divs to hold the images
-var cityscape_images = d3.select("#imgCityscapes")
+var domain1_images = d3.select("#imgDomain1")
         // .attr("width", 1200)
         // .attr("height", 300);
 
-var synthia_images = d3.select("#imgSynthia")
+var domain2_images = d3.select("#imgDomain2")
 
 // Setup for activation view
 
@@ -328,7 +327,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
     
     // Add interaction with clicking
     function clickImage(){
-      d3.selectAll(".image").on("click", function updateImageAndActivations() {
+      d3.selectAll(".image").on("click", function () {
         // Change the class of the previous selected image to just "image"
         // Make it "image" before removing it from "selectedImage"
         d3.selectAll(".selectedImage").classed("notSelectedImage", true);
@@ -389,6 +388,9 @@ d3.csv("system_df_v2.csv",function(discreteData){
           }
         });
 
+        // TODO (possibly:) sort filteredData so that the data points with the same images but different names are together 
+        // shouldn't order by names
+
         updateImages(filteredData)
         updateActivations(filteredData)
         makePerformanceView(data,filteredData)
@@ -414,39 +416,54 @@ d3.csv("system_df_v2.csv",function(discreteData){
         // Image View: next button: 
         var nextButton = d3.select("#imageCheckBox button"); // name of div + button
         nextButton.on("click",function(){
-          var cityscapesData = filteredData.filter(function(d) {
-            return d.dataset === "Cityscapes";
+          var domain1Data = filteredData.filter(function(d) {
+            if (currentTypeDomain=="Discrete"){
+              return d.dataset === "Cityscapes";
+            }
+            else{
+              return d.noise_level==0;
+            } 
           });
-          var synthiaData = filteredData.filter(function(d) {
-            return d.dataset === "Synthia";
+          var domain2Data = filteredData.filter(function(d) {
+            if (currentTypeDomain=="Discrete"){
+              return d.dataset === "Synthia";
+            }
+            else{
+              if (continuousDomain=="Noise" && continuousValue!=0){
+                return d.noise_level == continuousValue
+              }
+              else{
+                return 0;
+              }
+            }
           });
           var parentDiv = d3.select(".selectedImage").node().parentNode;
           var parentDivId = parentDiv.id;
           // switch the cityscapes or synthia based on the div with 
           if (checkedCount == 1){
-            if (parentDivId =="imgCityscapes"){
-              var firstThreeElements = cityscapesData.slice(0, 3); // Get the first three elements
-              var remainingElements = cityscapesData.slice(3); // Get the remaining elements
-              cityscapesData = remainingElements.concat(firstThreeElements); // Concatenate the remaining elements with the first three elements
-              var newFilteredData = cityscapesData.concat(synthiaData)
+            if (parentDivId =="imgDomain1"){
+              var firstThreeElements = domain1Data.slice(0, 3); // Get the first three elements
+              var remainingElements = domain1Data.slice(3); // Get the remaining elements
+              domain1Data = remainingElements.concat(firstThreeElements); // Concatenate the remaining elements with the first three elements
+              var newFilteredData = domain1Data.concat(domain2Data)
             }
             else{
-              var firstThreeElements = synthiaData.slice(0, 3); // Get the first three elements
-              var remainingElements = synthiaData.slice(3); // Get the remaining elements
-              synthiaData = remainingElements.concat(firstThreeElements); // Concatenate the remaining elements with the first three elements
-              var newFilteredData = synthiaData.concat(cityscapesData);
+              var firstThreeElements = domain2Data.slice(0, 3); // Get the first three elements
+              var remainingElements = domain2Data.slice(3); // Get the remaining elements
+              domain2Data = remainingElements.concat(firstThreeElements); // Concatenate the remaining elements with the first three elements
+              var newFilteredData = domain2Data.concat(domain1Data);
             }
           }
           else{
-            if (parentDivId =="imgCityscapes"){
-              var firstElement = cityscapesData.shift();
-              cityscapesData.push(firstElement);
-              var newFilteredData = cityscapesData.concat(synthiaData)
+            if (parentDivId =="imgDomain1"){
+              var firstElement = domain1Data.shift();
+              domain1Data.push(firstElement);
+              var newFilteredData = domain1Data.concat(domain2Data)
             }
             else{
-              var firstElement = synthiaData.shift();
-              synthiaData.push(firstElement);
-              var newFilteredData = synthiaData.concat(cityscapesData);
+              var firstElement = domain2Data.shift();
+              domain2Data.push(firstElement);
+              var newFilteredData = domain2Data.concat(domain1Data);
             }
           }
           // var firstElement = filteredData.shift();
@@ -456,14 +473,13 @@ d3.csv("system_df_v2.csv",function(discreteData){
       }
     }
 
-
     function updateImages(filteredData){
       // This probably does not work because it is inside an svg.call instead of something else
       const maxImages = 100;
-      var numCityscapes = 0;
-      var numSynthia = 0; 
-      cityscape_images.selectAll("*").remove();
-      synthia_images.selectAll("*").remove();
+      var numDomain1 = 0;
+      var numDomain2 = 0; 
+      domain1_images.selectAll("*").remove();
+      domain2_images.selectAll("*").remove();
 
       // first check the selections
       // each Checkbox variable contain a True or False value on whether it's checked
@@ -496,7 +512,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
           });
         }
         for (let i=0 ; i < maxImages; i++) {
-            if (filteredData.length <= i || (numCityscapes>=4 && numSynthia>=4)) {
+            if (filteredData.length <= i || (numDomain1>=4 && numDomain2>=4)) {
               break
             }
             if (i==0){
@@ -505,12 +521,10 @@ d3.csv("system_df_v2.csv",function(discreteData){
             else{
               current_class = "notSelectedImage"
             }
-            if (filteredData[i].dataset=="Cityscapes"){
-              if (numCityscapes<3){
-                var current_image = cityscape_images.append("svg")
-                  // .attr("width",150)
-                  // .attr("height",150)
-                  // .attr("outline","1px solid white")
+            // either discrete cityscapes, or continuous with noise level=0
+            if ((filteredData[i].dataset=="Cityscapes"&&currentTypeDomain=="Discrete")|| filteredData[i].noise_level ==0){
+              if (numDomain1<3){
+                var current_image = domain1_images.append("svg")
                   .classed("image",true)
                   .classed(current_class,true)
                   .attr("id", "image-" + filteredData[i].id) // assign an ID to the image element
@@ -523,16 +537,13 @@ d3.csv("system_df_v2.csv",function(discreteData){
                 if (i==0){
                   current_image.classed("selectedImage")
                 }
-                
-                numCityscapes = numCityscapes+1
+                numDomain1 = numDomain1+1
               }
             }
-            else {
-              if (numSynthia<3){
-                var current_image = synthia_images.append("svg")
-                  // .attr("width",150)
-                  // .attr("height",150)
-                  // .attr("outline","1px solid white")
+            // either discrete synthia, or continuous with noise level the same as the current value
+            else if((filteredData[i].dataset=="Synthia"&&currentTypeDomain=="Discrete")|| filteredData[i].noise_level ==continuousValue){
+              if (numDomain2<3){
+                var current_image = domain2_images.append("svg")
                   .classed("image",true)
                   .classed(current_class,true)
                   .attr("id", "image-" + filteredData[i].id) // assign an ID to the image element
@@ -542,22 +553,36 @@ d3.csv("system_df_v2.csv",function(discreteData){
                   .attr('height', '100%')
                   .attr('preserveAspectRatio', 'xMinYMin meet');
                 
-                numSynthia = numSynthia+1
+                numDomain2 = numDomain2+1
               }
             }
           }
         }
       else{
         // filter out the cityscapes and synthia data
-        var cityscapesData = filteredData.filter(function(d) {
-          return d.dataset === "Cityscapes";
+        var domain1Data = filteredData.filter(function(d) {
+          if (currentTypeDomain=="Discrete"){
+            return d.dataset === "Cityscapes";
+          }
+          else{
+            return d.noise_level==0;
+          } 
         });
-        var synthiaData = filteredData.filter(function(d) {
-          return d.dataset === "Synthia";
+        var domain2Data = filteredData.filter(function(d) {
+          if (currentTypeDomain=="Discrete"){
+            return d.dataset === "Synthia";
+          }
+          else{
+            if (continuousDomain=="Noise" && continuousValue!=0){
+              return d.noise_level == continuousValue
+            }
+            else{
+              return 0;
+            }
+          }
         });
-        
-        if (cityscapesData.length>0){
-          instance = cityscapesData[0]
+        if (domain1Data.length>0){
+          instance = domain1Data[0]
           if (instance==filteredData[0]){
             current_class="selectedImage"
           }
@@ -565,7 +590,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
             current_class="notSelectedImage"
           }
           if (imageValue){
-            var current_image = cityscape_images.append("svg")
+            var current_image = domain1_images.append("svg")
               .classed("image",true)
               .classed(current_class,true)
               .attr("id", "image-" + instance.id) // assign an ID to the image element
@@ -576,7 +601,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
               .attr('preserveAspectRatio', 'xMinYMin meet');
           }
           if (groundTruthValue){
-            var current_image = cityscape_images.append("svg")
+            var current_image = domain1_images.append("svg")
               .classed("image",true)
               .classed(current_class,true)
               .attr("id", "image-" + instance.id) // assign an ID to the image element
@@ -587,7 +612,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
               .attr('preserveAspectRatio', 'xMinYMin meet');
           }
           if (predictionValue){
-            var current_image = cityscape_images.append("svg")
+            var current_image = domain1_images.append("svg")
               .classed("image",true)
               .classed(current_class,true)
               .attr("id", "image-" + instance.id) // assign an ID to the image element
@@ -598,8 +623,8 @@ d3.csv("system_df_v2.csv",function(discreteData){
               .attr('preserveAspectRatio', 'xMinYMin meet');
           }
         }
-        if (synthiaData.length>0){
-          instance = synthiaData[0]
+        if (domain2Data.length>0){
+          instance = domain2Data[0]
           if (instance==filteredData[0]){
             current_class="selectedImage"
           }
@@ -607,7 +632,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
             current_class ="notSelectedImage"
           }
           if (imageValue){
-            var current_image = synthia_images.append("svg")
+            var current_image = domain2_images.append("svg")
               .classed("image",true)
               .classed(current_class,true)
               .attr("id", "image-" + instance.id) // assign an ID to the image element
@@ -618,7 +643,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
               .attr('preserveAspectRatio', 'xMinYMin meet');
           }
           if (groundTruthValue){
-            var current_image = synthia_images.append("svg")
+            var current_image = domain2_images.append("svg")
               .classed("image",true)
               .classed(current_class,true)
               .attr("id", "image-" + instance.id) // assign an ID to the image element
@@ -629,7 +654,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
               .attr('preserveAspectRatio', 'xMinYMin meet');
           }
           if (predictionValue){
-            var current_image = synthia_images.append("svg")
+            var current_image = domain2_images.append("svg")
               .classed("image",true)
               .classed(current_class,true)
               .attr("id", "image-" + instance.id) // assign an ID to the image element
@@ -753,13 +778,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
           .attr('text-anchor', 'middle')
           .attr('font-size', '12px')
           .style("fill", setDomainColors(second_instance));
-      }     
-      // var current_image = synthia_images.append("svg")
-      //     .attr("width",150)
-      //     .attr("height",150)
-      //     .attr("outline","1px solid white")
-      //     .insert('image')
-      //     .attr('xlink:href',  filteredData[i].path)
+      }
     }
 
     function isBrushed(brush_coords, cx,cy) {
