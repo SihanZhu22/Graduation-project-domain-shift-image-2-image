@@ -114,12 +114,14 @@ li:hover {
   opacity: 1 !important;
   stroke: rgb(0, 0, 0);
   stroke-width: 1.5px;
+  z-index:1
 }
 
 .instance-point {
   opacity: 1 !important;
   stroke: red;
   stroke-width: 3px;
+  z-index:2
 }
 
 .image{
@@ -146,7 +148,7 @@ li:hover {
   position: absolute; 
   top:1%;
   /* If need to really scroll down and not see the input distribution: change position to absolute */
-  left: 25%;
+  left: 27%;
 }
 
 #inputViewTitle{
@@ -181,7 +183,7 @@ li:hover {
   width: 30%;
   height: 35%;
   position: absolute;
-  left: 25%;
+  left: 28%;
   top: 60%;
   /* outline:1px solid black; */
   text-align: center;
