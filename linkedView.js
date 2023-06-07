@@ -165,9 +165,24 @@ d3.csv("system_df_v2.csv",function(discreteData){
     function initializeViews(){
       // initialize some views
       svg.selectAll("*").remove();
+      d3.select("#imgDatasetNames").selectAll("*").remove();
       if (currentTypeDomain == "Discrete"){
         // after this 
         data=discreteData
+        // dynamically add the legend for domain
+        // Create the first SVG element
+        var datasetNameSvg1 = d3.select("#imgDatasetNames").append("svg").attr("width", "49%").attr("height", "25");
+        datasetNameSvg1.append("circle").attr("cx", "30").attr("cy", "10").attr("r", "6").attr("fill", "#003f5c");
+        datasetNameSvg1.append("text").attr("x", "50%").attr("y", "15").attr("text-anchor", "middle")
+          .attr("font-size", "14").text("Cityscapes");
+
+        // Create the second SVG element
+        var datasetNameSvg2 = d3.select("#imgDatasetNames").append("svg").attr("width", "49%").attr("height", "25");
+        datasetNameSvg2.append("circle").attr("cx", "30").attr("cy", "10").attr("r", "6").attr("fill", "#ffa600");
+        datasetNameSvg2.append("text").attr("x", "50%").attr("y", "15").attr("text-anchor", "middle")
+          .attr("font-size", "14").text("Synthia");
+
+        // initialize the views
         makeInputView(discreteData,"Classifier embedding");
         makePerformanceView(data = discreteData)
         var currentViolinClass = "Road"
@@ -178,6 +193,34 @@ d3.csv("system_df_v2.csv",function(discreteData){
         // makeInputView(noiseData,"Classifier embedding")
         if (continuousDomain=="Noise"){
           data=noiseData
+
+          // create color mapping function
+          let noiseMin = d3.min(noiseData,function(d) { return d.noise_level; });
+          let noiseMax = d3.max(noiseData,function(d) { return d.noise_level; });
+          let colorStart = "#003f5c";  // Start color (e.g., drak blue)
+          let colorEnd = "#c2e7ff";    // End color (e.g., light blue)
+  
+          continuousDomainColor = d3.scaleLinear()
+            .domain([noiseMin, noiseMax])
+            .range([colorStart, colorEnd])
+            .interpolate(d3.interpolateHsl);
+          // dynamically add the legend for domain
+          // Create the first SVG element
+          var datasetNameSvg1 = d3.select("#imgDatasetNames").append("svg").attr("width", "49%").attr("height", "25");
+          datasetNameSvg1.append("circle").attr("cx", "30").attr("cy", "10").attr("r", "6").attr("fill", "#003f5c");
+          datasetNameSvg1.append("text").attr("x", "50%").attr("y", "15").attr("text-anchor", "middle")
+            .attr("font-size", "14").text("Noise: 0");
+
+          // Create the second SVG element
+          if (continuousValue!=0){
+            var datasetNameSvg2 = d3.select("#imgDatasetNames").append("svg").attr("width", "49%").attr("height", "25");
+            datasetNameSvg2.append("circle").attr("cx", "30").attr("cy", "10").attr("r", "6").attr("fill", function(){return continuousDomainColor(continuousValue)});
+            datasetNameSvg2.append("text").attr("x", "50%").attr("y", "15").attr("text-anchor", "middle")
+              .attr("font-size", "14").text("Noise: "+continuousValue.toString());
+          }
+          else{
+            var datasetNameSvg2 = d3.select("#imgDatasetNames").append("svg").attr("width", "49%").attr("height", "25");
+          }
           var noiseDataOriginal = noiseData.filter(function(d) {return d.noise_level == 0})
           if (continuousValue){
             var noiseDataCurrent = noiseData.filter(function(d) {return d.noise_level == continuousValue})
@@ -758,7 +801,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
         .attr('font-size', '12px')
         .style("fill", setDomainColors(instance)); //but I want background color
 
-      if (continuousValue!=0){
+      if (currentTypeDomain=="Discrete"||continuousValue!=0){
         var second_mask = d3.select("#maskSimilarity").append("svg")
         .attr("width", imageSize)
         .attr("height", imageSize + spacing)
@@ -885,15 +928,15 @@ d3.csv("system_df_v2.csv",function(discreteData){
       else{
         if (continuousDomain=="Noise"){
           // range of noise (color domain)
-          let noiseMin = d3.min(noiseData,function(d) { return d.noise_level; });
-          let noiseMax = d3.max(noiseData,function(d) { return d.noise_level; });
-          let colorStart = "#003f5c";  // Start color (e.g., drak blue)
-          let colorEnd = "#c2e7ff";    // End color (e.g., light blue)
+          // let noiseMin = d3.min(noiseData,function(d) { return d.noise_level; });
+          // let noiseMax = d3.max(noiseData,function(d) { return d.noise_level; });
+          // let colorStart = "#003f5c";  // Start color (e.g., drak blue)
+          // let colorEnd = "#c2e7ff";    // End color (e.g., light blue)
   
-          continuousDomainColor = d3.scaleLinear()
-            .domain([noiseMin, noiseMax])
-            .range([colorStart, colorEnd])
-            .interpolate(d3.interpolateHsl);
+          // continuousDomainColor = d3.scaleLinear()
+          //   .domain([noiseMin, noiseMax])
+          //   .range([colorStart, colorEnd])
+          //   .interpolate(d3.interpolateHsl);
           // define the color
           if (d.key){
             if (d.key=="Selected"){
