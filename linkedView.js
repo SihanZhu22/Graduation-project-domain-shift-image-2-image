@@ -2,7 +2,7 @@
 var discreteDomains = ["Cityscapes","Synthia"]
 var discreteDomainColor = d3.scaleOrdinal()
   .domain(["Selected","Cityscapes", "Synthia"])
-  .range([ "#bc5090","#003f5c", "#ffa600"])
+  .range([ "#D6D6D6","#003f5c", "#ffa600"])
 
 // setup for selection of domains
 
@@ -44,18 +44,6 @@ const titleInputView = d3.select("#inputViewTitle")
     .style("font-family","Arial, Helvetica, sans-serif")
     .text("Input Distribution View");
 
-//TODO: create legend for heatmap
-// var legend = d3.select("#inputScatterPlot").append("svg")
-//   .attr("width", 100)
-//   .attr("height", 50)
-//   .append("g");
-
-// legend.classed("legend");
-// legend.append("circle").attr("cx",40).attr("cy",10).attr("r", 6).style("fill", "#003f5c")
-// legend.append("circle").attr("cx",40).attr("cy",40).attr("r", 6).style("fill", "#ffa600")
-// legend.append("text").attr("x", 60).attr("y", 10).text("Cityscapes").style("font-size", "15px").attr("alignment-baseline","middle")
-// legend.append("text").attr("x",60).attr("y", 40).text("Synthia").style("font-size", "15px").attr("alignment-baseline","middle")
-
 // append the svg object to the body of the page
 var svg = d3.select("#inputScatterPlot")
   .append("svg")
@@ -85,18 +73,6 @@ var heatmapMargin = {top: 15, right: 25, bottom: 30, left: 110},
       heatmapWidth = 550 - heatmapMargin.left - heatmapMargin.right,
       heatmapHeight = 250 - heatmapMargin.top - heatmapMargin.bottom;
 
-// create a tooltip
-var tooltip = d3.select("#performanceView")
-  .append("div")
-  .style("opacity", 0)
-  .attr("class", "tooltip")
-  .style("background-color", "white")
-  .style("border", "solid")
-  .style("border-width", "2px")
-  .style("border-radius", "5px")
-  .style("padding", "5px")
-  .style("position", "absolute");
-
 // append the svg object to the body of the page
 var heatmap_svg = d3.select("#performancePlot")
 .append("svg")
@@ -105,6 +81,90 @@ var heatmap_svg = d3.select("#performancePlot")
 .append("g")
   .attr("transform",
         "translate(" + heatmapMargin.left + "," + heatmapMargin.top + ")");
+
+// create a tooltip
+var tooltip = d3.select("#performanceTooltip")
+  .append("div")
+  .style("opacity", 0)
+  .attr("class", "tooltip")
+  .style("background-color", "white")
+  .style("border", "solid")
+  .style("border-width", "2px")
+  .style("border-radius", "5px")
+  .style("padding", "5px")
+  .style("position", "relative")
+  .style("z-index",1)
+  .style("width","200px");
+  // .style("white-space", "nowrap")
+  // .style("overflow", "hidden")
+  // .style("text-overflow", "ellipsis");
+
+// legend for heatmap
+var legendWidth = 0.8*heatmapWidth;
+var legendHeight = 20;
+// color scale
+const heatmapColor = d3.scaleSequential()
+  .domain([0, 1]) // Range of values for the color scale
+  .interpolator(d3.interpolateGreens); // Color interpolation function (interpolate* is sequential single hue)
+
+var legendContainer = d3.select("#heatmapLegend")
+  .append("svg")
+  .attr("width", legendWidth)
+  .attr("height", legendHeight);
+
+// Add color stops to the gradient
+const numColorStops = 10; // Number of color stops (could be tuned)
+const colorStops = d3.range(numColorStops).map((d) => d / (numColorStops - 1));
+
+// Define the gradient
+var gradient = legendContainer.append("defs")
+  .append("linearGradient")
+  .attr("id", "gradient")
+  .attr("x1", "0%")
+  .attr("y1", "0%")
+  .attr("x2", "100%")
+  .attr("y2", "0%");
+
+gradient.selectAll("stop")
+  .data(colorStops)
+  .enter()
+  .append("stop")
+  .attr("offset", (d, i) => {
+    // console.log("Offset:", (i * numColorStops) + "%");
+    return (i * 10) + "%"
+  })
+  .attr("stop-color", (d) => {
+    // console.log("Stop Color:", heatmapColor(d));
+    return heatmapColor(d);
+  });
+
+// Add color rectangle
+legendContainer.append("rect")
+  .attr("x", 0)
+  .attr("y", 0)
+  .attr("width", legendWidth)
+  .attr("height", legendHeight)
+  .style("fill", "url(#gradient)");
+
+// number for the legend
+var legendText = d3.select("#heatmapLegend")
+  .append("svg")
+  .attr("width", legendWidth)
+  .attr("height", legendHeight)
+  .style("margin-top", "10px");
+
+// Add text labels to the left and right ends
+legendText.append("text")
+  .attr("x", 0)
+  .attr("y", legendHeight / 2)
+  .attr("text-anchor", "start")
+  .text("0");
+
+legendText.append("text")
+  .attr("x", legendWidth)
+  .attr("y", legendHeight / 2)
+  .attr("text-anchor", "end")
+  .text("1");
 
 // Setup for image view
 
@@ -296,7 +356,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
       .text(Option);
 
       // Convert the strings in the "tsne_1" and "tsne_2" column to numbers
-      if (Option=="PCA + t-SNE"){
+      if (Option=="Direct PCA + t-SNE"){
         data.forEach(function(d) {
           d.tsne_1 = +d.simple_tsne_1;
           d.tsne_2 = +d.simple_tsne_2
@@ -308,7 +368,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
           d.tsne_2 = +d.meaningful_tsne_2;
         });
       }
-      else if (Option=="PCA"){
+      else if (Option=="Direct PCA"){
         data.forEach(function(d) {
           d.tsne_1 = +d.pca_1; //TODO: change the tsne_1 to something else
           d.tsne_2 = +d.pca_2;
@@ -524,6 +584,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
       domain1_images.selectAll("*").remove();
       domain2_images.selectAll("*").remove();
 
+      d3.selectAll(".selected").classed("viewed-points",false)
       // first check the selections
       // each Checkbox variable contain a True or False value on whether it's checked
       var imageCheckbox = d3.select('input[name="imageCheck"]').node();
@@ -577,9 +638,12 @@ d3.csv("system_df_v2.csv",function(discreteData){
                   .attr('height', '100%')
                   .attr('preserveAspectRatio', 'xMinYMin meet');
                 
-                if (i==0){
-                  current_image.classed("selectedImage")
-                }
+                // if (i!=0){
+                //   // current_image.classed("selectedImage")
+                //   d3.selectAll(".selected").classed("viewed-points", function(d) {
+                //     return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2
+                //   });
+                // }
                 numDomain1 = numDomain1+1
               }
             }
@@ -595,6 +659,13 @@ d3.csv("system_df_v2.csv",function(discreteData){
                   .attr('width', '100%')
                   .attr('height', '100%')
                   .attr('preserveAspectRatio', 'xMinYMin meet');
+                
+                // if (i!=0){
+                //   // current_image.classed("selectedImage")
+                //   d3.selectAll(".selected").classed("viewed-points", function(d) {
+                //     return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2
+                //   });
+                // }
                 
                 numDomain2 = numDomain2+1
               }
@@ -997,16 +1068,6 @@ function makePerformanceView(data,filteredData){
       }
     }
   }
-  // if (currentTypeDomain=="Discrete"){
-  //   var VerticalVars = d3.map(data, function(d){return d.dataset;}).keys()// vertical
-  // }
-  // else{
-  //   // TODO: return the categories
-  //   var VerticalVars = d3.map(data, function(d){
-  //     return d.noise_level;
-  //   }).keys()// vertical
-  // }
-  // VerticalVars.push("Selected");
 
   data.forEach(function(d) {
     if (currentTypeDomain=="Discrete"){
@@ -1104,9 +1165,9 @@ function makePerformanceView(data,filteredData){
     .style("white-space", "pre-wrap"); // Allow line breaks to be displayed
 
   // Build color scale
-  var heatmapColor = d3.scaleSequential()
-    .domain([0,1])
-    .interpolator(d3.interpolateGreens) //interpolate* is sequential single hue
+  // var heatmapColor = d3.scaleSequential()
+  //   .domain([0,1])
+  //   .interpolator(d3.interpolateGreens) //interpolate* is sequential single hue
 
   // Three function that change the tooltip when user hover / move / leave a cell
   var mouseover = function(d) {
@@ -1118,9 +1179,9 @@ function makePerformanceView(data,filteredData){
   }
   var mousemove = function(d) {
     tooltip
-      .html("Performance (IoU): " + d.value)
-      .style("left", (d3.mouse(this)[0]+70) + "px")
-      .style("top", (d3.mouse(this)[1]) + "px")
+      .html("Performance (IoU): " + d.value.toFixed(3))
+      .style("left", (d3.mouse(this)[0]+15) + "px")
+      .style("top", (d3.mouse(this)[1]+15) + "px")
       // .style("left", (d3.event.pageX + 10) + "px") // Position relative to mouse coordinates
       // .style("top", (d3.event.pageY + 10) + "px")
   }

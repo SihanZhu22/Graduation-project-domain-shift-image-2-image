@@ -111,15 +111,22 @@ li:hover {
 }
 
 .selected {
-  opacity: 1 !important;
+  /* opacity: 1 !important;
   stroke: rgb(0, 0, 0);
-  stroke-width: 1.5px;
+  stroke-width: 1.5px; */
   z-index:1
 }
 
 .instance-point {
   opacity: 1 !important;
   stroke: red;
+  stroke-width: 3px;
+  z-index:3
+}
+
+.viewed-points {
+  opacity: 1 !important;
+  stroke: black;
   stroke-width: 3px;
   z-index:2
 }
@@ -132,13 +139,13 @@ li:hover {
 .notSelectedImage {
   /* Define the styles for the selected image */
   /* border-color: white !important; */
-  border: 2px solid white !important;
+  border: 3px solid black !important;
   /* Add other highlighting styles as needed */
 }
 
 .selectedImage {
   /* Define the styles for the selected image */
-  border: 2px solid red !important;
+  border: 3px solid red !important;
   /* Add other highlighting styles as needed */
 }
 
@@ -176,7 +183,41 @@ li:hover {
 }
 
 #performanceViewTitle{
+  position:absolute;
+  /* position:relative; */
+  top: 0%;
   text-align: center;
+}
+
+#performanceContainer{
+  margin-bottom: 10px;
+  /* position: fixed;
+  top: 55%; */
+  position:absolute;
+  top:5%;
+  left:5%;
+}
+
+#performancePlot{
+  position:relative;
+  /* top:0%; */
+}
+
+#performanceTooltip{
+  position:absolute;
+  top:5%;
+  z-index:1;
+}
+
+#heatmapLegend {
+  /* allow mouse event to pass through the legend container */
+  /* margin-top:10px; */
+  position: absolute;
+  top: 95%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 #classDist{
