@@ -144,7 +144,9 @@ legendContainer.append("rect")
   .attr("y", 0)
   .attr("width", legendWidth)
   .attr("height", legendHeight)
-  .style("fill", "url(#gradient)");
+  .style("fill", "url(#gradient)")
+  .style("stroke", "black") // Add the stroke property (because outline does not work for "rect")
+  .style("stroke-width", "1px"); // Specify the width of the stroke
 
 // number for the legend
 var legendText = d3.select("#heatmapLegend")
@@ -243,7 +245,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
           .attr("font-size", "14").text("Synthia");
 
         // initialize the views
-        makeInputView(discreteData,"Classifier embedding");
+        makeInputView(discreteData,"t-SNE","Latent»");
         makePerformanceView(data = discreteData)
         var currentViolinClass = "Road"
         makeClassDist(data = discreteData,filteredData = 0,specifiedClassName = currentViolinClass,setDomainColors=setDomainColors);
@@ -288,10 +290,21 @@ d3.csv("system_df_v2.csv",function(discreteData){
             noiseSelectedData =  noiseDataOriginal.concat(noiseDataCurrent);
           }
           else{
-            noiseSelectedData = noiseDataOriginal
+            noiseSelectedData = noiseDataOriginal;
           }
+          // check and use the current embedding method if needed
+          if (typeof embeddingMethodsText !== 'undefined'){
+            var embeddingMethodsParts = embeddingMethodsText.split('» ');
+            var Option = embeddingMethodsParts[1] 
+            var optionParent = embeddingMethodsParts[0] 
+            makeInputView(noiseSelectedData,Option,optionParent);
+          }
+          else{
+            makeInputView(noiseSelectedData,"t-SNE","Latent»");
+          }
+          
           // get noise level and make colors
-          makeInputView(noiseSelectedData,"Classifier embedding");
+          // TODO: if there are current selected noise level, use the current one; otherwise, use "Latent"
           var currentViolinClass = "Road";
           makeClassDist(data = noiseSelectedData,filteredData = 0,specifiedClassName = currentViolinClass,setDomainColors=setDomainColors)
           makePerformanceView(data = noiseSelectedData) //TODO: major improve for this one  
@@ -343,40 +356,57 @@ d3.csv("system_df_v2.csv",function(discreteData){
     // embeddingMethods: Add click event listener to each menu item
     embeddingMethodsItems.on('click', function() {
       // Get the selected option using D3
+      d3.event.stopPropagation();
       const selectedOption = d3.select(this).text().trim();
+      // Get the parent element and its text
+      // const parentElement = d3.select(this).node().parentNode.parentNode.parentNode;
+      const parentElement = d3.select(this).node().parentNode.parentNode;
+      const parentText = d3.select(parentElement).select("a").text().trim();
+
       svg.selectAll("*").remove();
-      makeInputView(data,selectedOption);
+      makeInputView(data,selectedOption,parentText);
     });
 
-    function makeInputView(data,Option){
+    function makeInputView(data,Option,optionParent){
       // remove the previous text and add new text
       svg.selectAll("*").remove();
       d3.select("#currentEmbeddingMethod").selectAll("*").remove();
+      embeddingMethodsText = optionParent+"» "+Option
       d3.select("#currentEmbeddingMethod").append("text")
-      .text(Option);
+      .text(embeddingMethodsText);
 
       // Convert the strings in the "tsne_1" and "tsne_2" column to numbers
-      if (Option=="Direct PCA + t-SNE"){
-        data.forEach(function(d) {
-          d.tsne_1 = +d.simple_tsne_1;
-          d.tsne_2 = +d.simple_tsne_2
-        });
+      if (optionParent.includes("Direct")){
+        if (Option=="PCA + t-SNE"){
+          data.forEach(function(d) {
+            d.tsne_1 = +d.simple_tsne_1;
+            d.tsne_2 = +d.simple_tsne_2
+          });
+        }
+        else if (Option=="PCA"){
+          data.forEach(function(d) {
+            d.tsne_1 = +d.pca_1; //TODO: change the tsne_1 to something else
+            d.tsne_2 = +d.pca_2;
+          });
+        }
+        else{
+          console.warn("Please select one specific embedding method (not just Latent/Direct)")
+        }
       }
-      else if (Option=="Classifier embedding"){
-        data.forEach(function(d) {
-          d.tsne_1 = +d.meaningful_tsne_1;
-          d.tsne_2 = +d.meaningful_tsne_2;
-        });
-      }
-      else if (Option=="Direct PCA"){
-        data.forEach(function(d) {
-          d.tsne_1 = +d.pca_1; //TODO: change the tsne_1 to something else
-          d.tsne_2 = +d.pca_2;
-        });
+      else if (optionParent.includes("Latent")){
+        if (Option=="t-SNE"){
+          data.forEach(function(d) {
+            d.tsne_1 = +d.meaningful_tsne_1;
+            d.tsne_2 = +d.meaningful_tsne_2;
+          });
+        }
+        else{
+          console.warn("Please select one specific embedding method (not just Latent/Direct)")
+        }
       }
       else{
-        console.log(Option)
-        console.warn("Error with selection!!")
+        console.log("Current Selection: ", Option);
+        console.warn("Error with selection!!");
       }
       
       // input view: range for each dimension
@@ -456,7 +486,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
         var instance = data.filter(function(d) { return d.id == id; })[0];
         instanceActivations(instance)
 
-        d3.selectAll(".selected").classed("instance-point", function(d) {
+        d3.selectAll(".selected-points").classed("instance-point", function(d) {
           return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2 
         });
       })
@@ -467,7 +497,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
     function updateChart_start(myPoint,x,y) {
       // the chart is update many times with the selection it seems like
       extent = d3.event.selection
-      myPoint.classed("selected", function(d){ return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))} ) // The points are classed to be either true or false
+      myPoint.classed("selected-points", function(d){ return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))} ) // The points are classed to be either true or false
       // update the corresponding images, leave out initially 
       var filteredData = data.filter(function(d){return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))})
       // remove all the red boundaries first (before adding new one later)
@@ -483,7 +513,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
     function updateMultipleViews(filteredData){
       if (filteredData.length>0){
         // mark the initial selected point in red
-        d3.selectAll(".selected").classed("instance-point", function(d) {
+        d3.selectAll(".selected-points").classed("instance-point", function(d) {
           if (filteredData.length>0){
             return d.tsne_1 === filteredData[0].tsne_1 && d.tsne_2 === filteredData[0].tsne_2
           } else {
@@ -584,7 +614,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
       domain1_images.selectAll("*").remove();
       domain2_images.selectAll("*").remove();
 
-      d3.selectAll(".selected").classed("viewed-points",false)
+      d3.selectAll(".selected-points").classed("viewed-points",false)
       // first check the selections
       // each Checkbox variable contain a True or False value on whether it's checked
       var imageCheckbox = d3.select('input[name="imageCheck"]').node();
@@ -925,6 +955,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
       }
 
       parsed_list = JSON.parse(instance.bottleneck_activations_embedding);
+      // console.log(parsed_list)
       if (second_instance){
         second_activations_parsed = JSON.parse(second_instance.bottleneck_activations_embedding);
         var combinedList = parsed_list.concat(second_activations_parsed);
@@ -982,6 +1013,16 @@ d3.csv("system_df_v2.csv",function(discreteData){
       // this removes the x and y axis from the scatter plot
       xAxis.remove()
       yAxis.remove()
+
+      // note that the passive issue still exist, but putting it outside of this function did not help
+      activation_svg.call(
+        d3.brush()                 // Add the brush feature using the d3.brush function
+          .extent( [ [0,0], [activationWidth,activationHeight] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+          .on("brush start", function() {
+            console.log("activation brush") // Invoke the function inside the event handler
+          }),
+        {passive: true}
+      )
 
       // return instance_type, second_instance_type
     }
