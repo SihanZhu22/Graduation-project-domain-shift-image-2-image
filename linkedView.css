@@ -118,8 +118,8 @@ li:hover {
 }
 
 /* points outside of the box are more transparent */
-.not-selected-points{
-  opacity: 0.2;
+.points{
+  opacity: 1;
 }
 
 .instance-point {
@@ -130,8 +130,17 @@ li:hover {
   z-index:9999;
 }
 
-.viewed-points {
+.viewed-selected-points {
   opacity: 1 !important;
+  stroke: #bc5090;
+  stroke-width: 2px;
+  z-index:2
+}
+
+.viewed-not-selected-points {
+  opacity: 1 !important;
+  stroke: yellow;
+  stroke-width: 2px;
   z-index:2
 }
 
@@ -140,11 +149,15 @@ li:hover {
   height: 150px
 }
 
-.notSelectedImage {
-  border: 1px solid black !important;
+.viewedSelectedImage {
+  border: 3px solid #bc5090 !important;
 }
 
-.selectedImage {
+.viewedNotSelectedImage {
+  border: 3px solid yellow !important;
+}
+
+.instanceImage {
   /* Define the styles for the selected image */
   border: 3px solid red !important;
   /* Add other highlighting styles as needed */

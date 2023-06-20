@@ -440,6 +440,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
         .attr("cy", function (d) { return y(d.tsne_2)} )
         .attr("r", 2.5)
         .style("fill", function (d) { return setDomainColors(d)} )
+        .classed("points",true)
       
       //remove the x and y axis
       xAxis.remove()
@@ -463,32 +464,58 @@ d3.csv("system_df_v2.csv",function(discreteData){
       d3.selectAll(".image").on("click", function () {
         // Change the class of the previous selected image to just "image"
         // Make it "image" before removing it from "selectedImage"
-        d3.selectAll(".selectedImage").classed("notSelectedImage", true);
-        d3.selectAll(".selectedImage").classed("selectedImage", false);
+        
+        // classify the previous instance image to either viewedSelectedImage or viewedNotSelectedImage
+        var original_id = d3.select(".instanceImage").attr("id").split("-")[1]; 
+        var original_instance = data.filter(function(d) { return d.id == original_id; })[0];
 
-        // if only one checkbox is selected, meaning that there are multiple instances:
-        if (countCheckbox ==1){
-          d3.select(this).classed("notSelectedImage", false);
-          d3.select(this).classed("selectedImage", true);
+        if (original_instance.selected==true){
+          d3.selectAll(".instanceImage").classed("viewedSelectedImage",true)
+          d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function(d) {
+            return d.id === original_id
+          });
         }
-        // otherwise, color the boundaries of all the images
         else{
-          // var selectedImage = d3.select(this);
-          var parentDiv = this.parentNode;
-          d3.select(parentDiv).selectAll(".image").classed("notSelectedImage", false);
-          d3.select(parentDiv).selectAll(".image").classed("selectedImage", true);
+          d3.selectAll(".instanceImage").classed("viewedNotSelectedImage",true)
+          d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function(d) {
+            return d.id === original_id
+          });
         }
+        // stop highlighting the previous instance image 
+        d3.selectAll(".instanceImage").classed("instanceImage", false);
 
         // Get the ID of the clicked image
         var id = d3.select(this).attr("id").split("-")[1]; 
 
         // Find the corresponding data in your dataset
         var instance = data.filter(function(d) { return d.id == id; })[0];
+
+        // if only one checkbox is selected, meaning that there are multiple instances:
+        if (countCheckbox ==1){
+          // d3.select(this).classed("viewedNotSelectedImage", false);
+          // d3.select(this).classed("instanceImage", false);
+          d3.select(this).classed("instanceImage", true);
+        }
+        // otherwise, color the boundaries of all the images
+        else{
+          // var selectedImage = d3.select(this);
+          var parentDiv = this.parentNode;
+          // d3.select(parentDiv).selectAll(".image").classed("viewedSelectedImage", false);
+          d3.select(parentDiv).selectAll(".image").classed("instanceImage", true);
+        }
         instanceActivations(instance)
 
-        d3.selectAll(".selected-points").classed("instance-point", function(d) {
-          return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2 
-        });
+        // d3.s(".points").classed("instance-point", function(d) {
+        //   return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2 
+        // });
+        var filteredPoint = d3.selectAll(".points")
+          .filter(function(d) {
+            return d.id === id;
+          });
+        console.log(JSON.parse(JSON.stringify(filteredPoint)))
+        filteredPoint.classed("viewed-selected-points",false)
+        filteredPoint.classed("viewed-not-selected-points",false)
+        filteredPoint.classed("instance-point",true)
       })
     }
     
@@ -500,11 +527,20 @@ d3.csv("system_df_v2.csv",function(discreteData){
       myPoint.classed("selected-points", function(d){ return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))} ) // The points are classed to be either true or false
       // update the corresponding images, leave out initially 
       var filteredData = data.filter(function(d){return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))})
-      // remove all the red boundaries first (before adding new one later)
-      myPoint.classed("instance-point", function() {
-        return false;
-      });
-      updateMultipleViews(filteredData)
+      if (filteredData.length>0){
+        var newFilteredData = modifyFiltered(filteredData)
+        // remove all the red boundaries first (before adding new one later)
+        myPoint.classed("instance-point", function() {
+          return false;
+        });
+        myPoint.classed("viewed-selected-points", function() {
+          return false;
+        });
+        myPoint.classed("viewed-not-selected-points", function() {
+          return false;
+        });
+        updateMultipleViews(newFilteredData)
+      }
     }
     // function updateChart_end(){
 
@@ -512,18 +548,6 @@ d3.csv("system_df_v2.csv",function(discreteData){
 
     function updateMultipleViews(filteredData){
       if (filteredData.length>0){
-        // mark the initial selected point in red
-        d3.selectAll(".selected-points").classed("instance-point", function(d) {
-          if (filteredData.length>0){
-            return d.tsne_1 === filteredData[0].tsne_1 && d.tsne_2 === filteredData[0].tsne_2
-          } else {
-            return false;
-          }
-        });
-
-        // TODO (possibly:) sort filteredData so that the data points with the same images but different names are together 
-        // shouldn't order by names
-
         updateImages(filteredData)
         updateActivations(filteredData)
         makePerformanceView(data,filteredData)
@@ -570,7 +594,7 @@ d3.csv("system_df_v2.csv",function(discreteData){
               }
             }
           });
-          var parentDiv = d3.select(".selectedImage").node().parentNode;
+          var parentDiv = d3.select(".instanceImage").node().parentNode;
           var parentDivId = parentDiv.id;
           // switch the cityscapes or synthia based on the div with 
           if (checkedCount == 1){
@@ -606,15 +630,94 @@ d3.csv("system_df_v2.csv",function(discreteData){
       }
     }
 
+    function modifyFiltered(filteredData){
+      // console.log("filteredData\n",JSON.parse(JSON.stringify(filteredData)));
+      if (currentTypeDomain=="Discrete"){
+        filteredData.map(function(d){d["selected"]=true});
+        return filteredData
+      }
+      else{
+        if (continuousDomain=="Noise" && continuousValue!=0){
+          // sort the data with the name column
+          function compare(a, b ) {
+            if ( a.name < b.name ){
+              return -1;
+            }
+            if ( a.name > b.name ){
+              return 1;
+            }
+            if (a.name == b.name){
+              if (a.noise_level<b.noise_level){
+                return -1;
+              }
+              else if (a.noise_level<b.noise_level){
+                return 1;
+              }
+              else{
+                return 0;
+              }
+            }
+          }
+          filteredData.sort(compare);
+          filteredData.map(function(d){d["selected"]=true});
+          // fo r image that did not come together with another noise level, also get another noise level
+          // count the occurance of each name with reduce
+          var nameCounts = filteredData.reduce(function(acc, curr) {
+            acc[curr.name] = (acc[curr.name] || 0) + 1;
+            return acc;
+          },{}); // "{}" is the initial value for reduce function
+          
+          // Filter the instances based on the count of each name
+          var singleImageCases = filteredData.filter(function(d) {
+            return nameCounts[d.name] === 1;
+          });
+          // continuousValue
+          if (singleImageCases.length>0){
+            // console.log("singleImageCases: \n",JSON.parse(JSON.stringify(singleImageCases)));
+            var notSelectedImageCases = singleImageCases.map(function(d) {
+              if (d.noise_level === 0){
+                return noiseData.find(function(obj) {
+                  return obj.name === d.name && obj.noise_level === continuousValue;
+                });
+              }
+              else{
+                return noiseData.find(function(obj) {
+                  return obj.name === d.name && obj.noise_level === 0;
+                });
+              }
+            });
+            // console.log("notSelectedImageCases: \n",JSON.parse(JSON.stringify(notSelectedImageCases)));
+            notSelectedImageCases.map(function(d){d["selected"]=false});
+            var newFilteredData = filteredData.concat(notSelectedImageCases)
+            newFilteredData.sort(compare) 
+            return newFilteredData
+          }
+          return filteredData
+        }
+        else{
+          filteredData.map(function(d){d["selected"]=true});
+          return filteredData
+        }
+      }
+      // return modifiedData
+    }
+
     function updateImages(filteredData){
-      // This probably does not work because it is inside an svg.call instead of something else
+      // This probably does not work because it is inside an svg.call instead of something else'
+      var first_index = filteredData.findIndex(function(d){return d.selected==true})
+      d3.selectAll(".points").classed("instance-point", function(d) {
+          return d.tsne_1 === filteredData[first_index].tsne_1 && d.tsne_2 === filteredData[first_index].tsne_2
+      });
       const maxImages = 100;
       var numDomain1 = 0;
       var numDomain2 = 0; 
       domain1_images.selectAll("*").remove();
       domain2_images.selectAll("*").remove();
 
-      d3.selectAll(".selected-points").classed("viewed-points",false)
+      // Set the classes to be false before setting new ones.
+      d3.selectAll(".selected-points").classed("viewed-selected-points",false)
+      d3.selectAll(".points").classed("viewed-not-selected-points",false)
+
       // first check the selections
       // each Checkbox variable contain a True or False value on whether it's checked
       var imageCheckbox = d3.select('input[name="imageCheck"]').node();
@@ -627,6 +730,11 @@ d3.csv("system_df_v2.csv",function(discreteData){
 
       // not initialize the variable so that it's global (Automatically Global (doesn't work if strict mode is on))
       countCheckbox = imageValue+groundTruthValue+predictionValue;
+
+      // for continuous data: re-organize the data and add not selectedData
+      // if (currentTypeDomain=="Continuous"){
+      //   modifiyFilteredContinuous(filteredData)
+      // }
       
       //conditions
       if (countCheckbox==1){
@@ -649,11 +757,17 @@ d3.csv("system_df_v2.csv",function(discreteData){
             if (filteredData.length <= i || (numDomain1>=4 && numDomain2>=4)) {
               break
             }
-            if (i==0){
-              current_class = "selectedImage"
+            if (i==first_index){
+              current_class = "instanceImage"
             }
             else{
-              current_class = "notSelectedImage"
+              // distinguish the selected between the not selected ones
+              if (filteredData[i].selected===true){
+                current_class = "viewedSelectedImage"
+              }
+              else{
+                current_class = "viewedNotSelectedImage"
+              }
             }
             // either discrete cityscapes, or continuous with noise level=0
             if ((filteredData[i].dataset=="Cityscapes"&&currentTypeDomain=="Discrete")|| filteredData[i].noise_level ==0){
@@ -668,6 +782,16 @@ d3.csv("system_df_v2.csv",function(discreteData){
                   .attr('height', '100%')
                   .attr('preserveAspectRatio', 'xMinYMin meet');
                 
+                if (i!=first_index && filteredData[i].selected==true){
+                  d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function(d) {
+                    return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2 
+                  });
+                }
+                else if (i!=first_index &&filteredData[i].selected==false){
+                  d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function(d) {
+                    return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2 
+                  });
+                }
                 // if (i!=0){
                 //   // current_image.classed("selectedImage")
                 //   d3.selectAll(".selected").classed("viewed-points", function(d) {
@@ -689,6 +813,17 @@ d3.csv("system_df_v2.csv",function(discreteData){
                   .attr('width', '100%')
                   .attr('height', '100%')
                   .attr('preserveAspectRatio', 'xMinYMin meet');
+
+                if (i!=first_index && filteredData[i].selected==true){
+                  d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function(d) {
+                    return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2 
+                  });
+                }
+                else if (i!=first_index && filteredData[i].selected==false){
+                  d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function(d) {
+                    return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2 
+                  });
+                }
                 
                 // if (i!=0){
                 //   // current_image.classed("selectedImage")
@@ -727,11 +862,22 @@ d3.csv("system_df_v2.csv",function(discreteData){
         });
         if (domain1Data.length>0){
           instance = domain1Data[0]
-          if (instance==filteredData[0]){
-            current_class="selectedImage"
+          if (instance==filteredData[first_index]){
+            current_class="instanceImage"
           }
           else{
-            current_class="notSelectedImage"
+            if (instance.selected==true){
+              current_class="viewedSelectedImage"
+              d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function(d) {
+                return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2 
+              });
+            }
+            else{
+              current_class="viewedNotSelectedImage"
+              d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function(d) {
+                return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2 
+              });
+            }
           }
           if (imageValue){
             var current_image = domain1_images.append("svg")
@@ -769,11 +915,22 @@ d3.csv("system_df_v2.csv",function(discreteData){
         }
         if (domain2Data.length>0){
           instance = domain2Data[0]
-          if (instance==filteredData[0]){
-            current_class="selectedImage"
+          if (instance==filteredData[first_index]){
+            current_class="instanceImage"
           }
           else{
-            current_class ="notSelectedImage"
+            if (instance.selected==true){
+              current_class="viewedSelectedImage"
+              d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function(d) {
+                return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2 
+              });
+            }
+            else{
+              current_class="viewedNotSelectedImage"
+              d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function(d) {
+                return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2 
+              });
+            };
           }
           if (imageValue){
             var current_image = domain2_images.append("svg")
@@ -817,7 +974,8 @@ d3.csv("system_df_v2.csv",function(discreteData){
     
     function updateActivations(filteredData){
       if (filteredData.length>0){
-        //call the first instance in filterData as default
+        // call the first instance in filterData as default
+        // todo (maybe):find the first instance that are selected
           instance = filteredData[0];
           instanceActivations(instance)
       }
