@@ -512,7 +512,6 @@ d3.csv("system_df_v2.csv",function(discreteData){
           .filter(function(d) {
             return d.id === id;
           });
-        console.log(JSON.parse(JSON.stringify(filteredPoint)))
         filteredPoint.classed("viewed-selected-points",false)
         filteredPoint.classed("viewed-not-selected-points",false)
         filteredPoint.classed("instance-point",true)
@@ -573,59 +572,70 @@ d3.csv("system_df_v2.csv",function(discreteData){
         // Image View: next button: 
         var nextButton = d3.select("#imageCheckBox button"); // name of div + button
         nextButton.on("click",function(){
-          var domain1Data = filteredData.filter(function(d) {
-            if (currentTypeDomain=="Discrete"){
-              return d.dataset === "Cityscapes";
-            }
-            else{
-              return d.noise_level==0;
-            } 
-          });
-          var domain2Data = filteredData.filter(function(d) {
-            if (currentTypeDomain=="Discrete"){
-              return d.dataset === "Synthia";
-            }
-            else{
-              if (continuousDomain=="Noise" && continuousValue!=0){
-                return d.noise_level == continuousValue
-              }
-              else{
-                return 0;
-              }
-            }
-          });
-          var parentDiv = d3.select(".instanceImage").node().parentNode;
-          var parentDivId = parentDiv.id;
-          // switch the cityscapes or synthia based on the div with 
-          if (checkedCount == 1){
-            if (parentDivId =="imgDomain1"){
-              var firstThreeElements = domain1Data.slice(0, 3); // Get the first three elements
-              var remainingElements = domain1Data.slice(3); // Get the remaining elements
-              domain1Data = remainingElements.concat(firstThreeElements); // Concatenate the remaining elements with the first three elements
-              var newFilteredData = domain1Data.concat(domain2Data)
-            }
-            else{
-              var firstThreeElements = domain2Data.slice(0, 3); // Get the first three elements
-              var remainingElements = domain2Data.slice(3); // Get the remaining elements
-              domain2Data = remainingElements.concat(firstThreeElements); // Concatenate the remaining elements with the first three elements
-              var newFilteredData = domain2Data.concat(domain1Data);
-            }
+          if (currentTypeDomain=="Continuous"){
+            // move top three pairs to the end (the objects in filteredData are the same, just the order is different)
+            var firstThreepairs = filteredData.slice(0, 6); // Get the first three elements
+            var remainingElements = filteredData.slice(6); // Get the remaining elements
+            var newFilteredData = remainingElements.concat(firstThreepairs); // Concatenate the remaining elements with
+            updateMultipleViews(newFilteredData);
           }
           else{
-            if (parentDivId =="imgDomain1"){
-              var firstElement = domain1Data.shift();
-              domain1Data.push(firstElement);
-              var newFilteredData = domain1Data.concat(domain2Data)
+            // separate the data for domain 1 and 2
+            var domain1Data = filteredData.filter(function(d) {
+              if (currentTypeDomain=="Discrete"){
+                return d.dataset === "Cityscapes";
+              }
+              else{
+                return d.noise_level==0;
+              } 
+            });
+            var domain2Data = filteredData.filter(function(d) {
+              if (currentTypeDomain=="Discrete"){
+                return d.dataset === "Synthia";
+              }
+              else{
+                if (continuousDomain=="Noise" && continuousValue!=0){
+                  return d.noise_level == continuousValue
+                }
+                else{
+                  return 0;
+                }
+              }
+            });
+            // get the parent div of the current selected image: imgDomain1 or imgDomain2
+            var parentDiv = d3.select(".instanceImage").node().parentNode;
+            var parentDivId = parentDiv.id;
+            // switch the cityscapes or synthia based on the div with 
+            if (checkedCount == 1){
+              if (parentDivId =="imgDomain1"){
+                var firstThreeElements = domain1Data.slice(0, 3); // Get the first three elements
+                var remainingElements = domain1Data.slice(3); // Get the remaining elements
+                domain1Data = remainingElements.concat(firstThreeElements); // Concatenate the remaining elements with the first three elements
+                var newFilteredData = domain1Data.concat(domain2Data)
+              }
+              else{
+                var firstThreeElements = domain2Data.slice(0, 3); // Get the first three elements
+                var remainingElements = domain2Data.slice(3); // Get the remaining elements
+                domain2Data = remainingElements.concat(firstThreeElements); // Concatenate the remaining elements with the first three elements
+                var newFilteredData = domain2Data.concat(domain1Data);
+              }
             }
             else{
-              var firstElement = domain2Data.shift();
-              domain2Data.push(firstElement);
-              var newFilteredData = domain2Data.concat(domain1Data);
+              if (parentDivId =="imgDomain1"){
+                var firstElement = domain1Data.shift();
+                domain1Data.push(firstElement);
+                var newFilteredData = domain1Data.concat(domain2Data)
+              }
+              else{
+                var firstElement = domain2Data.shift();
+                domain2Data.push(firstElement);
+                var newFilteredData = domain2Data.concat(domain1Data);
+              }
             }
+            // var firstElement = filteredData.shift();
+            // filteredData.push(firstElement);
+            updateMultipleViews(newFilteredData);
           }
-          // var firstElement = filteredData.shift();
-          // filteredData.push(firstElement);
-          updateMultipleViews(newFilteredData);
         })
       }
     }
