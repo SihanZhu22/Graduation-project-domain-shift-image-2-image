@@ -1,8 +1,8 @@
 // color setup
-var discreteDomains = ["Cityscapes","Synthia"]
+var discreteDomains = ["Cityscapes", "Synthia"]
 var discreteDomainColor = d3.scaleOrdinal()
-  .domain(["Selected","Cityscapes", "Synthia"])
-  .range([ "#D6D6D6","#003f5c", "#ffa600"])
+  .domain(["Selected", "Cityscapes", "Synthia"])
+  .range(["#D6D6D6", "#003f5c", "#ffa600"])
 
 // setup for selection of domains
 
@@ -12,53 +12,53 @@ var discreteDomainColor = d3.scaleOrdinal()
 //placeholder for now
 const titleClassDist = d3.select("#classDistTitle")
   .append("text")
-    .style("font-size", "16px")
-    .style("font-weight",700)
-    .text("Distribution of classes");
+  .style("font-size", "16px")
+  .style("font-weight", 700)
+  .text("Distribution of classes");
 
 // set the dimensions and margins of the graph
-var violinMargin = {top: 10, right: 30, bottom: 30, left: 30},
-    violinWidth = 400 - violinMargin.left - violinMargin.right,
-    violinHeight = 230 - violinMargin.top - violinMargin.bottom;
+var violinMargin = { top: 10, right: 30, bottom: 30, left: 30 },
+  violinWidth = 400 - violinMargin.left - violinMargin.right,
+  violinHeight = 230 - violinMargin.top - violinMargin.bottom;
 
 // append the svg object to the body of the page
 var violinPlot = d3.select("#classDistPlot")
   .append("svg")
-    .attr("width", violinWidth + violinMargin.left + violinMargin.right)
-    .attr("height", violinHeight + violinMargin.top + violinMargin.bottom)
+  .attr("width", violinWidth + violinMargin.left + violinMargin.right)
+  .attr("height", violinHeight + violinMargin.top + violinMargin.bottom)
   .append("g")
-    .attr("transform",
-          "translate(" + violinMargin.left + "," + violinMargin.top + ")");
+  .attr("transform",
+    "translate(" + violinMargin.left + "," + violinMargin.top + ")");
 
 // setup for input view
 
 // set the dimensions and margins of the graph
-const margin_of_input = {top: 10, right: 10, bottom: 10, left: 10},
-    inputWidth = 460 - margin_of_input.left - margin_of_input.right,
-    inputHeight = 400 - margin_of_input.top - margin_of_input.bottom;
+const margin_of_input = { top: 10, right: 10, bottom: 10, left: 10 },
+  inputWidth = 460 - margin_of_input.left - margin_of_input.right,
+  inputHeight = 400 - margin_of_input.top - margin_of_input.bottom;
 
 const titleInputView = d3.select("#inputViewTitle")
   .append("text")
-    .style("font-size", "16px")
-    .style("font-weight",700)
-    .style("font-family","Arial, Helvetica, sans-serif")
-    .text("Input Distribution View");
+  .style("font-size", "16px")
+  .style("font-weight", 700)
+  .style("font-family", "Arial, Helvetica, sans-serif")
+  .text("Input Distribution View");
 
 // append the svg object to the body of the page
 var svg = d3.select("#inputScatterPlot")
   .append("svg")
-    .attr("width", inputWidth + margin_of_input.left + margin_of_input.right)//tried adding an additional 100 to make the svg bigger->did not solve the issue
-    .attr("height", inputHeight + margin_of_input.top + margin_of_input.bottom)
+  .attr("width", inputWidth + margin_of_input.left + margin_of_input.right)//tried adding an additional 100 to make the svg bigger->did not solve the issue
+  .attr("height", inputHeight + margin_of_input.top + margin_of_input.bottom)
   .append("g")
-    .attr("transform",
-          "translate(" + margin_of_input.left + "," + margin_of_input.top + ")");
+  .attr("transform",
+    "translate(" + margin_of_input.left + "," + margin_of_input.top + ")");
 
 // Setup for performance view
 const titlePerformanceView = d3.select("#performanceViewTitle")
   .append("text")
-    .style("font-size", "16px")
-    .style("font-weight",700)
-    .text("Performance View ");
+  .style("font-size", "16px")
+  .style("font-weight", 700)
+  .text("Performance View ");
 
 // var performance = d3.select("#performanceView")
 //   .append("svg")
@@ -69,18 +69,18 @@ const titlePerformanceView = d3.select("#performanceViewTitle")
 //   .attr("width", "100%")
 //   .attr("height","100%");
 // setup for heatmap view
-var heatmapMargin = {top: 15, right: 25, bottom: 30, left: 110},
-      heatmapWidth = 550 - heatmapMargin.left - heatmapMargin.right,
-      heatmapHeight = 250 - heatmapMargin.top - heatmapMargin.bottom;
+var heatmapMargin = { top: 15, right: 25, bottom: 30, left: 110 },
+  heatmapWidth = 550 - heatmapMargin.left - heatmapMargin.right,
+  heatmapHeight = 250 - heatmapMargin.top - heatmapMargin.bottom;
 
 // append the svg object to the body of the page
 var heatmap_svg = d3.select("#performancePlot")
-.append("svg")
+  .append("svg")
   .attr("width", heatmapWidth + heatmapMargin.left + heatmapMargin.right)
   .attr("height", heatmapHeight + heatmapMargin.top + heatmapMargin.bottom)
-.append("g")
+  .append("g")
   .attr("transform",
-        "translate(" + heatmapMargin.left + "," + heatmapMargin.top + ")");
+    "translate(" + heatmapMargin.left + "," + heatmapMargin.top + ")");
 
 // create a tooltip
 var tooltip = d3.select("#performanceTooltip")
@@ -93,14 +93,14 @@ var tooltip = d3.select("#performanceTooltip")
   .style("border-radius", "5px")
   .style("padding", "5px")
   .style("position", "relative")
-  .style("z-index",1)
-  .style("width","200px");
-  // .style("white-space", "nowrap")
-  // .style("overflow", "hidden")
-  // .style("text-overflow", "ellipsis");
+  .style("z-index", 1)
+  .style("width", "200px");
+// .style("white-space", "nowrap")
+// .style("overflow", "hidden")
+// .style("text-overflow", "ellipsis");
 
 // legend for heatmap
-var legendWidth = 0.8*heatmapWidth;
+var legendWidth = 0.8 * heatmapWidth;
 var legendHeight = 20;
 // color scale
 const heatmapColor = d3.scaleSequential()
@@ -172,65 +172,65 @@ legendText.append("text")
 
 const titleImageView = d3.select("#imageViewTitle")
   .append("text")
-    .style("font-size", "16px")
-    .style("font-weight",700)
-    .text("Image View");
+  .style("font-size", "16px")
+  .style("font-weight", 700)
+  .text("Image View");
 
 // Use the separate divs to hold the images
 var domain1_images = d3.select("#imgDomain1")
-        // .attr("width", 1200)
-        // .attr("height", 300);
+// .attr("width", 1200)
+// .attr("height", 300);
 
 var domain2_images = d3.select("#imgDomain2")
 
 // Setup for activation view
 
-var margin_of_activation = {top: 30, right: 30, bottom: 50, left: 60},
-    activationWidth = 460 - margin_of_activation.left - margin_of_activation.right,
-    activationHeight = 420 - margin_of_activation.top - margin_of_activation.bottom;
+var margin_of_activation = { top: 30, right: 30, bottom: 50, left: 60 },
+  activationWidth = 430 - margin_of_activation.left - margin_of_activation.right,
+  activationHeight = 420 - margin_of_activation.top - margin_of_activation.bottom;
 
 const titleModelView = d3.select("#modelViewTitle")
   .append("text")
-    .style("font-size", "16px")
-    .style("font-weight",700)
-    .text("Model View: Instance-level model activations");
+  .style("font-size", "16px")
+  .style("font-weight", 700)
+  .text("Model View: Instance-level model activations");
 
 var activation_svg = d3.select("#activationsScatter")
   .append("svg")
-    .attr("width", activationWidth + margin_of_activation.left + margin_of_activation.right)
-    .attr("height", activationHeight + margin_of_activation.top + margin_of_activation.bottom)
+  .attr("width", activationWidth + margin_of_activation.left + margin_of_activation.right)
+  .attr("height", activationHeight + margin_of_activation.top + margin_of_activation.bottom)
   .append("g")
-    .attr("transform",
-          "translate(" + margin_of_activation.left + "," + margin_of_activation.top + ")")
-  // .append("text")
-  //   .attr("x", (activationWidth / 2))             
-  //   .attr("y", 0 - (margin_of_activation.top / 2))
-  //   .attr("text-anchor", "middle")  
-  //   .style("font-size", "16px") 
-  //   .style("text-decoration", "underline")  
-  //   .text("Instance-level model activaitons");
+  .attr("transform",
+    "translate(" + margin_of_activation.left + "," + margin_of_activation.top + ")")
+// .append("text")
+//   .attr("x", (activationWidth / 2))             
+//   .attr("y", 0 - (margin_of_activation.top / 2))
+//   .attr("text-anchor", "middle")  
+//   .style("font-size", "16px") 
+//   .style("text-decoration", "underline")  
+//   .text("Instance-level model activaitons");
 
 //Read the data
-d3.csv("system_df_v2.csv",function(discreteData){
-  d3.csv("noise_df.csv", function(noiseData) {
+d3.csv("system_df_v2.csv", function (discreteData) {
+  d3.csv("noise_df.csv", function (noiseData) {
     // create global variables
     currentTypeDomain = "Continuous"
     continuousDomain = "Noise"
     continuousValue = 0 //todo: change this to finding the min (non-zero) or max of the value
     // todo: change the slider also
-    noiseData.forEach(function(d) {
+    noiseData.forEach(function (d) {
       d.noise_level = +d.noise_level;
     });
 
     initializeViews()
-    
-    function initializeViews(){
+
+    function initializeViews() {
       // initialize some views
       svg.selectAll("*").remove();
       d3.select("#imgDatasetNames").selectAll("*").remove();
-      if (currentTypeDomain == "Discrete"){
+      if (currentTypeDomain == "Discrete") {
         // after this 
-        data=discreteData
+        data = discreteData
         // dynamically add the legend for domain
         // Create the first SVG element
         var datasetNameSvg1 = d3.select("#imgDatasetNames").append("svg").attr("width", "49%").attr("height", "25");
@@ -245,23 +245,23 @@ d3.csv("system_df_v2.csv",function(discreteData){
           .attr("font-size", "14").text("Synthia");
 
         // initialize the views
-        makeInputView(discreteData,"t-SNE","Latent»");
+        makeInputView(discreteData, "t-SNE", "Latent»");
         makePerformanceView(data = discreteData)
         var currentViolinClass = "Road"
-        makeClassDist(data = discreteData,filteredData = 0,specifiedClassName = currentViolinClass,setDomainColors=setDomainColors);
+        makeClassDist(data = discreteData, filteredData = 0, specifiedClassName = currentViolinClass, setDomainColors = setDomainColors);
       }
-      else{
+      else {
         // change the makeInputView
         // makeInputView(noiseData,"Classifier embedding")
-        if (continuousDomain=="Noise"){
-          data=noiseData
+        if (continuousDomain == "Noise") {
+          data = noiseData
 
           // create color mapping function
-          let noiseMin = d3.min(noiseData,function(d) { return d.noise_level; });
-          let noiseMax = d3.max(noiseData,function(d) { return d.noise_level; });
+          let noiseMin = d3.min(noiseData, function (d) { return d.noise_level; });
+          let noiseMax = d3.max(noiseData, function (d) { return d.noise_level; });
           let colorStart = "#003f5c";  // Start color (e.g., drak blue)
           let colorEnd = "#c2e7ff";    // End color (e.g., light blue)
-  
+
           continuousDomainColor = d3.scaleLinear()
             .domain([noiseMin, noiseMax])
             .range([colorStart, colorEnd])
@@ -274,58 +274,58 @@ d3.csv("system_df_v2.csv",function(discreteData){
             .attr("font-size", "14").text("Noise: 0");
 
           // Create the second SVG element
-          if (continuousValue!=0){
+          if (continuousValue != 0) {
             var datasetNameSvg2 = d3.select("#imgDatasetNames").append("svg").attr("width", "49%").attr("height", "25");
-            datasetNameSvg2.append("circle").attr("cx", "30").attr("cy", "10").attr("r", "6").attr("fill", function(){return continuousDomainColor(continuousValue)});
+            datasetNameSvg2.append("circle").attr("cx", "30").attr("cy", "10").attr("r", "6").attr("fill", function () { return continuousDomainColor(continuousValue) });
             datasetNameSvg2.append("text").attr("x", "50%").attr("y", "15").attr("text-anchor", "middle")
-              .attr("font-size", "14").text("Noise: "+continuousValue.toString());
+              .attr("font-size", "14").text("Noise: " + continuousValue.toString());
           }
-          else{
+          else {
             var datasetNameSvg2 = d3.select("#imgDatasetNames").append("svg").attr("width", "49%").attr("height", "25");
           }
-          var noiseDataOriginal = noiseData.filter(function(d) {return d.noise_level == 0})
-          if (continuousValue){
-            var noiseDataCurrent = noiseData.filter(function(d) {return d.noise_level == continuousValue})
+          var noiseDataOriginal = noiseData.filter(function (d) { return d.noise_level == 0 })
+          if (continuousValue) {
+            var noiseDataCurrent = noiseData.filter(function (d) { return d.noise_level == continuousValue })
             // noiseSelectedData is global
-            noiseSelectedData =  noiseDataOriginal.concat(noiseDataCurrent);
+            noiseSelectedData = noiseDataOriginal.concat(noiseDataCurrent);
           }
-          else{
+          else {
             noiseSelectedData = noiseDataOriginal;
           }
           // check and use the current embedding method if needed
-          if (typeof embeddingMethodsText !== 'undefined'){
+          if (typeof embeddingMethodsText !== 'undefined') {
             var embeddingMethodsParts = embeddingMethodsText.split('» ');
-            var Option = embeddingMethodsParts[1] 
-            var optionParent = embeddingMethodsParts[0] 
-            makeInputView(noiseSelectedData,Option,optionParent);
+            var Option = embeddingMethodsParts[1]
+            var optionParent = embeddingMethodsParts[0]
+            makeInputView(noiseSelectedData, Option, optionParent);
           }
-          else{
-            makeInputView(noiseSelectedData,"t-SNE","Latent»");
+          else {
+            makeInputView(noiseSelectedData, "t-SNE", "Latent»");
           }
-          
+
           // get noise level and make colors
           // TODO: if there are current selected noise level, use the current one; otherwise, use "Latent"
           var currentViolinClass = "Road";
-          makeClassDist(data = noiseSelectedData,filteredData = 0,specifiedClassName = currentViolinClass,setDomainColors=setDomainColors)
+          makeClassDist(data = noiseSelectedData, filteredData = 0, specifiedClassName = currentViolinClass, setDomainColors = setDomainColors)
           makePerformanceView(data = noiseSelectedData) //TODO: major improve for this one  
         }
       }
-       // always use all the arguments because the missing argument is undefined
+      // always use all the arguments because the missing argument is undefined
     }
 
     // event listener for domain selection
     var domainDropdown = d3.selectAll("#dropdown .child li");
-    domainDropdown.on("click",function(){
+    domainDropdown.on("click", function () {
       d3.event.stopPropagation();
       const selectedDomain = d3.select(this).text().trim();
       // TODO: make the text more complicated later
       d3.select("#currentSelectedDomain").selectAll("*").remove();
-      d3.select("#currentSelectedDomain").append("text").text("Current domain type: "+selectedDomain);
-      if (selectedDomain=="Discrete"){
+      d3.select("#currentSelectedDomain").append("text").text("Current domain type: " + selectedDomain);
+      if (selectedDomain == "Discrete") {
         currentTypeDomain = "Discrete"
         initializeViews()
       }
-      else{
+      else {
         currentTypeDomain = "Continuous"
         initializeViews()
         // current domain is the specific value?
@@ -335,26 +335,26 @@ d3.csv("system_df_v2.csv",function(discreteData){
     // event listener for slider
     // think about: combining this with domainDropdown or not?
     var slider = d3.select("#mySlider");
-    slider.on("input", function() {
+    slider.on("input", function () {
       // Retrieve the selected value from the slider
       var selectedValue = d3.event.target.value;
-      
+
       // Do something with the selected value
-      continuousValue=+selectedValue
+      continuousValue = +selectedValue
       initializeViews()
     });
 
     // event listener for class dist
     var classDropdown = d3.selectAll("#classDropdown .child li");
-    classDropdown.on("click",function(){
+    classDropdown.on("click", function () {
       const selectedOption = d3.select(this).text().trim();
-      makeClassDist(data = data,filteredData = 0,specifiedClassName = selectedOption,setDomainColors=setDomainColors)
+      makeClassDist(data = data, filteredData = 0, specifiedClassName = selectedOption, setDomainColors = setDomainColors)
     })
 
     const embeddingMethodsItems = d3.selectAll('#embeddingMethods .child li');
 
     // embeddingMethods: Add click event listener to each menu item
-    embeddingMethodsItems.on('click', function() {
+    embeddingMethodsItems.on('click', function () {
       // Get the selected option using D3
       d3.event.stopPropagation();
       const selectedOption = d3.select(this).text().trim();
@@ -364,84 +364,84 @@ d3.csv("system_df_v2.csv",function(discreteData){
       const parentText = d3.select(parentElement).select("a").text().trim();
 
       svg.selectAll("*").remove();
-      makeInputView(data,selectedOption,parentText);
+      makeInputView(data, selectedOption, parentText);
     });
 
-    function makeInputView(data,Option,optionParent){
+    function makeInputView(data, Option, optionParent) {
       // remove the previous text and add new text
       svg.selectAll("*").remove();
       d3.select("#currentEmbeddingMethod").selectAll("*").remove();
-      embeddingMethodsText = optionParent+"» "+Option
+      embeddingMethodsText = optionParent + "» " + Option
       d3.select("#currentEmbeddingMethod").append("text")
-      .text(embeddingMethodsText);
+        .text(embeddingMethodsText);
 
       // Convert the strings in the "tsne_1" and "tsne_2" column to numbers
-      if (optionParent.includes("Direct")){
-        if (Option=="PCA + t-SNE"){
-          data.forEach(function(d) {
+      if (optionParent.includes("Direct")) {
+        if (Option == "PCA + t-SNE") {
+          data.forEach(function (d) {
             d.tsne_1 = +d.simple_tsne_1;
             d.tsne_2 = +d.simple_tsne_2
           });
         }
-        else if (Option=="PCA"){
-          data.forEach(function(d) {
+        else if (Option == "PCA") {
+          data.forEach(function (d) {
             d.tsne_1 = +d.pca_1; //TODO: change the tsne_1 to something else
             d.tsne_2 = +d.pca_2;
           });
         }
-        else{
+        else {
           console.warn("Please select one specific embedding method (not just Latent/Direct)")
         }
       }
-      else if (optionParent.includes("Latent")){
-        if (Option=="t-SNE"){
-          data.forEach(function(d) {
+      else if (optionParent.includes("Latent")) {
+        if (Option == "t-SNE") {
+          data.forEach(function (d) {
             d.tsne_1 = +d.meaningful_tsne_1;
             d.tsne_2 = +d.meaningful_tsne_2;
           });
         }
-        else{
+        else {
           console.warn("Please select one specific embedding method (not just Latent/Direct)")
         }
       }
-      else{
+      else {
         console.log("Current Selection: ", Option);
         console.warn("Error with selection!!");
       }
-      
+
       // input view: range for each dimension
-      const min_dim_1 = d3.min(data,function(d) { return d.tsne_1; });
-      const max_dim_1 = d3.max(data,function(d) { return d.tsne_1; });
-      const min_dim_2 = d3.min(data,function(d) { return d.tsne_2; });
-      const max_dim_2 = d3.max(data,function(d) { return d.tsne_2; });
-    
+      const min_dim_1 = d3.min(data, function (d) { return d.tsne_1; });
+      const max_dim_1 = d3.max(data, function (d) { return d.tsne_1; });
+      const min_dim_2 = d3.min(data, function (d) { return d.tsne_2; });
+      const max_dim_2 = d3.max(data, function (d) { return d.tsne_2; });
+
       // Add X axis
       var x = d3.scaleLinear()
-        .domain([min_dim_1 - 0.1*Math.abs(min_dim_1) , 1.1*max_dim_1])
-        .range([ 0, inputWidth]);
+        .domain([min_dim_1 - 0.1 * Math.abs(min_dim_1), 1.1 * max_dim_1])
+        .range([0, inputWidth]);
       var xAxis = svg.append("g")
         .attr("transform", "translate(0," + inputHeight + ")")
         .call(d3.axisBottom(x));
-    
+
       // Add Y axis
       var y = d3.scaleLinear()
-        .domain([min_dim_2 - 0.1*Math.abs(min_dim_2) , 1.1*max_dim_2])
+        .domain([min_dim_2 - 0.1 * Math.abs(min_dim_2), 1.1 * max_dim_2])
         .range([inputHeight, 0]);
-      var yAxis =svg.append("g")
+      var yAxis = svg.append("g")
         .call(d3.axisLeft(y));
-    
+
       // Add dots
       var myPoint = svg.append('g')
         .selectAll("dot")
         .data(data)
         .enter()
         .append("circle")
-        .attr("cx", function (d) { return x(d.tsne_1)} )
-        .attr("cy", function (d) { return y(d.tsne_2)} )
+        .attr("cx", function (d) { return x(d.tsne_1) })
+        .attr("cy", function (d) { return y(d.tsne_2) })
         .attr("r", 2.5)
-        .style("fill", function (d) { return setDomainColors(d)} )
-        .classed("points",true)
-      
+        .style("fill", function (d) { return setDomainColors(d) })
+        .classed("points", true)
+
       //remove the x and y axis
       xAxis.remove()
       yAxis.remove()
@@ -451,33 +451,33 @@ d3.csv("system_df_v2.csv",function(discreteData){
       // however, might still be a nice thing to move it outside of the makeInputView function at some point
       // issues are with x,y,and myPoint: could declare them to be global, but not sure how that would affect other plots
       svg
-      .call(d3.brush()                 // Add the brush feature using the d3.brush function
-        .extent( [ [0,0], [inputWidth,inputHeight] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
-        .on("brush start", function() {
-          updateChart_start(myPoint, x, y); // Invoke the function inside the event handler
-        }),{ passive: true }
-      )
+        .call(d3.brush()                 // Add the brush feature using the d3.brush function
+          .extent([[0, 0], [inputWidth, inputHeight]]) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+          .on("brush start", function () {
+            updateChart_start(myPoint, x, y); // Invoke the function inside the event handler
+          }), { passive: true }
+        )
     }
-    
+
     // Add interaction with clicking
-    function clickImage(){
+    function clickImage() {
       d3.selectAll(".image").on("click", function () {
         // Change the class of the previous selected image to just "image"
         // Make it "image" before removing it from "selectedImage"
-        
-        // classify the previous instance image to either viewedSelectedImage or viewedNotSelectedImage
-        var original_id = d3.select(".instanceImage").attr("id").split("-")[1]; 
-        var original_instance = data.filter(function(d) { return d.id == original_id; })[0];
 
-        if (original_instance.selected==true){
-          d3.selectAll(".instanceImage").classed("viewedSelectedImage",true)
-          d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function(d) {
+        // classify the previous instance image to either viewedSelectedImage or viewedNotSelectedImage
+        var original_id = d3.select(".instanceImage").attr("id").split("-")[1];
+        var original_instance = data.filter(function (d) { return d.id == original_id; })[0];
+
+        if (original_instance.selected == true) {
+          d3.selectAll(".instanceImage").classed("viewedSelectedImage", true)
+          d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function (d) {
             return d.id === original_id
           });
         }
-        else{
-          d3.selectAll(".instanceImage").classed("viewedNotSelectedImage",true)
-          d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function(d) {
+        else {
+          d3.selectAll(".instanceImage").classed("viewedNotSelectedImage", true)
+          d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function (d) {
             return d.id === original_id
           });
         }
@@ -485,19 +485,19 @@ d3.csv("system_df_v2.csv",function(discreteData){
         d3.selectAll(".instanceImage").classed("instanceImage", false);
 
         // Get the ID of the clicked image
-        var id = d3.select(this).attr("id").split("-")[1]; 
+        var id = d3.select(this).attr("id").split("-")[1];
 
         // Find the corresponding data in your dataset
-        var instance = data.filter(function(d) { return d.id == id; })[0];
+        var instance = data.filter(function (d) { return d.id == id; })[0];
 
         // if only one checkbox is selected, meaning that there are multiple instances:
-        if (countCheckbox ==1){
+        if (countCheckbox == 1) {
           // d3.select(this).classed("viewedNotSelectedImage", false);
           // d3.select(this).classed("instanceImage", false);
           d3.select(this).classed("instanceImage", true);
         }
         // otherwise, color the boundaries of all the images
-        else{
+        else {
           // var selectedImage = d3.select(this);
           var parentDiv = this.parentNode;
           // d3.select(parentDiv).selectAll(".image").classed("viewedSelectedImage", false);
@@ -509,33 +509,33 @@ d3.csv("system_df_v2.csv",function(discreteData){
         //   return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2 
         // });
         var filteredPoint = d3.selectAll(".points")
-          .filter(function(d) {
+          .filter(function (d) {
             return d.id === id;
           });
-        filteredPoint.classed("viewed-selected-points",false)
-        filteredPoint.classed("viewed-not-selected-points",false)
-        filteredPoint.classed("instance-point",true)
+        filteredPoint.classed("viewed-selected-points", false)
+        filteredPoint.classed("viewed-not-selected-points", false)
+        filteredPoint.classed("instance-point", true)
       })
     }
-    
-    
+
+
     // Function that is triggered when brushing is performed
-    function updateChart_start(myPoint,x,y) {
+    function updateChart_start(myPoint, x, y) {
       // the chart is update many times with the selection it seems like
       extent = d3.event.selection
-      myPoint.classed("selected-points", function(d){ return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))} ) // The points are classed to be either true or false
-      // update the corresponding images, leave out initially 
-      var filteredData = data.filter(function(d){return isBrushed(extent, x(d.tsne_1), y(d.tsne_2))})
-      if (filteredData.length>0){
+      myPoint.classed("selected-points", function (d) { return isBrushed(extent, x(d.tsne_1), y(d.tsne_2)) }) // The points are classed to be either true or false
+      // update the corresponding images, leave out initially
+      var filteredData = data.filter(function (d) { return isBrushed(extent, x(d.tsne_1), y(d.tsne_2)) })
+      if (filteredData.length > 0) {
         var newFilteredData = modifyFiltered(filteredData)
         // remove all the red boundaries first (before adding new one later)
-        myPoint.classed("instance-point", function() {
+        myPoint.classed("instance-point", function () {
           return false;
         });
-        myPoint.classed("viewed-selected-points", function() {
+        myPoint.classed("viewed-selected-points", function () {
           return false;
         });
-        myPoint.classed("viewed-not-selected-points", function() {
+        myPoint.classed("viewed-not-selected-points", function () {
           return false;
         });
         updateMultipleViews(newFilteredData)
@@ -545,17 +545,17 @@ d3.csv("system_df_v2.csv",function(discreteData){
 
     // }
 
-    function updateMultipleViews(filteredData){
-      if (filteredData.length>0){
+    function updateMultipleViews(filteredData) {
+      if (filteredData.length > 0) {
         updateImages(filteredData)
         updateActivations(filteredData)
-        makePerformanceView(data,filteredData)
+        makePerformanceView(data, filteredData)
         var currentClassViolin = d3.select("#classNameText").text();
-        makeClassDist(data=data,filteredData=filteredData,specifiedClassName=currentClassViolin,setDomainColors=setDomainColors)
+        makeClassDist(data = data, filteredData = filteredData, specifiedClassName = currentClassViolin, setDomainColors = setDomainColors)
         var classDropdown = d3.selectAll("#classDropdown .child li");
-        classDropdown.on("click",function(){
+        classDropdown.on("click", function () {
           const selectedOption = d3.select(this).text().trim();
-          makeClassDist(data=data,filteredData = filteredData,specifiedClassName = selectedOption,setDomainColors=setDomainColors)
+          makeClassDist(data = data, filteredData = filteredData, specifiedClassName = selectedOption, setDomainColors = setDomainColors)
         })
         // allow clicking images after adding all the images to image view
         // (the listeners have to be added after the images have been appended to the DOM)
@@ -564,40 +564,40 @@ d3.csv("system_df_v2.csv",function(discreteData){
         // event listener: change of image/label/prediction selection
         var checkboxes = d3.selectAll('input[name="imageCheck"], input[name="groundTruthCheck"], input[name="predictionCheck"]');
         // "filter(":checked")": filters the selection to include only the checkboxes that are checked
-        var checkedCount = checkboxes.filter(":checked").size(); 
-        checkboxes.on("change", function(){
+        var checkedCount = checkboxes.filter(":checked").size();
+        checkboxes.on("change", function () {
           updateMultipleViews(filteredData)
         }); // this function(){} is necessary to have, otherwise the updateMultipleViews will be immediately called
-        
+
         // Image View: next button: 
         var nextButton = d3.select("#imageCheckBox button"); // name of div + button
-        nextButton.on("click",function(){
-          if (currentTypeDomain=="Continuous"){
+        nextButton.on("click", function () {
+          if (currentTypeDomain == "Continuous") {
             // move top three pairs to the end (the objects in filteredData are the same, just the order is different)
             var firstThreepairs = filteredData.slice(0, 6); // Get the first three elements
             var remainingElements = filteredData.slice(6); // Get the remaining elements
             var newFilteredData = remainingElements.concat(firstThreepairs); // Concatenate the remaining elements with
             updateMultipleViews(newFilteredData);
           }
-          else{
+          else {
             // separate the data for domain 1 and 2
-            var domain1Data = filteredData.filter(function(d) {
-              if (currentTypeDomain=="Discrete"){
+            var domain1Data = filteredData.filter(function (d) {
+              if (currentTypeDomain == "Discrete") {
                 return d.dataset === "Cityscapes";
               }
-              else{
-                return d.noise_level==0;
-              } 
+              else {
+                return d.noise_level == 0;
+              }
             });
-            var domain2Data = filteredData.filter(function(d) {
-              if (currentTypeDomain=="Discrete"){
+            var domain2Data = filteredData.filter(function (d) {
+              if (currentTypeDomain == "Discrete") {
                 return d.dataset === "Synthia";
               }
-              else{
-                if (continuousDomain=="Noise" && continuousValue!=0){
+              else {
+                if (continuousDomain == "Noise" && continuousValue != 0) {
                   return d.noise_level == continuousValue
                 }
-                else{
+                else {
                   return 0;
                 }
               }
@@ -606,27 +606,27 @@ d3.csv("system_df_v2.csv",function(discreteData){
             var parentDiv = d3.select(".instanceImage").node().parentNode;
             var parentDivId = parentDiv.id;
             // switch the cityscapes or synthia based on the div with 
-            if (checkedCount == 1){
-              if (parentDivId =="imgDomain1"){
+            if (checkedCount == 1) {
+              if (parentDivId == "imgDomain1") {
                 var firstThreeElements = domain1Data.slice(0, 3); // Get the first three elements
                 var remainingElements = domain1Data.slice(3); // Get the remaining elements
                 domain1Data = remainingElements.concat(firstThreeElements); // Concatenate the remaining elements with the first three elements
                 var newFilteredData = domain1Data.concat(domain2Data)
               }
-              else{
+              else {
                 var firstThreeElements = domain2Data.slice(0, 3); // Get the first three elements
                 var remainingElements = domain2Data.slice(3); // Get the remaining elements
                 domain2Data = remainingElements.concat(firstThreeElements); // Concatenate the remaining elements with the first three elements
                 var newFilteredData = domain2Data.concat(domain1Data);
               }
             }
-            else{
-              if (parentDivId =="imgDomain1"){
+            else {
+              if (parentDivId == "imgDomain1") {
                 var firstElement = domain1Data.shift();
                 domain1Data.push(firstElement);
                 var newFilteredData = domain1Data.concat(domain2Data)
               }
-              else{
+              else {
                 var firstElement = domain2Data.shift();
                 domain2Data.push(firstElement);
                 var newFilteredData = domain2Data.concat(domain1Data);
@@ -640,93 +640,93 @@ d3.csv("system_df_v2.csv",function(discreteData){
       }
     }
 
-    function modifyFiltered(filteredData){
+    function modifyFiltered(filteredData) {
       // console.log("filteredData\n",JSON.parse(JSON.stringify(filteredData)));
-      if (currentTypeDomain=="Discrete"){
-        filteredData.map(function(d){d["selected"]=true});
+      if (currentTypeDomain == "Discrete") {
+        filteredData.map(function (d) { d["selected"] = true });
         return filteredData
       }
-      else{
-        if (continuousDomain=="Noise" && continuousValue!=0){
+      else {
+        if (continuousDomain == "Noise" && continuousValue != 0) {
           // sort the data with the name column
-          function compare(a, b ) {
-            if ( a.name < b.name ){
+          function compare(a, b) {
+            if (a.name < b.name) {
               return -1;
             }
-            if ( a.name > b.name ){
+            if (a.name > b.name) {
               return 1;
             }
-            if (a.name == b.name){
-              if (a.noise_level<b.noise_level){
+            if (a.name == b.name) {
+              if (a.noise_level < b.noise_level) {
                 return -1;
               }
-              else if (a.noise_level<b.noise_level){
+              else if (a.noise_level < b.noise_level) {
                 return 1;
               }
-              else{
+              else {
                 return 0;
               }
             }
           }
           filteredData.sort(compare);
-          filteredData.map(function(d){d["selected"]=true});
+          filteredData.map(function (d) { d["selected"] = true });
           // fo r image that did not come together with another noise level, also get another noise level
           // count the occurance of each name with reduce
-          var nameCounts = filteredData.reduce(function(acc, curr) {
+          var nameCounts = filteredData.reduce(function (acc, curr) {
             acc[curr.name] = (acc[curr.name] || 0) + 1;
             return acc;
-          },{}); // "{}" is the initial value for reduce function
-          
+          }, {}); // "{}" is the initial value for reduce function
+
           // Filter the instances based on the count of each name
-          var singleImageCases = filteredData.filter(function(d) {
+          var singleImageCases = filteredData.filter(function (d) {
             return nameCounts[d.name] === 1;
           });
           // continuousValue
-          if (singleImageCases.length>0){
+          if (singleImageCases.length > 0) {
             // console.log("singleImageCases: \n",JSON.parse(JSON.stringify(singleImageCases)));
-            var notSelectedImageCases = singleImageCases.map(function(d) {
-              if (d.noise_level === 0){
-                return noiseData.find(function(obj) {
+            var notSelectedImageCases = singleImageCases.map(function (d) {
+              if (d.noise_level === 0) {
+                return noiseData.find(function (obj) {
                   return obj.name === d.name && obj.noise_level === continuousValue;
                 });
               }
-              else{
-                return noiseData.find(function(obj) {
+              else {
+                return noiseData.find(function (obj) {
                   return obj.name === d.name && obj.noise_level === 0;
                 });
               }
             });
             // console.log("notSelectedImageCases: \n",JSON.parse(JSON.stringify(notSelectedImageCases)));
-            notSelectedImageCases.map(function(d){d["selected"]=false});
+            notSelectedImageCases.map(function (d) { d["selected"] = false });
             var newFilteredData = filteredData.concat(notSelectedImageCases)
-            newFilteredData.sort(compare) 
+            newFilteredData.sort(compare)
             return newFilteredData
           }
           return filteredData
         }
-        else{
-          filteredData.map(function(d){d["selected"]=true});
+        else {
+          filteredData.map(function (d) { d["selected"] = true });
           return filteredData
         }
       }
       // return modifiedData
     }
 
-    function updateImages(filteredData){
+    function updateImages(filteredData) {
       // This probably does not work because it is inside an svg.call instead of something else'
-      var first_index = filteredData.findIndex(function(d){return d.selected==true})
-      d3.selectAll(".points").classed("instance-point", function(d) {
-          return d.tsne_1 === filteredData[first_index].tsne_1 && d.tsne_2 === filteredData[first_index].tsne_2
+      var first_index = filteredData.findIndex(function (d) { return d.selected == true })
+      d3.selectAll(".points").classed("instance-point", function (d) {
+        return d.tsne_1 === filteredData[first_index].tsne_1 && d.tsne_2 === filteredData[first_index].tsne_2
       });
       const maxImages = 100;
       var numDomain1 = 0;
-      var numDomain2 = 0; 
+      var numDomain2 = 0;
       domain1_images.selectAll("*").remove();
       domain2_images.selectAll("*").remove();
 
       // Set the classes to be false before setting new ones.
-      d3.selectAll(".selected-points").classed("viewed-selected-points",false)
-      d3.selectAll(".points").classed("viewed-not-selected-points",false)
+      d3.selectAll(".selected-points").classed("viewed-selected-points", false)
+      d3.selectAll(".points").classed("viewed-not-selected-points", false)
 
       // first check the selections
       // each Checkbox variable contain a True or False value on whether it's checked
@@ -739,160 +739,160 @@ d3.csv("system_df_v2.csv",function(discreteData){
       var predictionValue = predictionCheckbox.checked ? 1 : 0;
 
       // not initialize the variable so that it's global (Automatically Global (doesn't work if strict mode is on))
-      countCheckbox = imageValue+groundTruthValue+predictionValue;
+      countCheckbox = imageValue + groundTruthValue + predictionValue;
 
       // for continuous data: re-organize the data and add not selectedData
       // if (currentTypeDomain=="Continuous"){
       //   modifiyFilteredContinuous(filteredData)
       // }
-      
+
       //conditions
-      if (countCheckbox==1){
-        if (imageValue){
-          filteredData.forEach(function(d) {
+      if (countCheckbox == 1) {
+        if (imageValue) {
+          filteredData.forEach(function (d) {
             d.path = d.image_path; // no "+", because don't need path to be number here
           });
         }
-        else if (groundTruthValue){
-          filteredData.forEach(function(d) {
+        else if (groundTruthValue) {
+          filteredData.forEach(function (d) {
             d.path = d.label_path;
           });
         }
         else {
-          filteredData.forEach(function(d) {
+          filteredData.forEach(function (d) {
             d.path = d.prediction_path;
           });
         }
-        for (let i=0 ; i < maxImages; i++) {
-            if (filteredData.length <= i || (numDomain1>=4 && numDomain2>=4)) {
-              break
+        for (let i = 0; i < maxImages; i++) {
+          if (filteredData.length <= i || (numDomain1 >= 4 && numDomain2 >= 4)) {
+            break
+          }
+          if (i == first_index) {
+            current_class = "instanceImage"
+          }
+          else {
+            // distinguish the selected between the not selected ones
+            if (filteredData[i].selected === true) {
+              current_class = "viewedSelectedImage"
             }
-            if (i==first_index){
-              current_class = "instanceImage"
+            else {
+              current_class = "viewedNotSelectedImage"
             }
-            else{
-              // distinguish the selected between the not selected ones
-              if (filteredData[i].selected===true){
-                current_class = "viewedSelectedImage"
-              }
-              else{
-                current_class = "viewedNotSelectedImage"
-              }
-            }
-            // either discrete cityscapes, or continuous with noise level=0
-            if ((filteredData[i].dataset=="Cityscapes"&&currentTypeDomain=="Discrete")|| filteredData[i].noise_level ==0){
-              if (numDomain1<3){
-                var current_image = domain1_images.append("svg")
-                  .classed("image",true)
-                  .classed(current_class,true)
-                  .attr("id", "image-" + filteredData[i].id) // assign an ID to the image element
-                  .insert('image')
-                  .attr('xlink:href', filteredData[i].path)
-                  .attr('width', '100%')
-                  .attr('height', '100%')
-                  .attr('preserveAspectRatio', 'xMinYMin meet');
-                
-                if (i!=first_index && filteredData[i].selected==true){
-                  d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function(d) {
-                    return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2 
-                  });
-                }
-                else if (i!=first_index &&filteredData[i].selected==false){
-                  d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function(d) {
-                    return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2 
-                  });
-                }
-                // if (i!=0){
-                //   // current_image.classed("selectedImage")
-                //   d3.selectAll(".selected").classed("viewed-points", function(d) {
-                //     return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2
-                //   });
-                // }
-                numDomain1 = numDomain1+1
-              }
-            }
-            // either discrete synthia, or continuous with noise level the same as the current value
-            else if((filteredData[i].dataset=="Synthia"&&currentTypeDomain=="Discrete")|| filteredData[i].noise_level ==continuousValue){
-              if (numDomain2<3){
-                var current_image = domain2_images.append("svg")
-                  .classed("image",true)
-                  .classed(current_class,true)
-                  .attr("id", "image-" + filteredData[i].id) // assign an ID to the image element
-                  .insert('image')
-                  .attr('xlink:href',  filteredData[i].path)
-                  .attr('width', '100%')
-                  .attr('height', '100%')
-                  .attr('preserveAspectRatio', 'xMinYMin meet');
+          }
+          // either discrete cityscapes, or continuous with noise level=0
+          if ((filteredData[i].dataset == "Cityscapes" && currentTypeDomain == "Discrete") || filteredData[i].noise_level == 0) {
+            if (numDomain1 < 3) {
+              var current_image = domain1_images.append("svg")
+                .classed("image", true)
+                .classed(current_class, true)
+                .attr("id", "image-" + filteredData[i].id) // assign an ID to the image element
+                .insert('image')
+                .attr('xlink:href', filteredData[i].path)
+                .attr('width', '100%')
+                .attr('height', '100%')
+                .attr('preserveAspectRatio', 'xMinYMin meet');
 
-                if (i!=first_index && filteredData[i].selected==true){
-                  d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function(d) {
-                    return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2 
-                  });
-                }
-                else if (i!=first_index && filteredData[i].selected==false){
-                  d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function(d) {
-                    return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2 
-                  });
-                }
-                
-                // if (i!=0){
-                //   // current_image.classed("selectedImage")
-                //   d3.selectAll(".selected").classed("viewed-points", function(d) {
-                //     return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2
-                //   });
-                // }
-                
-                numDomain2 = numDomain2+1
+              if (i != first_index && filteredData[i].selected == true) {
+                d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function (d) {
+                  return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2
+                });
               }
+              else if (i != first_index && filteredData[i].selected == false) {
+                d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function (d) {
+                  return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2
+                });
+              }
+              // if (i!=0){
+              //   // current_image.classed("selectedImage")
+              //   d3.selectAll(".selected").classed("viewed-points", function(d) {
+              //     return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2
+              //   });
+              // }
+              numDomain1 = numDomain1 + 1
+            }
+          }
+          // either discrete synthia, or continuous with noise level the same as the current value
+          else if ((filteredData[i].dataset == "Synthia" && currentTypeDomain == "Discrete") || filteredData[i].noise_level == continuousValue) {
+            if (numDomain2 < 3) {
+              var current_image = domain2_images.append("svg")
+                .classed("image", true)
+                .classed(current_class, true)
+                .attr("id", "image-" + filteredData[i].id) // assign an ID to the image element
+                .insert('image')
+                .attr('xlink:href', filteredData[i].path)
+                .attr('width', '100%')
+                .attr('height', '100%')
+                .attr('preserveAspectRatio', 'xMinYMin meet');
+
+              if (i != first_index && filteredData[i].selected == true) {
+                d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function (d) {
+                  return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2
+                });
+              }
+              else if (i != first_index && filteredData[i].selected == false) {
+                d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function (d) {
+                  return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2
+                });
+              }
+
+              // if (i!=0){
+              //   // current_image.classed("selectedImage")
+              //   d3.selectAll(".selected").classed("viewed-points", function(d) {
+              //     return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2
+              //   });
+              // }
+
+              numDomain2 = numDomain2 + 1
             }
           }
         }
-      else{
+      }
+      else {
         // filter out the cityscapes and synthia data
-        var domain1Data = filteredData.filter(function(d) {
-          if (currentTypeDomain=="Discrete"){
+        var domain1Data = filteredData.filter(function (d) {
+          if (currentTypeDomain == "Discrete") {
             return d.dataset === "Cityscapes";
           }
-          else{
-            return d.noise_level==0;
-          } 
+          else {
+            return d.noise_level == 0;
+          }
         });
-        var domain2Data = filteredData.filter(function(d) {
-          if (currentTypeDomain=="Discrete"){
+        var domain2Data = filteredData.filter(function (d) {
+          if (currentTypeDomain == "Discrete") {
             return d.dataset === "Synthia";
           }
-          else{
-            if (continuousDomain=="Noise" && continuousValue!=0){
+          else {
+            if (continuousDomain == "Noise" && continuousValue != 0) {
               return d.noise_level == continuousValue
             }
-            else{
+            else {
               return 0;
             }
           }
         });
-        if (domain1Data.length>0){
+        if (domain1Data.length > 0) {
           instance = domain1Data[0]
-          if (instance==filteredData[first_index]){
-            current_class="instanceImage"
+          if (instance == filteredData[first_index]) {
+            current_class = "instanceImage"
           }
-          else{
-            if (instance.selected==true){
-              current_class="viewedSelectedImage"
-              d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function(d) {
-                return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2 
+          else {
+            if (instance.selected == true) {
+              current_class = "viewedSelectedImage"
+              d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function (d) {
+                return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2
               });
             }
-            else{
-              current_class="viewedNotSelectedImage"
-              d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function(d) {
-                return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2 
+            else {
+              current_class = "viewedNotSelectedImage"
+              d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function (d) {
+                return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2
               });
             }
           }
-          if (imageValue){
+          if (imageValue) {
             var current_image = domain1_images.append("svg")
-              .classed("image",true)
-              .classed(current_class,true)
+              .classed("image", true)
+              .classed(current_class, true)
               .attr("id", "image-" + instance.id) // assign an ID to the image element
               .insert('image')
               .attr('xlink:href', instance.image_path)
@@ -900,10 +900,10 @@ d3.csv("system_df_v2.csv",function(discreteData){
               // .attr('height', "100%")
               .attr('preserveAspectRatio', 'xMinYMin meet');
           }
-          if (groundTruthValue){
+          if (groundTruthValue) {
             var current_image = domain1_images.append("svg")
-              .classed("image",true)
-              .classed(current_class,true)
+              .classed("image", true)
+              .classed(current_class, true)
               .attr("id", "image-" + instance.id) // assign an ID to the image element
               .insert('image')
               .attr('xlink:href', instance.label_path)
@@ -911,10 +911,10 @@ d3.csv("system_df_v2.csv",function(discreteData){
               // .attr('height', '100')
               .attr('preserveAspectRatio', 'xMinYMin meet');
           }
-          if (predictionValue){
+          if (predictionValue) {
             var current_image = domain1_images.append("svg")
-              .classed("image",true)
-              .classed(current_class,true)
+              .classed("image", true)
+              .classed(current_class, true)
               .attr("id", "image-" + instance.id) // assign an ID to the image element
               .insert('image')
               .attr('xlink:href', instance.prediction_path)
@@ -923,29 +923,29 @@ d3.csv("system_df_v2.csv",function(discreteData){
               .attr('preserveAspectRatio', 'xMinYMin meet');
           }
         }
-        if (domain2Data.length>0){
+        if (domain2Data.length > 0) {
           instance = domain2Data[0]
-          if (instance==filteredData[first_index]){
-            current_class="instanceImage"
+          if (instance == filteredData[first_index]) {
+            current_class = "instanceImage"
           }
-          else{
-            if (instance.selected==true){
-              current_class="viewedSelectedImage"
-              d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function(d) {
-                return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2 
+          else {
+            if (instance.selected == true) {
+              current_class = "viewedSelectedImage"
+              d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function (d) {
+                return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2
               });
             }
-            else{
-              current_class="viewedNotSelectedImage"
-              d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function(d) {
-                return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2 
+            else {
+              current_class = "viewedNotSelectedImage"
+              d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function (d) {
+                return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2
               });
             };
           }
-          if (imageValue){
+          if (imageValue) {
             var current_image = domain2_images.append("svg")
-              .classed("image",true)
-              .classed(current_class,true)
+              .classed("image", true)
+              .classed(current_class, true)
               .attr("id", "image-" + instance.id) // assign an ID to the image element
               .insert('image')
               .attr('xlink:href', instance.image_path)
@@ -953,10 +953,10 @@ d3.csv("system_df_v2.csv",function(discreteData){
               .attr('height', '100%')
               .attr('preserveAspectRatio', 'xMinYMin meet');
           }
-          if (groundTruthValue){
+          if (groundTruthValue) {
             var current_image = domain2_images.append("svg")
-              .classed("image",true)
-              .classed(current_class,true)
+              .classed("image", true)
+              .classed(current_class, true)
               .attr("id", "image-" + instance.id) // assign an ID to the image element
               .insert('image')
               .attr('xlink:href', instance.label_path)
@@ -964,10 +964,10 @@ d3.csv("system_df_v2.csv",function(discreteData){
               .attr('height', '100%')
               .attr('preserveAspectRatio', 'xMinYMin meet');
           }
-          if (predictionValue){
+          if (predictionValue) {
             var current_image = domain2_images.append("svg")
-              .classed("image",true)
-              .classed(current_class,true)
+              .classed("image", true)
+              .classed(current_class, true)
               .attr("id", "image-" + instance.id) // assign an ID to the image element
               .insert('image')
               .attr('xlink:href', instance.prediction_path)
@@ -980,61 +980,62 @@ d3.csv("system_df_v2.csv",function(discreteData){
       }
       // return countCheckbox;
     }
-    
-    
-    function updateActivations(filteredData){
-      if (filteredData.length>0){
+
+
+    function updateActivations(filteredData) {
+      if (filteredData.length > 0) {
         // call the first instance in filterData as default
         // todo (maybe):find the first instance that are selected
-          instance = filteredData[0];
-          instanceActivations(instance)
+        selectedInstance = filteredData[0];
+        instanceActivations(selectedInstance)
       }
     }
 
-    function instanceActivations(instance){
-      if (currentTypeDomain=="Discrete"){
+    function instanceActivations(instance) {
+      if (currentTypeDomain == "Discrete") {
         var second_instance_path = instance.similar_image_paths;
-        var second_instance = data.find(function(d) {
-        return d.image_path === second_instance_path;
-      });
+        var second_instance = data.find(function (d) {
+          return d.image_path === second_instance_path;
+        });
       }
-      else{
-        if (continuousDomain=="Noise"){
+      else {
+        if (continuousDomain == "Noise") {
           // get the current noise level
           // find the corresponding image in that level
-          if (continuousValue!=0){
-            var second_instance = data.find(function(d) {
+          if (continuousValue != 0) {
+            var second_instance = data.find(function (d) {
               // if the first instance have noise = 0, then find the instance with selected noise value
               // and vice versa
-              if (instance.noise_level ==0){
+              if (instance.noise_level == 0) {
                 // console.log("equality for noise:", d.noise_level === continuousValue)
                 return d.noise_level === continuousValue && d.name === instance.name;
               }
-              else{
+              else {
                 // console.log("equality for noise (0):", d.noise_level === 0)
                 return d.noise_level === 0 && d.name === instance.name;
               }
               // return (d.noise_level ==0)? (d.name === instance.name && d.noise_level === continuousValue) : (d.name === instance.name && d.noise_level === 0);
-              }            
+            }
             );
             second_instance_path = second_instance.image_path
           }
         }
       }
-      
+
       d3.select("#maskSimilarity").selectAll("*").remove();
       activation_svg.selectAll("*").remove();
       // clear the existing mask for the previous image, to make way for printing new masks
       // var instance_type, second_instance_type = 
-      if (second_instance){
-        activation_list_to_graph(instance, second_instance)
+      let x,y
+      if (second_instance) {
+        [x,y]=activation_list_to_graph(instance, second_instance)
       }
-      else{
-        activation_list_to_graph(instance)
+      else {
+        [x,y]=activation_list_to_graph(instance)
       }
       // measuere the height of a div
       // var offsetHeight = document.getElementById('maskSimilarity').offsetHeight;
-      
+
       var imageSize = 150;
       var spacing = 20;
 
@@ -1045,38 +1046,30 @@ d3.csv("system_df_v2.csv",function(discreteData){
         .append('g') // Create a group element to contain the image and title
         .attr("transform", "translate(0, " + spacing + ")"); // Adjust the y-coordinate for spacing
 
-        // both of the methods below for extra spacing does not seem to work
-        
-        // .style("margin-bottom", spacing/2 + "px")
+      // both of the methods below for extra spacing does not seem to work
+
+      // .style("margin-bottom", spacing/2 + "px")
 
       mask.append('image')
         .attr('xlink:href', instance.label_path)
         .attr('width', imageSize)
         .attr('height', imageSize);
-      
-      // tried to add background color for text, but didn't work due to one of the colors are too dark
-      // mask.append('rect') // Add background rectangle
-      //   .attr('x', 0)
-      //   .attr('y', -15)
-      //   .attr('width', imageSize)
-      //   .attr('height', 20)
-      //   .style('fill', color(instance.dataset));
 
       mask.append('text') // Add title text
-        .text("Current: ("+instance_type+")")
+        .text("Current: (" + instance_type + ")")
         .attr('x', imageSize / 2) //center it horizontally within the container
         .attr('y', -5)
         .attr('text-anchor', 'middle')
         .attr('font-size', '12px')
         .style("fill", setDomainColors(instance)); //but I want background color
 
-      if (currentTypeDomain=="Discrete"||continuousValue!=0){
+      if (currentTypeDomain == "Discrete" || continuousValue != 0) {
         var second_mask = d3.select("#maskSimilarity").append("svg")
-        .attr("width", imageSize)
-        .attr("height", imageSize + spacing)
-        .attr("outline", "1px solid white")
-        .append('g') // Create a group element to contain the image and title
-        .attr("transform", "translate(0, " + spacing + ")"); // Adjust the y-coordinate for spacing
+          .attr("width", imageSize)
+          .attr("height", imageSize + spacing)
+          .attr("outline", "1px solid white")
+          .append('g') // Create a group element to contain the image and title
+          .attr("transform", "translate(0, " + spacing + ")"); // Adjust the y-coordinate for spacing
 
         second_mask.append('image')
           .attr('xlink:href', second_instance.label_path)
@@ -1084,149 +1077,233 @@ d3.csv("system_df_v2.csv",function(discreteData){
           .attr('height', imageSize);
 
         second_mask.append('text') // Add title text
-          .text("Corresponding: ("+second_instance_type+")")
+          .text("Corresponding: (" + second_instance_type + ")")
           .attr('x', imageSize / 2) //center it horizontally within the container
           .attr('y', -5)
           .attr('text-anchor', 'middle')
           .attr('font-size', '12px')
           .style("fill", setDomainColors(second_instance));
+      }else{
+        second_mask=0
+      }
+
+      // note that the passive issue still exist, but putting it outside of this function did not help
+      activation_svg.call(
+        d3.brush()                 // Add the brush feature using the d3.brush function
+          .extent([[0, 0], [activationWidth, activationHeight]]) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+          .on("brush end", function () {
+            highlightPatches(x,y,mask,second_mask,d3.event.selection,imageSize)
+            // var filteredActivations = data.filter(function (d) { return isBrushed(extent, x(d.tsne_1), y(d.tsne_2)) })
+            // highlightPatches()
+          }),
+        { passive: true }
+      )
+    }
+
+    function highlightPatches(x,y,mask,second_mask,extentActivation,imageSize){
+      // repeat the definition for x and y (which is the same as the model activations graph)
+      // this is useful for checking the brushed points.
+
+      var brushedActivations = combinedList.filter(function (d) { 
+        // console.log("brushed",isBrushed(extent, x(d[0]), y(d[1]) ))
+        return isBrushed(extentActivation, x(d[0]), y(d[1])) }
+      )
+      
+      if (brushedActivations.length>0){
+        activationListLength = first_activations_parsed.length
+        var brushedIndices = brushedActivations.map(function(d){return combinedList.indexOf(d)})
+        var brushIndicesFirst = brushedIndices.filter(function(d){return d<activationListLength})
+        var brushIndicesSecond = brushedIndices.filter(function(d){return d>=activationListLength})
+        // this means that height = 1 * width
+        var numOfPatchesWidth =Math.sqrt(activationListLength)
+        var numOfPatchesHeight = numOfPatchesWidth
+        
+        var patchWidth = imageSize/numOfPatchesWidth
+        var patchHeight = imageSize/numOfPatchesHeight
+
+        mask.selectAll("rect").remove();
+
+        // find the regions to highlight, and save them as dictionary
+        var regionsToHighlightDictFirst = brushIndicesFirst.map(function(d){
+          let object = {}
+          object.x = (d%numOfPatchesWidth)*patchWidth
+          object.y = (Math.floor(d/numOfPatchesHeight))*patchHeight
+          object.width = patchWidth
+          object.height = patchHeight
+          return object
+        })
+        
+        // console.log("regionsToHighlightDict:\n",regionsToHighlightDictFirst)
+        
+        // Define the regions to be highlighted
+        // var regionsToHighlight = [
+        //   { x: 20, y: 20, width: 30, height: 30 }, // Example region 1
+        //   { x: 60, y: 60, width: 40, height: 40 }, // Example region 2
+        //   // Add more regions as needed...
+        // ];
+
+        // Add the masks for the highlighted regions
+        regionsToHighlightDictFirst.forEach(function(region) {
+          mask.append("rect")
+            .attr("x", region.x)
+            .attr("y", region.y)
+            .attr("width", region.width)
+            .attr("height", region.height)
+            .style("fill", "red") // maybe adjust the color
+            .style("opacity", 0.5);
+        });
+
+        if (second_mask!=0){
+          second_mask.selectAll("rect").remove();
+          var regionsToHighlightDictSecond = brushIndicesSecond.map(function(d){
+            let object = {}
+            object.x = ((d-activationListLength)%numOfPatchesWidth)*patchWidth
+            object.y = (Math.floor((d-activationListLength)/numOfPatchesHeight))*patchHeight
+            object.width = patchWidth
+            object.height = patchHeight
+            return object
+          })
+          regionsToHighlightDictSecond.forEach(function(region) {
+            second_mask.append("rect")
+              .attr("x", region.x)
+              .attr("y", region.y)
+              .attr("width", region.width)
+              .attr("height", region.height)
+              .style("fill", "red") // maybe adjust the color
+              .style("opacity", 0.5);
+          });
+        }
       }
     }
 
-    function isBrushed(brush_coords, cx,cy) {
+    function isBrushed(brush_coords, cx, cy) {
       const x0 = brush_coords[0][0],
-            x1 = brush_coords[1][0],
-            y0 = brush_coords[0][1],
-            y1 = brush_coords[1][1];
+        x1 = brush_coords[1][0],
+        y0 = brush_coords[0][1],
+        y1 = brush_coords[1][1];
 
       return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;    // This return TRUE or FALSE depending on if the points is in the selected area
     }
 
-    function activation_list_to_graph(instance,second_instance){
+    function activation_list_to_graph(instance, second_instance) {
       // dataset_types = ["Cityscapes", "Synthia" ];
 
       // find the domain for the second instance
-      if (currentTypeDomain=="Discrete"){
+      if (currentTypeDomain == "Discrete") {
         instance_type = instance.dataset
         second_instance_type = second_instance.dataset
         activation_svg.append("text")
-        .text("Similarity score for masks:"+instance.similar_IoU_score);
+          .text("Similarity score for masks:" + instance.similar_IoU_score)
+          .style("font-size", "15px")
+          // fill it with black color to actually see it
+          .style("fill", "black");
       }
-      else{
-        if (continuousDomain=="Noise"){
-          instance_type = "Noise: "+ instance.noise_level.toString()
-          if (second_instance){
-            second_instance_type = "Noise: "+ second_instance.noise_level.toString()
+      else {
+        if (continuousDomain == "Noise") {
+          instance_type = "Noise: " + instance.noise_level.toString()
+          if (second_instance) {
+            second_instance_type = "Noise: " + second_instance.noise_level.toString()
           }
           // console.log("Instance type",instance_type)
         }
       }
 
-      parsed_list = JSON.parse(instance.bottleneck_activations_embedding);
-      // console.log(parsed_list)
-      if (second_instance){
+      first_activations_parsed = JSON.parse(instance.bottleneck_activations_embedding);
+      if (second_instance) {
         second_activations_parsed = JSON.parse(second_instance.bottleneck_activations_embedding);
-        var combinedList = parsed_list.concat(second_activations_parsed);
+        combinedList = first_activations_parsed.concat(second_activations_parsed);
       }
-      else{
-        var combinedList = parsed_list
+      else {
+        combinedList = first_activations_parsed
       }
       // use the combined list to find the range of graph
 
       // input view: range for each dimension
-      let min_1 = d3.min(combinedList,function(d) { return d[0]; });
-      let max_1 = d3.max(combinedList,function(d) { return d[0]; });
-      let min_2 = d3.min(combinedList,function(d) { return d[1]; });
-      let max_2 = d3.max(combinedList,function(d) { return d[1]; });
+      let min_1 = d3.min(combinedList, function (d) { return d[0]; });
+      let max_1 = d3.max(combinedList, function (d) { return d[0]; });
+      let min_2 = d3.min(combinedList, function (d) { return d[1]; });
+      let max_2 = d3.max(combinedList, function (d) { return d[1]; });
 
       // Add X axis
       var x = d3.scaleLinear()
-          .domain([min_1 - 0.1*Math.abs(min_1) , 1.1*max_1])
-          .range([ 0, activationWidth]);
+        .domain([min_1 - 0.1 * Math.abs(min_1), 1.1 * max_1])
+        .range([0, activationWidth]);
       var xAxis = activation_svg.append("g")
-          .attr("transform", "translate(0," + activationHeight + ")")
-          .call(d3.axisBottom(x));
+        .attr("transform", "translate(0," + activationHeight + ")")
+        .call(d3.axisBottom(x));
 
       // Add Y axis
       var y = d3.scaleLinear()
-          .domain([min_2 - 0.1*Math.abs(min_2) , 1.1*max_2])
-          .range([ activationHeight, 0]);
-      var yAxis =activation_svg.append("g")
-          .call(d3.axisLeft(y));
-      
+        .domain([min_2 - 0.1 * Math.abs(min_2), 1.1 * max_2])
+        .range([activationHeight, 0]);
+      var yAxis = activation_svg.append("g")
+        .call(d3.axisLeft(y));
+
       // Add dots for the current dataset
       activation_svg.append('g')
-          .selectAll("dot")
-          .data(parsed_list)
-          .enter()
-          .append("circle")
-          .attr("cx", function (d) { return x(d[0])} )
-          .attr("cy", function (d) { return y(d[1])} )
-          .attr("r", 2.5)
-          .style("fill", setDomainColors(instance))
-      
+        .selectAll("dot")
+        .data(first_activations_parsed)
+        .enter()
+        .append("circle")
+        .attr("cx", function (d) { return x(d[0]) })
+        .attr("cy", function (d) { return y(d[1]) })
+        .attr("r", 2.5)
+        .style("fill", setDomainColors(instance))
+
       //Add dots for the other dataset
-      if (second_instance){
+      if (second_instance) {
         activation_svg.append('g')
           .selectAll("dot")
           .data(second_activations_parsed)
           .enter()
           .append("circle")
-          .attr("cx", function (d) { return x(d[0])} )
-          .attr("cy", function (d) { return y(d[1])} )
+          .attr("cx", function (d) { return x(d[0]) })
+          .attr("cy", function (d) { return y(d[1]) })
           .attr("r", 2.5)
-          .style("fill",setDomainColors(second_instance))
+          .style("fill", setDomainColors(second_instance))
       }
-  
+
       // this removes the x and y axis from the scatter plot
       xAxis.remove()
       yAxis.remove()
 
-      // note that the passive issue still exist, but putting it outside of this function did not help
-      activation_svg.call(
-        d3.brush()                 // Add the brush feature using the d3.brush function
-          .extent( [ [0,0], [activationWidth,activationHeight] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
-          .on("brush start", function() {
-            console.log("activation brush") // Invoke the function inside the event handler
-          }),
-        {passive: true}
-      )
+      return [x,y]
 
       // return instance_type, second_instance_type
     }
 
-    function setDomainColors(d){
+    function setDomainColors(d) {
       // console.log("current type domain in set",currentTypeDomain)
-      if (currentTypeDomain=="Discrete"){
-        if (d.key){
+      if (currentTypeDomain == "Discrete") {
+        if (d.key) {
           return discreteDomainColor(d.key)
         }
-        else{
+        else {
           return discreteDomainColor(d.dataset)
         }
       }
-      else{
-        if (continuousDomain=="Noise"){
+      else {
+        if (continuousDomain == "Noise") {
           // range of noise (color domain)
           // let noiseMin = d3.min(noiseData,function(d) { return d.noise_level; });
           // let noiseMax = d3.max(noiseData,function(d) { return d.noise_level; });
           // let colorStart = "#003f5c";  // Start color (e.g., drak blue)
           // let colorEnd = "#c2e7ff";    // End color (e.g., light blue)
-  
+
           // continuousDomainColor = d3.scaleLinear()
           //   .domain([noiseMin, noiseMax])
           //   .range([colorStart, colorEnd])
           //   .interpolate(d3.interpolateHsl);
           // define the color
-          if (d.key){
-            if (d.key=="Selected"){
+          if (d.key) {
+            if (d.key == "Selected") {
               return discreteDomainColor(d.key)
             }
-            else{
+            else {
               return continuousDomainColor(d.key)
             }
           }
-          else{
+          else {
             return continuousDomainColor(d.noise_level)
           }
         }
@@ -1237,53 +1314,53 @@ d3.csv("system_df_v2.csv",function(discreteData){
     //   // add (overall) vs (partial)
     //   if (currentTypeDomain=="Discrete"){
     //     domainLabelsExtension = discreteDomains
-        
+
     //   }else{
-    
+
     //   }
     // }
     // domain names based on different domains
-    
+
   })//end of d3.csv
 })//another end of d3.csv
 
 // define more functions here 
-function makePerformanceView(data,filteredData){
+function makePerformanceView(data, filteredData) {
   heatmap_svg.selectAll("*").remove();
 
   //Add selection for domains later
   var columnNames = Object.keys(data[0]);
-    var iouColumns = columnNames.filter(function(column) {
-        return column.endsWith("_iou");
-    })
+  var iouColumns = columnNames.filter(function (column) {
+    return column.endsWith("_iou");
+  })
   // Labels of row and columns -> unique identifier of the column called 'group' and 'variable'
-  var HorizontalVars = iouColumns.map(function(d){return d.slice(0,-4);}) // horizontal
+  var HorizontalVars = iouColumns.map(function (d) { return d.slice(0, -4); }) // horizontal
 
   // get the domain list for Vertical Vars
-  if (currentTypeDomain=="Discrete"){
+  if (currentTypeDomain == "Discrete") {
     var domainNameList = ["Cityscapes (Overall)", "Synthia (Overall)", "Selected (Partial)"]
   }
-  else{
-    if (continuousDomain=="Noise"){
+  else {
+    if (continuousDomain == "Noise") {
       // no need to think about one domain case specifically, because it could be that one domain is empty in the graph
-      var domain1 = "Noise: 0 " +"(Overall)"
+      var domain1 = "Noise: 0 " + "(Overall)"
       var domain2 = "Noise: " + continuousValue.toString() + " " + "(Overall)"
       // create a list
-      if (continuousValue!=0){
+      if (continuousValue != 0) {
         var domainNameList = [domain1, domain2, "Selected (Partial)"]
       }
-      else{
+      else {
         var domainNameList = [domain1, "Selected (Partial)"]
       }
     }
   }
 
-  data.forEach(function(d) {
-    if (currentTypeDomain=="Discrete"){
+  data.forEach(function (d) {
+    if (currentTypeDomain == "Discrete") {
       d.domainKey = d.dataset;
     }
-    else{
-      if (continuousDomain=="Noise"){
+    else {
+      if (continuousDomain == "Noise") {
         d.domainKey = d.noise_level
       }
     }
@@ -1294,7 +1371,7 @@ function makePerformanceView(data,filteredData){
     .key(d => d.domainKey)
     .entries(data);
 
-  if (filteredData){
+  if (filteredData) {
     // combine the filtered data with the overall data
     nestedData = nestedData.concat({
       key: "Selected",
@@ -1341,7 +1418,7 @@ function makePerformanceView(data,filteredData){
 
   // Build X scales and axis:
   var x = d3.scaleBand()
-    .range([ 0, heatmapWidth ])
+    .range([0, heatmapWidth])
     .domain(HorizontalVars)
     .padding(0.05);
   heatmap_svg.append("g")
@@ -1352,7 +1429,7 @@ function makePerformanceView(data,filteredData){
 
   // Build Y scales and axis:
   var y = d3.scaleBand()
-    .range([ heatmapHeight, 0 ])
+    .range([heatmapHeight, 0])
     .domain(domainNameList)
     .padding(0.05);
   heatmap_svg.append("g")
@@ -1361,7 +1438,7 @@ function makePerformanceView(data,filteredData){
       d3.axisLeft(y)
         .tickSize(0)
         .tickFormat(
-          d => d.split(" ").map(function(word) {
+          d => d.split(" ").map(function (word) {
             return word.trim();
           }).join("\n")
         )
@@ -1379,22 +1456,22 @@ function makePerformanceView(data,filteredData){
   //   .interpolator(d3.interpolateGreens) //interpolate* is sequential single hue
 
   // Three function that change the tooltip when user hover / move / leave a cell
-  var mouseover = function(d) {
+  var mouseover = function (d) {
     tooltip
       .style("opacity", 1)
     d3.select(this)
       .style("stroke", "black")
       .style("opacity", 1)
   }
-  var mousemove = function(d) {
+  var mousemove = function (d) {
     tooltip
       .html("Performance (IoU): " + d.value.toFixed(3))
-      .style("left", (d3.mouse(this)[0]+15) + "px")
-      .style("top", (d3.mouse(this)[1]+15) + "px")
-      // .style("left", (d3.event.pageX + 10) + "px") // Position relative to mouse coordinates
-      // .style("top", (d3.event.pageY + 10) + "px")
+      .style("left", (d3.mouse(this)[0] + 15) + "px")
+      .style("top", (d3.mouse(this)[1] + 15) + "px")
+    // .style("left", (d3.event.pageX + 10) + "px") // Position relative to mouse coordinates
+    // .style("top", (d3.event.pageY + 10) + "px")
   }
-  var mouseleave = function(d) {
+  var mouseleave = function (d) {
     tooltip
       .style("opacity", 0)
     d3.select(this)
@@ -1404,25 +1481,25 @@ function makePerformanceView(data,filteredData){
 
   // add the squares
   heatmap_svg.selectAll()
-    .data(transformedData, function(d) {return d.class+':'+d.domainKey;})
+    .data(transformedData, function (d) { return d.class + ':' + d.domainKey; })
     .enter()
     .append("rect")
-      .attr("x", function(d) { return x(d.class) })
-      .attr("y", function(d) { return y(getDataScope(d.domainKey)) })
-      .attr("rx", 4)
-      .attr("ry", 4)
-      .attr("width", x.bandwidth() )
-      .attr("height", y.bandwidth() )
-      .style("fill", function(d) { return heatmapColor(d.value)} )
-      .style("stroke-width", 4)
-      .style("stroke", "none")
-      .style("opacity", 0.8)
+    .attr("x", function (d) { return x(d.class) })
+    .attr("y", function (d) { return y(getDataScope(d.domainKey)) })
+    .attr("rx", 4)
+    .attr("ry", 4)
+    .attr("width", x.bandwidth())
+    .attr("height", y.bandwidth())
+    .style("fill", function (d) { return heatmapColor(d.value) })
+    .style("stroke-width", 4)
+    .style("stroke", "none")
+    .style("opacity", 0.8)
     .on("mouseover", mouseover)
     .on("mousemove", mousemove)
     .on("mouseleave", mouseleave)
 }
 
-function makeClassDist(data,filteredData,specifiedClassName,setDomainColors){
+function makeClassDist(data, filteredData, specifiedClassName, setDomainColors) {
   d3.select("#classDistPlot").selectAll("*").remove();
   d3.select("#classNameText").selectAll("*").remove();
 
@@ -1430,38 +1507,38 @@ function makeClassDist(data,filteredData,specifiedClassName,setDomainColors){
     .text(specifiedClassName);
 
   var violinPlot = d3.select("#classDistPlot")
-  .append("svg")
+    .append("svg")
     .attr("width", violinWidth + violinMargin.left + violinMargin.right)
     .attr("height", violinHeight + violinMargin.top + violinMargin.bottom)
-  .append("g")
+    .append("g")
     .attr("transform",
-          "translate(" + violinMargin.left + "," + violinMargin.top + ")");
-  
+      "translate(" + violinMargin.left + "," + violinMargin.top + ")");
+
   // className refer to the specific ratio of the semantic segmentation class
-  var className = specifiedClassName.toLowerCase()+"_ratio";
-  var maxClassRatio= d3.max(data,function(d) {
-     return +d[className]; // need the "+" to make it number
-    })
-  
+  var className = specifiedClassName.toLowerCase() + "_ratio";
+  var maxClassRatio = d3.max(data, function (d) {
+    return +d[className]; // need the "+" to make it number
+  })
+
   var y = d3.scaleLinear()
-  .domain([0,maxClassRatio])          // Y scale is set manually (here it's [0,1] because of the ratio of classes)
-  .range([violinHeight, 0])
-  violinPlot.append("g").call(d3.axisLeft(y) )  
+    .domain([0, maxClassRatio])          // Y scale is set manually (here it's [0,1] because of the ratio of classes)
+    .range([violinHeight, 0])
+  violinPlot.append("g").call(d3.axisLeft(y))
 
   // get the list of domains to put on the axis
-  if (currentTypeDomain=="Discrete"){
+  if (currentTypeDomain == "Discrete") {
     var domainNameList = ["Cityscapes (Overall)", "Synthia (Overall)", "Selected (Partial)"]
   }
-  else{
-    if (continuousDomain=="Noise"){
+  else {
+    if (continuousDomain == "Noise") {
       // no need to think about one domain case specifically, because it could be that one domain is empty in the graph
-      var domain1 = "Noise: 0 " +"(Overall)"
+      var domain1 = "Noise: 0 " + "(Overall)"
       var domain2 = "Noise: " + continuousValue.toString() + " " + "(Overall)"
       // create a list
-      if (continuousValue!=0){
+      if (continuousValue != 0) {
         var domainNameList = [domain1, domain2, "Selected (Partial)"]
       }
-      else{
+      else {
         var domainNameList = [domain1, "Selected (Partial)"]
       }
     }
@@ -1469,120 +1546,119 @@ function makeClassDist(data,filteredData,specifiedClassName,setDomainColors){
 
   // Build and Show the X scale. It is a band scale like for a boxplot: each group has an dedicated RANGE on the axis. This range has a length of x.bandwidth
   var x = d3.scaleBand()
-  .range([ 0, violinWidth])
-  .domain(domainNameList) //TODO: change this to also fit continuous domains
-  .padding(0.05)     // This is important: it is the space between 2 groups. 0 means no padding. 1 is the maximum.
+    .range([0, violinWidth])
+    .domain(domainNameList) //TODO: change this to also fit continuous domains
+    .padding(0.05)     // This is important: it is the space between 2 groups. 0 means no padding. 1 is the maximum.
   violinPlot.append("g")
-  .attr("transform", "translate(0," + violinHeight + ")")
-  .call(d3.axisBottom(x))
+    .attr("transform", "translate(0," + violinHeight + ")")
+    .call(d3.axisBottom(x))
 
   // Features of the histogram
   var histogram = d3.histogram()
-        .domain(y.domain())
-        //the original code has 20, use 10 to avoid too detailed range
-        .thresholds(y.ticks(10))    // Important: how many bins approx are going to be made? It is the 'resolution' of the violin plot
-        .value(d => d)
-  
-  data.forEach(function(d) {
-    if (currentTypeDomain=="Discrete"){
+    .domain(y.domain())
+    //the original code has 20, use 10 to avoid too detailed range
+    .thresholds(y.ticks(10))    // Important: how many bins approx are going to be made? It is the 'resolution' of the violin plot
+    .value(d => d)
+
+  data.forEach(function (d) {
+    if (currentTypeDomain == "Discrete") {
       d.group = d.dataset;
     }
-    else{
-      if (continuousDomain=="Noise"){
+    else {
+      if (continuousDomain == "Noise") {
         d.group = d.noise_level
       }
     }
   });
 
-  if (filteredData){
+  if (filteredData) {
     let selectedData = JSON.parse(JSON.stringify(filteredData)) // deepcopy the filterData
-    selectedData.forEach(function(d) {
+    selectedData.forEach(function (d) {
       d.group = "Selected";
     });
     var violinData = data.concat(selectedData)
   }
-  else{
+  else {
     var violinData = data;
   }
 
   // sumstat has the calculated distribution for ratio values in each interval
   var sumstat = d3.nest()  // nest function allows to group the calculation per level of a factor
-    .key(function(d) { return d.group;})
-    .rollup(function(d) {   // For each key..
-      input = d.map(function(g) { return g[className];})    // use the current selected class
+    .key(function (d) { return d.group; })
+    .rollup(function (d) {   // For each key..
+      input = d.map(function (g) { return g[className]; })    // use the current selected class
       bins = histogram(input)   // And compute the binning on it.
-      return(bins)
+      return (bins)
     })
     .entries(violinData)
-  
+
   // What is the biggest number of value in a bin for each group?
   // maxNum is the dictionary for maximum bandwith for each violin, and the range of each violin is defined by the plus and minus of the corresponding max number
   var maxNum = {};
-  sumstat.forEach(function(d) {
+  sumstat.forEach(function (d) {
     var allBins = d.value;
-    var lengths = allBins.map(function(a) { return a.length; });
-    allBins.map(function(bin) {bin.group = d.key})
+    var lengths = allBins.map(function (a) { return a.length; });
+    allBins.map(function (bin) { bin.group = d.key })
     maxNum[d.key] = d3.max(lengths);
   });
   // console.log(JSON.parse(JSON.stringify(sumstat)))
 
-  
-  function calculateDomain(length,key) {
+
+  function calculateDomain(length, key) {
     let xNum = d3.scaleLinear()
       .range([0, x.bandwidth()])
-      .domain([-maxNum[key],maxNum[key]]) 
+      .domain([-maxNum[key], maxNum[key]])
     return xNum(length);
   }
-  
+
   // Add the shape to this svg!
   violinPlot
     .selectAll("myViolin") // not sure why the "myViolin", but it works somehow (shrug)
     .data(sumstat)
     .enter()        // So now we are working group per group
     .append("g")
-      .attr("transform", function(d){
-        return("translate(" + x(getDataScope(d.key)) +" ,0)") 
-      } ) // Translation on the right to be at the group position
-      .style("fill", function (d) {
-        // console.log("discrete color:",discreteDomainColor(d.key))
-        //  console.log("set: ",setDomainColors(d))
-         return setDomainColors(d) 
-        } )
+    .attr("transform", function (d) {
+      return ("translate(" + x(getDataScope(d.key)) + " ,0)")
+    }) // Translation on the right to be at the group position
+    .style("fill", function (d) {
+      // console.log("discrete color:",discreteDomainColor(d.key))
+      //  console.log("set: ",setDomainColors(d))
+      return setDomainColors(d)
+    })
     .append("path")
-        .datum(function(d){ return(d.value)} )     // So now we are working bin per bin
-        .style("stroke", "none")
-        .attr("d", d3.area()
-            .x0(function(d){ 
-              // return(xNum(-d.length)) 
-              return calculateDomain(-d.length,d.group)
-            })
-            .x1(function(d){ 
-              // return(xNum(d.length)) 
-              return calculateDomain(d.length,d.group)
-            })
-            .y(function(d){ return(y(d.x0)) } )
-            .curve(d3.curveCatmullRom)    // This makes the line smoother to give the violin appearance. Try d3.curveStep to see the difference
-        )
-  } 
+    .datum(function (d) { return (d.value) })     // So now we are working bin per bin
+    .style("stroke", "none")
+    .attr("d", d3.area()
+      .x0(function (d) {
+        // return(xNum(-d.length)) 
+        return calculateDomain(-d.length, d.group)
+      })
+      .x1(function (d) {
+        // return(xNum(d.length)) 
+        return calculateDomain(d.length, d.group)
+      })
+      .y(function (d) { return (y(d.x0)) })
+      .curve(d3.curveCatmullRom)    // This makes the line smoother to give the violin appearance. Try d3.curveStep to see the difference
+    )
+}
 
-  function getDataScope(key){
-    if (key=="Selected"){
-      // the scope of let is only this "if" function
-      let dataScope="(Partial)"
-      return key+" "+dataScope
+function getDataScope(key) {
+  if (key == "Selected") {
+    // the scope of let is only this "if" function
+    let dataScope = "(Partial)"
+    return key + " " + dataScope
+  }
+  else {
+    var dataScope = "(Overall)"
+    if (currentTypeDomain == "Discrete") {
+      return key + " " + dataScope
     }
     else {
-      var dataScope="(Overall)"
-      if (currentTypeDomain=="Discrete"){
-        return key+" "+dataScope
+      if (continuousDomain == "Noise") {
+        // console.log("Noise: "+ key.toString() +dataScope)
+        return "Noise: " + key.toString() + " " + dataScope
       }
-      else{
-        if (continuousDomain=="Noise"){
-          // console.log("Noise: "+ key.toString() +dataScope)
-          return "Noise: "+ key.toString() +" " + dataScope
-        }
-      }
-    } 
+    }
   }
+}
 
-  
