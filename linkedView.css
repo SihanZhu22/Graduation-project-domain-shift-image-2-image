@@ -1,7 +1,7 @@
 #domainSelection{
   float: left;
   width: 22%;
-  height: 15%;
+  height: 10%;
   /* change the background color to see the div more clearly */
   /* background-color: grey; */
   outline:1px solid black;
@@ -97,7 +97,7 @@ li:hover {
   appearance: none;
   width: 25px;
   height: 25px;
-  background: #04AA6D;
+  background: black;
   cursor: pointer;
 }
 
@@ -119,28 +119,36 @@ li:hover {
 
 /* points outside of the box are more transparent */
 .points{
-  opacity: 1;
+  opacity: 0.75;
+}
+
+.not-used-points{
+  /* to fill grey */
+  /* fill:grey !important; */
+  opacity: 0.25 !important;
+  /* to fill grey */
+  /* fill:#C0C0C0 !important; */
 }
 
 .instance-point {
   position:relative;
   opacity: 1 !important;
   stroke: red;
-  stroke-width: 3px;
+  stroke-width: 2px;
   z-index:9999;
 }
 
 .viewed-selected-points {
   opacity: 1 !important;
-  stroke: #bc5090;
-  stroke-width: 2px;
-  z-index:2
+  stroke: black;
+  stroke-width: 1.5px;
+  z-index:2;
 }
 
 .viewed-not-selected-points {
   opacity: 1 !important;
-  stroke: yellow;
-  stroke-width: 2px;
+  stroke: black;
+  stroke-width: 1.5px;
   z-index:2
 }
 
@@ -150,11 +158,11 @@ li:hover {
 }
 
 .viewedSelectedImage {
-  border: 3px solid #bc5090 !important;
+  border: 1px solid black !important;
 }
 
 .viewedNotSelectedImage {
-  border: 3px solid yellow !important;
+  border: 1px solid black !important;
 }
 
 .instanceImage {

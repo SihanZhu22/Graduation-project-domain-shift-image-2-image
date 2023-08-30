@@ -2,7 +2,7 @@
 var discreteDomains = ["Cityscapes", "Synthia"]
 var discreteDomainColor = d3.scaleOrdinal()
   .domain(["Selected", "Cityscapes", "Synthia"])
-  .range(["#D6D6D6", "#003f5c", "#ffa600"])
+  .range(["#D6D6D6", "#ffa600", "#003f5c"])
 
 // setup for selection of domains
 
@@ -105,7 +105,7 @@ var legendHeight = 20;
 // color scale
 const heatmapColor = d3.scaleSequential()
   .domain([0, 1]) // Range of values for the color scale
-  .interpolator(d3.interpolateGreens); // Color interpolation function (interpolate* is sequential single hue)
+  .interpolator(d3.interpolateGreys); // Color interpolation function (interpolate* is sequential single hue)
 
 var legendContainer = d3.select("#heatmapLegend")
   .append("svg")
@@ -211,7 +211,7 @@ var activation_svg = d3.select("#activationsScatter")
 //   .text("Instance-level model activaitons");
 
 //Read the data
-d3.csv("system_df_v2.csv", function (discreteData) {
+d3.csv("system_df_v3.csv", function (discreteData) {
   d3.csv("noise_df.csv", function (noiseData) {
     // create global variables
     currentTypeDomain = "Continuous"
@@ -234,13 +234,13 @@ d3.csv("system_df_v2.csv", function (discreteData) {
         // dynamically add the legend for domain
         // Create the first SVG element
         var datasetNameSvg1 = d3.select("#imgDatasetNames").append("svg").attr("width", "49%").attr("height", "25");
-        datasetNameSvg1.append("circle").attr("cx", "30").attr("cy", "10").attr("r", "6").attr("fill", "#003f5c");
+        datasetNameSvg1.append("circle").attr("cx", "30").attr("cy", "10").attr("r", "6").attr("fill", discreteDomainColor("Cityscapes"));
         datasetNameSvg1.append("text").attr("x", "50%").attr("y", "15").attr("text-anchor", "middle")
           .attr("font-size", "14").text("Cityscapes");
 
         // Create the second SVG element
         var datasetNameSvg2 = d3.select("#imgDatasetNames").append("svg").attr("width", "49%").attr("height", "25");
-        datasetNameSvg2.append("circle").attr("cx", "30").attr("cy", "10").attr("r", "6").attr("fill", "#ffa600");
+        datasetNameSvg2.append("circle").attr("cx", "30").attr("cy", "10").attr("r", "6").attr("fill", discreteDomainColor("Synthia"));
         datasetNameSvg2.append("text").attr("x", "50%").attr("y", "15").attr("text-anchor", "middle")
           .attr("font-size", "14").text("Synthia");
 
@@ -259,17 +259,22 @@ d3.csv("system_df_v2.csv", function (discreteData) {
           // create color mapping function
           let noiseMin = d3.min(noiseData, function (d) { return d.noise_level; });
           let noiseMax = d3.max(noiseData, function (d) { return d.noise_level; });
-          let colorStart = "#003f5c";  // Start color (e.g., drak blue)
-          let colorEnd = "#c2e7ff";    // End color (e.g., light blue)
+          let colorStart = "#c7e9c0";  // Start color (e.g., drak blue)
+          let colorEnd = "#006d2c";    // End color (e.g., light blue)
 
-          continuousDomainColor = d3.scaleLinear()
-            .domain([noiseMin, noiseMax])
-            .range([colorStart, colorEnd])
-            .interpolate(d3.interpolateHsl);
+
+          continuousDomainColor = d3.scaleSequential()
+              .domain([0, 5])
+              .interpolator(d3.interpolateHcl("blue", "pink")); 
+
+          // continuousDomainColor = d3.scaleLinear()
+          //   .domain([noiseMin, noiseMax])
+            // .range([colorStart, colorEnd])
+            // .interpolate(d3.interpolateHsl);
           // dynamically add the legend for domain
           // Create the first SVG element
           var datasetNameSvg1 = d3.select("#imgDatasetNames").append("svg").attr("width", "49%").attr("height", "25");
-          datasetNameSvg1.append("circle").attr("cx", "30").attr("cy", "10").attr("r", "6").attr("fill", "#003f5c");
+          datasetNameSvg1.append("circle").attr("cx", "30").attr("cy", "10").attr("r", "6").attr("fill", continuousDomainColor(0));
           datasetNameSvg1.append("text").attr("x", "50%").attr("y", "15").attr("text-anchor", "middle")
             .attr("font-size", "14").text("Noise: 0");
 
@@ -438,7 +443,7 @@ d3.csv("system_df_v2.csv", function (discreteData) {
         .append("circle")
         .attr("cx", function (d) { return x(d.tsne_1) })
         .attr("cy", function (d) { return y(d.tsne_2) })
-        .attr("r", 2.5)
+        .attr("r", 3.5)
         .style("fill", function (d) { return setDomainColors(d) })
         .classed("points", true)
 
@@ -455,7 +460,13 @@ d3.csv("system_df_v2.csv", function (discreteData) {
           .extent([[0, 0], [inputWidth, inputHeight]]) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
           .on("brush start", function () {
             updateChart_start(myPoint, x, y); // Invoke the function inside the event handler
-          }), { passive: true }
+          })
+          .on("end", function () {
+            if (!d3.event.selection) {
+              updateChart_end(myPoint, x, y); // Invoke the function when the brush selection is cleared
+            }
+          }),
+          { passive: true }
         )
     }
 
@@ -541,9 +552,15 @@ d3.csv("system_df_v2.csv", function (discreteData) {
         updateMultipleViews(newFilteredData)
       }
     }
-    // function updateChart_end(){
+    function updateChart_end(){
+      // make all of the points "normal" again (without any other class)
+      d3.selectAll(".points").classed("not-used-points",false);
+      d3.selectAll(".points").classed("instance-point",false);
+      d3.selectAll(".points").classed("viewed-selected-points",false);
+      d3.selectAll(".points").classed("viewed-not-selected-points",false);
 
-    // }
+      // TODO: maybe clear all the other views too
+    }
 
     function updateMultipleViews(filteredData) {
       if (filteredData.length > 0) {
@@ -718,6 +735,9 @@ d3.csv("system_df_v2.csv", function (discreteData) {
       d3.selectAll(".points").classed("instance-point", function (d) {
         return d.tsne_1 === filteredData[first_index].tsne_1 && d.tsne_2 === filteredData[first_index].tsne_2
       });
+      // first turn off the not-used-points class before adding new ones
+      d3.selectAll(".not-used-points").classed("not-used-points", false);
+
       const maxImages = 100;
       var numDomain1 = 0;
       var numDomain2 = 0;
@@ -976,9 +996,12 @@ d3.csv("system_df_v2.csv", function (discreteData) {
               .attr('preserveAspectRatio', 'xMinYMin meet');
           }
         }
-        // find all the cityscapes data in filtered data
       }
-      // return countCheckbox;
+      d3.selectAll(".points")
+        .filter(function() {
+          return !d3.select(this).classed("instance-point") && !d3.select(this).classed("viewed-selected-points") && !d3.select(this).classed("viewed-not-selected-points");
+        })
+        .classed("not-used-points", true);
     }
 
 
@@ -1038,6 +1061,21 @@ d3.csv("system_df_v2.csv", function (discreteData) {
 
       var imageSize = 150;
       var spacing = 20;
+      var showType;
+
+      if (currentTypeDomain=="Discrete") {
+        showType = "label"
+        instance.show_path = instance.label_path
+        second_instance.show_path = second_instance.label_path
+      }
+      else{
+        showType = "label"
+        instance.show_path = instance.label_path
+        if (continuousValue!=0){
+          second_instance.show_path = second_instance.label_path
+        }
+      }
+      
 
       var mask = d3.select("#maskSimilarity").append("svg")
         .attr("width", imageSize)
@@ -1051,17 +1089,17 @@ d3.csv("system_df_v2.csv", function (discreteData) {
       // .style("margin-bottom", spacing/2 + "px")
 
       mask.append('image')
-        .attr('xlink:href', instance.label_path)
+        .attr('xlink:href', instance.show_path)
         .attr('width', imageSize)
         .attr('height', imageSize);
 
       mask.append('text') // Add title text
-        .text("Current: (" + instance_type + ")")
+        .text("Current "+showType+": (" + instance_type + ")")
         .attr('x', imageSize / 2) //center it horizontally within the container
         .attr('y', -5)
         .attr('text-anchor', 'middle')
-        .attr('font-size', '12px')
-        .style("fill", setDomainColors(instance)); //but I want background color
+        .attr('font-size', '10px')
+        .style("fill", setDomainColors(instance)); 
 
       if (currentTypeDomain == "Discrete" || continuousValue != 0) {
         var second_mask = d3.select("#maskSimilarity").append("svg")
@@ -1072,16 +1110,16 @@ d3.csv("system_df_v2.csv", function (discreteData) {
           .attr("transform", "translate(0, " + spacing + ")"); // Adjust the y-coordinate for spacing
 
         second_mask.append('image')
-          .attr('xlink:href', second_instance.label_path)
+          .attr('xlink:href', second_instance.show_path)
           .attr('width', imageSize)
           .attr('height', imageSize);
 
         second_mask.append('text') // Add title text
-          .text("Corresponding: (" + second_instance_type + ")")
+          .text("Corresponding "+showType+": (" + second_instance_type + ")")
           .attr('x', imageSize / 2) //center it horizontally within the container
           .attr('y', -5)
           .attr('text-anchor', 'middle')
-          .attr('font-size', '12px')
+          .attr('font-size', '10px')
           .style("fill", setDomainColors(second_instance));
       }else{
         second_mask=0
@@ -1103,13 +1141,16 @@ d3.csv("system_df_v2.csv", function (discreteData) {
     function highlightPatches(x,y,mask,second_mask,extentActivation,imageSize){
       // repeat the definition for x and y (which is the same as the model activations graph)
       // this is useful for checking the brushed points.
-
       var brushedActivations = combinedList.filter(function (d) { 
         // console.log("brushed",isBrushed(extent, x(d[0]), y(d[1]) ))
         return isBrushed(extentActivation, x(d[0]), y(d[1])) }
       )
-      
       if (brushedActivations.length>0){
+        var brushedActivations = combinedList.filter(function (d) { 
+          // console.log("brushed",isBrushed(extent, x(d[0]), y(d[1]) ))
+          return isBrushed(extentActivation, x(d[0]), y(d[1])) }
+        )
+
         activationListLength = first_activations_parsed.length
         var brushedIndices = brushedActivations.map(function(d){return combinedList.indexOf(d)})
         var brushIndicesFirst = brushedIndices.filter(function(d){return d<activationListLength})
@@ -1247,8 +1288,9 @@ d3.csv("system_df_v2.csv", function (discreteData) {
         .append("circle")
         .attr("cx", function (d) { return x(d[0]) })
         .attr("cy", function (d) { return y(d[1]) })
-        .attr("r", 2.5)
+        .attr("r", 3.5)
         .style("fill", setDomainColors(instance))
+        .style("opacity",0.9)
 
       //Add dots for the other dataset
       if (second_instance) {
@@ -1259,8 +1301,9 @@ d3.csv("system_df_v2.csv", function (discreteData) {
           .append("circle")
           .attr("cx", function (d) { return x(d[0]) })
           .attr("cy", function (d) { return y(d[1]) })
-          .attr("r", 2.5)
+          .attr("r", 3.5)
           .style("fill", setDomainColors(second_instance))
+          .style("opacity",0.9)
       }
 
       // this removes the x and y axis from the scatter plot
@@ -1284,16 +1327,6 @@ d3.csv("system_df_v2.csv", function (discreteData) {
       }
       else {
         if (continuousDomain == "Noise") {
-          // range of noise (color domain)
-          // let noiseMin = d3.min(noiseData,function(d) { return d.noise_level; });
-          // let noiseMax = d3.max(noiseData,function(d) { return d.noise_level; });
-          // let colorStart = "#003f5c";  // Start color (e.g., drak blue)
-          // let colorEnd = "#c2e7ff";    // End color (e.g., light blue)
-
-          // continuousDomainColor = d3.scaleLinear()
-          //   .domain([noiseMin, noiseMax])
-          //   .range([colorStart, colorEnd])
-          //   .interpolate(d3.interpolateHsl);
           // define the color
           if (d.key) {
             if (d.key == "Selected") {
