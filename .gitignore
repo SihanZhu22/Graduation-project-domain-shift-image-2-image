@@ -1,4 +1,7 @@
-dataset/
+/dataset/*
+!/dataset/original_cityscapes_inputs
+!/dataset/5_classes_preprocessed/
 models/
 *.ipynb_checkpoints
 *.pkl
+*.csv
