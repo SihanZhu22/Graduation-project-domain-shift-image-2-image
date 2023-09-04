@@ -4,3 +4,6 @@ For running the checking activations specifically, you need to navigate to jupyt
 
 link for the cityscapes label file (referred as "pickle_file" in the code): https://drive.google.com/drive/folders/1qmGDGO_nt9WrGqOt7YMgSSTMGBAw_GiT?usp=sharing
 
+Note that this project uses Python 3.6.5
+
+
