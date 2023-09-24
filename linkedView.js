@@ -2,7 +2,7 @@
 var discreteDomains = ["Cityscapes", "Synthia"]
 var discreteDomainColor = d3.scaleOrdinal()
   .domain(["Selected", "Cityscapes", "Synthia"])
-  .range(["#D6D6D6", "#ffa600", "#003f5c"])
+  .range(["#D6D6D6", "#1f78b4", "#b2df8a"])
 
 // setup for selection of domains
 
@@ -211,8 +211,10 @@ var activation_svg = d3.select("#activationsScatter")
 //   .text("Instance-level model activaitons");
 
 //Read the data
-d3.csv("system_df_v3.csv", function (discreteData) {
-  d3.csv("noise_df.csv", function (noiseData) {
+// d3.csv("system_df_v3.csv", function (discreteData) {
+d3.csv("system_df_small_sample.csv", function (discreteData) {
+  // d3.csv("noise_df.csv", function (noiseData) {
+  d3.csv("noisy_data_sample_200.csv", function (noiseData) {
     // create global variables
     currentTypeDomain = "Continuous"
     continuousDomain = "Noise"
@@ -382,7 +384,7 @@ d3.csv("system_df_v3.csv", function (discreteData) {
 
       // Convert the strings in the "tsne_1" and "tsne_2" column to numbers
       if (optionParent.includes("Direct")) {
-        if (Option == "PCA + t-SNE") {
+        if (Option == "t-SNE") {
           data.forEach(function (d) {
             d.tsne_1 = +d.simple_tsne_1;
             d.tsne_2 = +d.simple_tsne_2
@@ -392,6 +394,12 @@ d3.csv("system_df_v3.csv", function (discreteData) {
           data.forEach(function (d) {
             d.tsne_1 = +d.pca_1; //TODO: change the tsne_1 to something else
             d.tsne_2 = +d.pca_2;
+          });
+        }
+        else if (Option == "UMAP") {
+          data.forEach(function (d) {
+            d.tsne_1 = +d.umap_1; //TODO: change the tsne_1 to something else
+            d.tsne_2 = +d.umap_2;
           });
         }
         else {
@@ -1010,11 +1018,17 @@ d3.csv("system_df_v3.csv", function (discreteData) {
         // call the first instance in filterData as default
         // todo (maybe):find the first instance that are selected
         selectedInstance = filteredData[0];
-        instanceActivations(selectedInstance)
+        instanceActivations(selectedInstance,"t-SNE") // add current option here
+        d3.select("#modelSpaceDRMethod").on("click", function(d) {
+          // recover the option that has been chosen
+          var selectedOption = d3.select(this).property("value")
+          // run the updateChart function with this selected option
+          instanceActivations(selectedInstance,selectedOption)
+      })
       }
     }
 
-    function instanceActivations(instance) {
+    function instanceActivations(instance,activationDR) {
       if (currentTypeDomain == "Discrete") {
         var second_instance_path = instance.similar_image_paths;
         var second_instance = data.find(function (d) {
@@ -1038,8 +1052,7 @@ d3.csv("system_df_v3.csv", function (discreteData) {
                 return d.noise_level === 0 && d.name === instance.name;
               }
               // return (d.noise_level ==0)? (d.name === instance.name && d.noise_level === continuousValue) : (d.name === instance.name && d.noise_level === 0);
-            }
-            );
+            });
             second_instance_path = second_instance.image_path
           }
         }
@@ -1051,10 +1064,11 @@ d3.csv("system_df_v3.csv", function (discreteData) {
       // var instance_type, second_instance_type = 
       let x,y
       if (second_instance) {
-        [x,y]=activation_list_to_graph(instance, second_instance)
+        [x,y]=activation_list_to_graph(instance, second_instance,activationDR)
       }
       else {
-        [x,y]=activation_list_to_graph(instance)
+        [x,y]=activation_list_to_graph(instance,0,activationDR)
+        // giving 0 to second_instance because otherwise the activationsDR will be recognized as second_instance
       }
       // measuere the height of a div
       // var offsetHeight = document.getElementById('maskSimilarity').offsetHeight;
@@ -1226,15 +1240,28 @@ d3.csv("system_df_v3.csv", function (discreteData) {
       return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;    // This return TRUE or FALSE depending on if the points is in the selected area
     }
 
-    function activation_list_to_graph(instance, second_instance) {
-      // dataset_types = ["Cityscapes", "Synthia" ];
-
+    function activation_list_to_graph(instance, second_instance, activationsDR) {
+      dataset_types = ["Cityscapes", "Synthia" ];
+      if (activationsDR == "t-SNE"){
+        instance.bottleneck_activations_embedding = instance.bottleneck_tsne_embedding
+        second_instance.bottleneck_activations_embedding = second_instance.bottleneck_tsne_embedding
+      }
+      else if(activationsDR == "PCA"){
+        instance.bottleneck_activations_embedding = instance.bottleneck_pca_embedding
+        second_instance.bottleneck_activations_embedding = second_instance.bottleneck_pca_embedding
+      }
+      // else if(activationsDR == "UMAP"){
+      //   instance.bottleneck_activations_embedding = instance.bottleneck_umap_embedding
+      //   second_instance.bottleneck_activations_embedding = second_instance.bottleneck_umap_embedding
+      // }
+      
       // find the domain for the second instance
       if (currentTypeDomain == "Discrete") {
         instance_type = instance.dataset
         second_instance_type = second_instance.dataset
+        instance.similar_IoU_score = +instance.similar_IoU_score
         activation_svg.append("text")
-          .text("Similarity score for masks:" + instance.similar_IoU_score)
+          .text("Similarity score for masks:" + instance.similar_IoU_score.toFixed(3))
           .style("font-size", "15px")
           // fill it with black color to actually see it
           .style("fill", "black");
@@ -1242,6 +1269,7 @@ d3.csv("system_df_v3.csv", function (discreteData) {
       else {
         if (continuousDomain == "Noise") {
           instance_type = "Noise: " + instance.noise_level.toString()
+          console.log(second_instance)
           if (second_instance) {
             second_instance_type = "Noise: " + second_instance.noise_level.toString()
           }
@@ -1249,7 +1277,7 @@ d3.csv("system_df_v3.csv", function (discreteData) {
         }
       }
 
-      first_activations_parsed = JSON.parse(instance.bottleneck_activations_embedding);
+      first_activations_parsed = JSON.parse(instance.bottleneck_activations_embedding); // change this to more general things
       if (second_instance) {
         second_activations_parsed = JSON.parse(second_instance.bottleneck_activations_embedding);
         combinedList = first_activations_parsed.concat(second_activations_parsed);
@@ -1259,7 +1287,7 @@ d3.csv("system_df_v3.csv", function (discreteData) {
       }
       // use the combined list to find the range of graph
 
-      // input view: range for each dimension
+      // range for each dimension
       let min_1 = d3.min(combinedList, function (d) { return d[0]; });
       let max_1 = d3.max(combinedList, function (d) { return d[0]; });
       let min_2 = d3.min(combinedList, function (d) { return d[1]; });
