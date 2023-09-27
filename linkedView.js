@@ -33,7 +33,7 @@ var violinPlot = d3.select("#classDistPlot")
 // setup for input view
 
 // set the dimensions and margins of the graph
-const margin_of_input = { top: 10, right: 10, bottom: 10, left: 10 },
+const margin_of_input = { top: 10, right: 10, bottom: 15, left:15},
   inputWidth = 460 - margin_of_input.left - margin_of_input.right,
   inputHeight = 400 - margin_of_input.top - margin_of_input.bottom;
 
@@ -130,11 +130,9 @@ gradient.selectAll("stop")
   .enter()
   .append("stop")
   .attr("offset", (d, i) => {
-    // console.log("Offset:", (i * numColorStops) + "%");
     return (i * 10) + "%"
   })
   .attr("stop-color", (d) => {
-    // console.log("Stop Color:", heatmapColor(d));
     return heatmapColor(d);
   });
 
@@ -226,13 +224,14 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
 
     initializeViews()
 
-    function initializeViews() {
+    function initializeViews(changingNoise=false) {
       // initialize some views
       svg.selectAll("*").remove();
       d3.select("#imgDatasetNames").selectAll("*").remove();
       if (currentTypeDomain == "Discrete") {
         // after this 
         data = discreteData
+        originalData = discreteData // global variable specifically for range calculation of input scatter plot
         // dynamically add the legend for domain
         // Create the first SVG element
         var datasetNameSvg1 = d3.select("#imgDatasetNames").append("svg").attr("width", "49%").attr("height", "25");
@@ -250,20 +249,19 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
         makeInputView(discreteData, "t-SNE", "Latent»");
         makePerformanceView(data = discreteData)
         var currentViolinClass = "Road"
-        makeClassDist(data = discreteData, filteredData = 0, specifiedClassName = currentViolinClass, setDomainColors = setDomainColors);
+        makeClassDist(data = discreteData, filteredDataClass = 0, specifiedClassName = currentViolinClass, setDomainColors = setDomainColors);
       }
       else {
         // change the makeInputView
         // makeInputView(noiseData,"Classifier embedding")
         if (continuousDomain == "Noise") {
           data = noiseData
-
+          originalData = noiseData // global variable specifically for range calculation of input scatter plot
           // create color mapping function
           let noiseMin = d3.min(noiseData, function (d) { return d.noise_level; });
           let noiseMax = d3.max(noiseData, function (d) { return d.noise_level; });
           let colorStart = "#c7e9c0";  // Start color (e.g., drak blue)
           let colorEnd = "#006d2c";    // End color (e.g., light blue)
-
 
           continuousDomainColor = d3.scaleSequential()
               .domain([0, 5])
@@ -291,7 +289,7 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
             var datasetNameSvg2 = d3.select("#imgDatasetNames").append("svg").attr("width", "49%").attr("height", "25");
           }
           var noiseDataOriginal = noiseData.filter(function (d) { return d.noise_level == 0 })
-          if (continuousValue) {
+          if (continuousValue) { // if current noise level is not 0
             var noiseDataCurrent = noiseData.filter(function (d) { return d.noise_level == continuousValue })
             // noiseSelectedData is global
             noiseSelectedData = noiseDataOriginal.concat(noiseDataCurrent);
@@ -299,7 +297,7 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
           else {
             noiseSelectedData = noiseDataOriginal;
           }
-          // check and use the current embedding method if needed
+          // make input view (tsne->latent by default)
           if (typeof embeddingMethodsText !== 'undefined') {
             var embeddingMethodsParts = embeddingMethodsText.split('» ');
             var Option = embeddingMethodsParts[1]
@@ -310,14 +308,41 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
             makeInputView(noiseSelectedData, "t-SNE", "Latent»");
           }
 
+          // create the performance view and class distribution
+          makePerformanceView(data = noiseSelectedData)
+          var currentViolinClass = "Road";
+          makeClassDist(data = noiseSelectedData, filteredDataClass = 0, specifiedClassName = currentViolinClass, setDomainColors = setDomainColors)
           // get noise level and make colors
           // TODO: if there are current selected noise level, use the current one; otherwise, use "Latent"
-          var currentViolinClass = "Road";
-          makeClassDist(data = noiseSelectedData, filteredData = 0, specifiedClassName = currentViolinClass, setDomainColors = setDomainColors)
-          makePerformanceView(data = noiseSelectedData) //TODO: major improve for this one  
+          if (changingNoise){ // change this to something else
+            // (stuck) remove brushing selection from input view 
+
+            // update the filteredData to the new "filteredData", which has the same 
+            var filteredWithoutNoise = filteredDataImageView.filter(function (d) { return d.noise_level == 0; })
+            if (continuousValue!=0){
+              // function for filtering instances in 
+              function filterDataByNames(dataset1, dataset2) {
+                return dataset1.filter(item1 => dataset2.some(item2 => item2.name === item1.name));
+              }
+              // find all the intances in data with same names as filteredWithoutNoise
+              var filteredSameNames = filterDataByNames(originalData,filteredWithoutNoise);
+              // filter the current level of noise
+              var filteredSpecificNoise = filteredSameNames.filter(function(d){return d.noise_level ==continuousValue})
+              filteredDataUpdated = filteredWithoutNoise.concat(filteredSpecificNoise)
+            }
+            else{
+              filteredDataUpdated = filteredWithoutNoise
+            }
+            // console.log("filteredDataUpdated\n",JSON.parse(JSON.stringify(filteredDataUpdated)))
+            var newFilteredData = modifyFiltered(filteredDataUpdated)
+            updateImages(newFilteredData)
+            updateActivations(newFilteredData)
+            // update the image view based on the previous images
+            // update model view based on the previous selected images
+          }
         }
-      }
       // always use all the arguments because the missing argument is undefined
+      }
     }
 
     // event listener for domain selection
@@ -348,14 +373,19 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
 
       // Do something with the selected value
       continuousValue = +selectedValue
-      initializeViews()
+      if (typeof filteredDataImageView!=="undefined"){//first check that there are some previous filter data
+        initializeViews(changingNoise=true)
+      }
+      else{
+        initializeViews(changingNoise=false)
+      }
     });
 
     // event listener for class dist
     var classDropdown = d3.selectAll("#classDropdown .child li");
     classDropdown.on("click", function () {
       const selectedOption = d3.select(this).text().trim();
-      makeClassDist(data = data, filteredData = 0, specifiedClassName = selectedOption, setDomainColors = setDomainColors)
+      makeClassDist(data = data, filteredDataClass = 0, specifiedClassName = selectedOption, setDomainColors = setDomainColors)
     })
 
     const embeddingMethodsItems = d3.selectAll('#embeddingMethods .child li');
@@ -377,6 +407,13 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
     function makeInputView(data, Option, optionParent) {
       // remove the previous text and add new text
       svg.selectAll("*").remove();
+
+      //todo: get the clear brush to work!
+      // if (typeof brush !== 'undefined'){
+      //   // brush.move(svg, null);
+      //   svg.call(brush.move, null);
+      // }
+
       d3.select("#currentEmbeddingMethod").selectAll("*").remove();
       embeddingMethodsText = optionParent + "» " + Option
       d3.select("#currentEmbeddingMethod").append("text")
@@ -386,20 +423,35 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
       if (optionParent.includes("Direct")) {
         if (Option == "t-SNE") {
           data.forEach(function (d) {
-            d.tsne_1 = +d.simple_tsne_1;
-            d.tsne_2 = +d.simple_tsne_2
+            d.embedding_1 = +d.simple_tsne_1;
+            d.embedding_2 = +d.simple_tsne_2
+          });
+          // for range calculation
+          originalData.forEach(function (d) {
+            d.embedding_1 = +d.simple_tsne_1;
+            d.embedding_2 = +d.simple_tsne_2
           });
         }
         else if (Option == "PCA") {
           data.forEach(function (d) {
-            d.tsne_1 = +d.pca_1; //TODO: change the tsne_1 to something else
-            d.tsne_2 = +d.pca_2;
+            d.embedding_1 = +d.pca_1; //TODO: change the tsne_1 to something else
+            d.embedding_2 = +d.pca_2;
+          });
+          // for range calculation
+          originalData.forEach(function (d) {
+            d.embedding_1 = +d.pca_1; //TODO: change the tsne_1 to something else
+            d.embedding_2 = +d.pca_2;
           });
         }
         else if (Option == "UMAP") {
           data.forEach(function (d) {
-            d.tsne_1 = +d.umap_1; //TODO: change the tsne_1 to something else
-            d.tsne_2 = +d.umap_2;
+            d.embedding_1 = +d.umap_1; //TODO: change the tsne_1 to something else
+            d.embedding_2 = +d.umap_2;
+          });
+          // for range calculation
+          originalData.forEach(function (d) {
+            d.embedding_1 = +d.umap_1; //TODO: change the tsne_1 to something else
+            d.embedding_2 = +d.umap_2;
           });
         }
         else {
@@ -409,8 +461,12 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
       else if (optionParent.includes("Latent")) {
         if (Option == "t-SNE") {
           data.forEach(function (d) {
-            d.tsne_1 = +d.meaningful_tsne_1;
-            d.tsne_2 = +d.meaningful_tsne_2;
+            d.embedding_1 = +d.meaningful_tsne_1;
+            d.embedding_2 = +d.meaningful_tsne_2;
+          });
+          originalData.forEach(function (d) {
+            d.embedding_1 = +d.meaningful_tsne_1;
+            d.embedding_2 = +d.meaningful_tsne_2;
           });
         }
         else {
@@ -421,12 +477,16 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
         console.log("Current Selection: ", Option);
         console.warn("Error with selection!!");
       }
+      // console.log(data)
+      // console.log("data\n",JSON.parse(JSON.stringify(data)));
+      // console.log(originalData)
+      // console.log("originalData\n",JSON.parse(JSON.stringify(originalData)));
 
       // input view: range for each dimension
-      const min_dim_1 = d3.min(data, function (d) { return d.tsne_1; });
-      const max_dim_1 = d3.max(data, function (d) { return d.tsne_1; });
-      const min_dim_2 = d3.min(data, function (d) { return d.tsne_2; });
-      const max_dim_2 = d3.max(data, function (d) { return d.tsne_2; });
+      const min_dim_1 = d3.min(originalData, function (d) { return d.embedding_1; });
+      const max_dim_1 = d3.max(originalData, function (d) { return d.embedding_1; });
+      const min_dim_2 = d3.min(originalData, function (d) { return d.embedding_2; });
+      const max_dim_2 = d3.max(originalData, function (d) { return d.embedding_2; });
 
       // Add X axis
       var x = d3.scaleLinear()
@@ -443,14 +503,15 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
       var yAxis = svg.append("g")
         .call(d3.axisLeft(y));
 
+      
       // Add dots
       var myPoint = svg.append('g')
         .selectAll("dot")
         .data(data)
         .enter()
         .append("circle")
-        .attr("cx", function (d) { return x(d.tsne_1) })
-        .attr("cy", function (d) { return y(d.tsne_2) })
+        .attr("cx", function (d) { return x(d.embedding_1) })
+        .attr("cy", function (d) { return y(d.embedding_2) })
         .attr("r", 3.5)
         .style("fill", function (d) { return setDomainColors(d) })
         .classed("points", true)
@@ -463,19 +524,19 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
       // the non-passive event listener is not because of it's within a function; 
       // however, might still be a nice thing to move it outside of the makeInputView function at some point
       // issues are with x,y,and myPoint: could declare them to be global, but not sure how that would affect other plots
+      brush = d3.brush()                 // Add the brush feature using the d3.brush function
+                  .extent([[0, 0], [inputWidth, inputHeight]]) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+                  .on("brush start", function () {
+                    updateChart_start(myPoint, x, y); // Invoke the function inside the event handler
+                  })
+                  .on("end", function () {
+                    if (!d3.event.selection) {
+                      updateChart_end(myPoint, x, y); // Invoke the function when the brush selection is cleared
+                    }
+                  }),
+                  { passive: true }
       svg
-        .call(d3.brush()                 // Add the brush feature using the d3.brush function
-          .extent([[0, 0], [inputWidth, inputHeight]]) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
-          .on("brush start", function () {
-            updateChart_start(myPoint, x, y); // Invoke the function inside the event handler
-          })
-          .on("end", function () {
-            if (!d3.event.selection) {
-              updateChart_end(myPoint, x, y); // Invoke the function when the brush selection is cleared
-            }
-          }),
-          { passive: true }
-        )
+        .call(brush)
     }
 
     // Add interaction with clicking
@@ -488,6 +549,7 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
         var original_id = d3.select(".instanceImage").attr("id").split("-")[1];
         var original_instance = data.filter(function (d) { return d.id == original_id; })[0];
 
+        // check and change the selected image
         if (original_instance.selected == true) {
           d3.selectAll(".instanceImage").classed("viewedSelectedImage", true)
           d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function (d) {
@@ -522,7 +584,8 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
           // d3.select(parentDiv).selectAll(".image").classed("viewedSelectedImage", false);
           d3.select(parentDiv).selectAll(".image").classed("instanceImage", true);
         }
-        instanceActivations(instance)
+        var selectedActivationsDR = d3.select("#modelSpaceDRMethod").property("value");
+        instanceActivations(instance,selectedActivationsDR)
 
         // d3.s(".points").classed("instance-point", function(d) {
         //   return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2 
@@ -542,9 +605,9 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
     function updateChart_start(myPoint, x, y) {
       // the chart is update many times with the selection it seems like
       extent = d3.event.selection
-      myPoint.classed("selected-points", function (d) { return isBrushed(extent, x(d.tsne_1), y(d.tsne_2)) }) // The points are classed to be either true or false
+      myPoint.classed("selected-points", function (d) { return isBrushed(extent, x(d.embedding_1), y(d.embedding_2)) }) // The points are classed to be either true or false
       // update the corresponding images, leave out initially
-      var filteredData = data.filter(function (d) { return isBrushed(extent, x(d.tsne_1), y(d.tsne_2)) })
+      var filteredData = data.filter(function (d) { return isBrushed(extent, x(d.embedding_1), y(d.embedding_2)) })
       if (filteredData.length > 0) {
         var newFilteredData = modifyFiltered(filteredData)
         // remove all the red boundaries first (before adding new one later)
@@ -576,11 +639,11 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
         updateActivations(filteredData)
         makePerformanceView(data, filteredData)
         var currentClassViolin = d3.select("#classNameText").text();
-        makeClassDist(data = data, filteredData = filteredData, specifiedClassName = currentClassViolin, setDomainColors = setDomainColors)
+        makeClassDist(data = data, filteredDataClass = filteredData, specifiedClassName = currentClassViolin, setDomainColors = setDomainColors)
         var classDropdown = d3.selectAll("#classDropdown .child li");
         classDropdown.on("click", function () {
           const selectedOption = d3.select(this).text().trim();
-          makeClassDist(data = data, filteredData = filteredData, specifiedClassName = selectedOption, setDomainColors = setDomainColors)
+          makeClassDist(data = data, filteredDataClass = filteredData, specifiedClassName = selectedOption, setDomainColors = setDomainColors)
         })
         // allow clicking images after adding all the images to image view
         // (the listeners have to be added after the images have been appended to the DOM)
@@ -708,7 +771,6 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
           });
           // continuousValue
           if (singleImageCases.length > 0) {
-            // console.log("singleImageCases: \n",JSON.parse(JSON.stringify(singleImageCases)));
             var notSelectedImageCases = singleImageCases.map(function (d) {
               if (d.noise_level === 0) {
                 return noiseData.find(function (obj) {
@@ -721,7 +783,6 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
                 });
               }
             });
-            // console.log("notSelectedImageCases: \n",JSON.parse(JSON.stringify(notSelectedImageCases)));
             notSelectedImageCases.map(function (d) { d["selected"] = false });
             var newFilteredData = filteredData.concat(notSelectedImageCases)
             newFilteredData.sort(compare)
@@ -738,10 +799,17 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
     }
 
     function updateImages(filteredData) {
-      // This probably does not work because it is inside an svg.call instead of something else'
+      // first set the global variable to use when the noise is changed
+      filteredDataImageView = filteredData
+      // find the first one of the filteredData
       var first_index = filteredData.findIndex(function (d) { return d.selected == true })
+      // no selected when changing noise from a noise level
+      // console.log("filteredData[first_index]\n",JSON.parse(JSON.stringify(filteredData[first_index])))
+      // console.log("filteredData-updateImages\n",JSON.parse(JSON.stringify(filteredData)))
+      // const points = d3.selectAll(".points");
+      // console.log("points\n",JSON.parse(JSON.stringify(points)))
       d3.selectAll(".points").classed("instance-point", function (d) {
-        return d.tsne_1 === filteredData[first_index].tsne_1 && d.tsne_2 === filteredData[first_index].tsne_2
+        return d.embedding_1 === filteredData[first_index].embedding_1 && d.embedding_2 === filteredData[first_index].embedding_2
       });
       // first turn off the not-used-points class before adding new ones
       d3.selectAll(".not-used-points").classed("not-used-points", false);
@@ -822,12 +890,12 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
 
               if (i != first_index && filteredData[i].selected == true) {
                 d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function (d) {
-                  return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2
+                  return d.embedding_1 === filteredData[i].embedding_1 && d.embedding_2 === filteredData[i].embedding_2
                 });
               }
               else if (i != first_index && filteredData[i].selected == false) {
                 d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function (d) {
-                  return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2
+                  return d.embedding_1 === filteredData[i].embedding_1 && d.embedding_2 === filteredData[i].embedding_2
                 });
               }
               // if (i!=0){
@@ -854,12 +922,12 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
 
               if (i != first_index && filteredData[i].selected == true) {
                 d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function (d) {
-                  return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2
+                  return d.embedding_1 === filteredData[i].embedding_1 && d.embedding_2 === filteredData[i].embedding_2
                 });
               }
               else if (i != first_index && filteredData[i].selected == false) {
                 d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function (d) {
-                  return d.tsne_1 === filteredData[i].tsne_1 && d.tsne_2 === filteredData[i].tsne_2
+                  return d.embedding_1 === filteredData[i].embedding_1 && d.embedding_2 === filteredData[i].embedding_2
                 });
               }
 
@@ -907,13 +975,13 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
             if (instance.selected == true) {
               current_class = "viewedSelectedImage"
               d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function (d) {
-                return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2
+                return d.embedding_1 === instance.embedding_1 && d.embedding_2 === instance.embedding_2
               });
             }
             else {
               current_class = "viewedNotSelectedImage"
               d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function (d) {
-                return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2
+                return d.embedding_1 === instance.embedding_1 && d.embedding_2 === instance.embedding_2
               });
             }
           }
@@ -960,13 +1028,13 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
             if (instance.selected == true) {
               current_class = "viewedSelectedImage"
               d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function (d) {
-                return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2
+                return d.embedding_1 === instance.embedding_1 && d.embedding_2 === instance.embedding_2
               });
             }
             else {
               current_class = "viewedNotSelectedImage"
               d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function (d) {
-                return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2
+                return d.embedding_1 === instance.embedding_1 && d.embedding_2 === instance.embedding_2
               });
             };
           }
@@ -1018,11 +1086,13 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
         // call the first instance in filterData as default
         // todo (maybe):find the first instance that are selected
         selectedInstance = filteredData[0];
-        instanceActivations(selectedInstance,"t-SNE") // add current option here
+        var selectedActivationsDR = d3.select("#modelSpaceDRMethod").property("value");
+        instanceActivations(selectedInstance,selectedActivationsDR) // add current option here
         d3.select("#modelSpaceDRMethod").on("click", function(d) {
           // recover the option that has been chosen
           var selectedOption = d3.select(this).property("value")
           // run the updateChart function with this selected option
+          var selectedActivationsDR = d3.select("#modelSpaceDRMethod").property("value");
           instanceActivations(selectedInstance,selectedOption)
       })
       }
@@ -1044,11 +1114,9 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
               // if the first instance have noise = 0, then find the instance with selected noise value
               // and vice versa
               if (instance.noise_level == 0) {
-                // console.log("equality for noise:", d.noise_level === continuousValue)
                 return d.noise_level === continuousValue && d.name === instance.name;
               }
               else {
-                // console.log("equality for noise (0):", d.noise_level === 0)
                 return d.noise_level === 0 && d.name === instance.name;
               }
               // return (d.noise_level ==0)? (d.name === instance.name && d.noise_level === continuousValue) : (d.name === instance.name && d.noise_level === 0);
@@ -1155,27 +1223,50 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
     function highlightPatches(x,y,mask,second_mask,extentActivation,imageSize){
       // repeat the definition for x and y (which is the same as the model activations graph)
       // this is useful for checking the brushed points.
+      // TODO: for domain adaptation model, sends differnet height and width instead of imageSize
+
+      // find all of the points that are brushed
       var brushedActivations = combinedList.filter(function (d) { 
-        // console.log("brushed",isBrushed(extent, x(d[0]), y(d[1]) ))
         return isBrushed(extentActivation, x(d[0]), y(d[1])) }
       )
-      if (brushedActivations.length>0){
+      // check for if there is anything being brushed
+      if (brushedActivations.length<=0){
+        mask.selectAll("rect").remove();
+        if (second_mask!=0){
+          second_mask.selectAll("rect").remove();
+        }
+      }
+      else{
         var brushedActivations = combinedList.filter(function (d) { 
-          // console.log("brushed",isBrushed(extent, x(d[0]), y(d[1]) ))
           return isBrushed(extentActivation, x(d[0]), y(d[1])) }
         )
-
         activationListLength = first_activations_parsed.length
-        var brushedIndices = brushedActivations.map(function(d){return combinedList.indexOf(d)})
-        var brushIndicesFirst = brushedIndices.filter(function(d){return d<activationListLength})
-        var brushIndicesSecond = brushedIndices.filter(function(d){return d>=activationListLength})
+
         // this means that height = 1 * width
-        var numOfPatchesWidth =Math.sqrt(activationListLength)
+        var numOfPatchesWidth=Math.sqrt(activationListLength)
         var numOfPatchesHeight = numOfPatchesWidth
         
         var patchWidth = imageSize/numOfPatchesWidth
         var patchHeight = imageSize/numOfPatchesHeight
 
+        // Create an array of all patch indices (assuming a linear index)
+        var allPatchIndicesFirst = Array.from({ length: numOfPatchesWidth * numOfPatchesHeight }, (_, i) => i);
+        var allPatchIndicesSecond = Array.from({ length: numOfPatchesWidth * numOfPatchesHeight }, 
+                                               (_, i) => allPatchIndicesFirst.length+i);
+
+        // for brushed points, find corresponding indices in the image 
+        var brushedIndices = brushedActivations.map(function(d){return combinedList.indexOf(d)})
+        var brushIndicesFirst = brushedIndices.filter(function(d){return d<activationListLength})
+        var brushIndicesSecond = brushedIndices.filter(function(d){return d>=activationListLength})
+
+        // Find the indices of non-highlighted patches by finding the difference
+        var nonHighlightedIndicesFirst = allPatchIndicesFirst.filter(function (index) {
+          return brushIndicesFirst.indexOf(index) === -1;
+        });
+        var nonHighlightedIndicesSecond = allPatchIndicesSecond.filter(function (index) {
+          return brushIndicesSecond.indexOf(index) === -1;
+        });
+        
         mask.selectAll("rect").remove();
 
         // find the regions to highlight, and save them as dictionary
@@ -1187,8 +1278,16 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
           object.height = patchHeight
           return object
         })
+        // not highlighted regions:
+        var nonHighlightedRegionsFirst = nonHighlightedIndicesFirst.map(function(d){
+          let object = {}
+          object.x = (d%numOfPatchesWidth)*patchWidth
+          object.y = (Math.floor(d/numOfPatchesHeight))*patchHeight
+          object.width = patchWidth
+          object.height = patchHeight
+          return object
+        })
         
-        // console.log("regionsToHighlightDict:\n",regionsToHighlightDictFirst)
         
         // Define the regions to be highlighted
         // var regionsToHighlight = [
@@ -1204,8 +1303,23 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
             .attr("y", region.y)
             .attr("width", region.width)
             .attr("height", region.height)
-            .style("fill", "red") // maybe adjust the color
-            .style("opacity", 0.5);
+            // .style("fill", "red") // maybe adjust the color
+            // .style("opacity", 0.5);
+            .style("fill", "white")
+            .style("opacity", 0.3);
+            // .style("opacity", 0); // opacity 0 does not work because of the black "others" class
+        });
+
+        // not highlighted regions: make it less obvious
+        nonHighlightedRegionsFirst.forEach(function(region) {
+          mask.append("rect")
+            .attr("x", region.x)
+            .attr("y", region.y)
+            .attr("width", region.width)
+            .attr("height", region.height)
+            .style("fill", "black") // maybe adjust the color
+            .style("opacity", 0.3);
+            // .style("opacity", 0);
         });
 
         if (second_mask!=0){
@@ -1218,14 +1332,34 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
             object.height = patchHeight
             return object
           })
+          var nonHighlightedRegionsSecond = nonHighlightedIndicesSecond.map(function(d){
+            let object = {}
+            object.x = ((d-activationListLength)%numOfPatchesWidth)*patchWidth
+            object.y = (Math.floor((d-activationListLength)/numOfPatchesHeight))*patchHeight
+            object.width = patchWidth
+            object.height = patchHeight
+            return object
+          })
+
+          // add the patches
           regionsToHighlightDictSecond.forEach(function(region) {
             second_mask.append("rect")
               .attr("x", region.x)
               .attr("y", region.y)
               .attr("width", region.width)
               .attr("height", region.height)
-              .style("fill", "red") // maybe adjust the color
-              .style("opacity", 0.5);
+              .style("fill", "white")
+              .style("opacity", 0.3);
+          });
+          nonHighlightedRegionsSecond.forEach(function(region) {
+            second_mask.append("rect")
+              .attr("x", region.x)
+              .attr("y", region.y)
+              .attr("width", region.width)
+              .attr("height", region.height)
+              .style("fill", "black") // maybe adjust the color
+              .style("opacity", 0.3);
+              // .style("opacity", 0);
           });
         }
       }
@@ -1269,11 +1403,9 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
       else {
         if (continuousDomain == "Noise") {
           instance_type = "Noise: " + instance.noise_level.toString()
-          console.log(second_instance)
           if (second_instance) {
             second_instance_type = "Noise: " + second_instance.noise_level.toString()
           }
-          // console.log("Instance type",instance_type)
         }
       }
 
@@ -1344,7 +1476,6 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
     }
 
     function setDomainColors(d) {
-      // console.log("current type domain in set",currentTypeDomain)
       if (currentTypeDomain == "Discrete") {
         if (d.key) {
           return discreteDomainColor(d.key)
@@ -1370,7 +1501,6 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
         }
       }
     }
-
     // function getLabelExtension(d){
     //   // add (overall) vs (partial)
     //   if (currentTypeDomain=="Discrete"){
@@ -1381,7 +1511,6 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
     //   }
     // }
     // domain names based on different domains
-
   })//end of d3.csv
 })//another end of d3.csv
 
@@ -1406,12 +1535,14 @@ function makePerformanceView(data, filteredData) {
       // no need to think about one domain case specifically, because it could be that one domain is empty in the graph
       var domain1 = "Noise: 0 " + "(Overall)"
       var domain2 = "Noise: " + continuousValue.toString() + " " + "(Overall)"
+      var domain1_partial = "Noise: 0 " + "(Partial)"
+      var domain2_partial = "Noise: " + continuousValue.toString() + " " + "(Partial)"
       // create a list
       if (continuousValue != 0) {
-        var domainNameList = [domain1, domain2, "Selected (Partial)"]
+        var domainNameList = [domain1, domain2, domain1_partial, domain2_partial]
       }
       else {
-        var domainNameList = [domain1, "Selected (Partial)"]
+        var domainNameList = [domain1, domain1_partial]
       }
     }
   }
@@ -1434,10 +1565,30 @@ function makePerformanceView(data, filteredData) {
 
   if (filteredData) {
     // combine the filtered data with the overall data
-    nestedData = nestedData.concat({
-      key: "Selected",
-      values: filteredData
-    });
+    if (continuousValue == 0) {
+      nestedData = nestedData.concat({
+        key: "Selected",
+        values: filteredData
+      });
+    }
+    else{
+      // Two seperate
+      var noise0Data = filteredData.filter(function (d) {
+        return d.noise_level == 0;
+      })
+      var noisyFilteredData = filteredData.filter(function (d) {
+        return d.noise_level != 0;
+      })
+      nestedData = nestedData.concat({
+        key: "Selected_1", // 1st domain with filtered data
+        values: noise0Data
+      });
+      nestedData = nestedData.concat({
+        key: "Selected_2", // 2nd domain with filtered data
+        values: noisyFilteredData
+      });
+    }
+    
   }
 
   // TODO: add the selected data to the groupData with data.concat
@@ -1560,7 +1711,7 @@ function makePerformanceView(data, filteredData) {
     .on("mouseleave", mouseleave)
 }
 
-function makeClassDist(data, filteredData, specifiedClassName, setDomainColors) {
+function makeClassDist(data, filteredDataClass, specifiedClassName, setDomainColors) {
   d3.select("#classDistPlot").selectAll("*").remove();
   d3.select("#classNameText").selectAll("*").remove();
 
@@ -1632,8 +1783,8 @@ function makeClassDist(data, filteredData, specifiedClassName, setDomainColors) 
     }
   });
 
-  if (filteredData) {
-    let selectedData = JSON.parse(JSON.stringify(filteredData)) // deepcopy the filterData
+  if (filteredDataClass) {
+    let selectedData = JSON.parse(JSON.stringify(filteredDataClass)) // deepcopy the filterData
     selectedData.forEach(function (d) {
       d.group = "Selected";
     });
@@ -1662,7 +1813,6 @@ function makeClassDist(data, filteredData, specifiedClassName, setDomainColors) 
     allBins.map(function (bin) { bin.group = d.key })
     maxNum[d.key] = d3.max(lengths);
   });
-  // console.log(JSON.parse(JSON.stringify(sumstat)))
 
 
   function calculateDomain(length, key) {
@@ -1682,8 +1832,6 @@ function makeClassDist(data, filteredData, specifiedClassName, setDomainColors) 
       return ("translate(" + x(getDataScope(d.key)) + " ,0)")
     }) // Translation on the right to be at the group position
     .style("fill", function (d) {
-      // console.log("discrete color:",discreteDomainColor(d.key))
-      //  console.log("set: ",setDomainColors(d))
       return setDomainColors(d)
     })
     .append("path")
@@ -1703,10 +1851,26 @@ function makeClassDist(data, filteredData, specifiedClassName, setDomainColors) 
     )
 }
 
+// return the corresponding name of a data key
 function getDataScope(key) {
-  if (key == "Selected") {
-    // the scope of let is only this "if" function
-    let dataScope = "(Partial)"
+  // noise case
+  if (key.includes("Selected")){
+    if ((currentTypeDomain == "Continuous") && (continuousDomain=="Noise")){
+      let dataScope = "(Partial)"
+      if (key == "Selected_1") {
+        // the scope of let is only this "if" function 
+        return "Noise: 0 "+dataScope
+      }
+      else if (key == "Selected_2") {
+        return "Noise: " + continuousValue.toString() + " " + dataScope
+      }
+      else if (key == "Selected") {
+        return key + " " + dataScope
+      }
+    }
+  }
+  // this is for discrete domain for now
+  else if (key == "Selected") {
     return key + " " + dataScope
   }
   else {
@@ -1716,7 +1880,6 @@ function getDataScope(key) {
     }
     else {
       if (continuousDomain == "Noise") {
-        // console.log("Noise: "+ key.toString() +dataScope)
         return "Noise: " + key.toString() + " " + dataScope
       }
     }
