@@ -1,15 +1,21 @@
+/* Define a default font for the entire document */
+body {
+  font-family: Arial, sans-serif;
+  /* background-color: lightgrey; */
+}
+
 #domainSelection{
   float: left;
   width: 22%;
-  height: 10%;
+  height: 15%;
   /* change the background color to see the div more clearly */
-  /* background-color: grey; */
-  outline:1px solid black;
+  background-color: lightsteelblue;
   text-align: center;
 }
 
-#dropdown{
-  height: 90px;
+#domainDropdown{
+  height: 50px;
+  text-align: center;
 }
 
 /* css elements for drop-down menu */
@@ -201,6 +207,7 @@ li:hover {
   flex-direction: column;
   align-items: center;
   justify-content: center; 
+  /* background-color: white; */
   /* outline:1px solid blue; */
 }
 
@@ -281,7 +288,7 @@ li:hover {
 #imgView{
   /* float:right; */
   position:absolute;
-  top:25%;
+  top:21%;
   left:0%;
   width: 25%;
   /* should not have text-align here because it affects everything */
@@ -370,6 +377,11 @@ li:hover {
 #modelViewTitle{
   text-align: center;
 }
+
+#modelDropdown{
+  text-align: center;
+}
+
 #modelViewContainer{
   display: flex;
 }
@@ -381,9 +393,11 @@ li:hover {
 #maskSimilarity {
   /* flexible display in the column */
   float:right;
-  display: flex; /* Add this to enable flexbox layout */
-  flex-direction: column; /* Display images vertically */
-  height: 400px; /*make it bigger so that the images and the spacing in between could fit*/
+  /* display: flex;  */
+  /* Add this to enable flexbox layout */
+  /* flex-direction: column;  */
+  /* Display images vertically */
+  height: 100%; /*make it bigger so that the images and the spacing in between could fit*/
 }
 
 

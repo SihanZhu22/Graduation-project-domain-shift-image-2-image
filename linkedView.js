@@ -14,6 +14,7 @@ const titleClassDist = d3.select("#classDistTitle")
   .append("text")
   .style("font-size", "16px")
   .style("font-weight", 700)
+  .style("font-family", "Arial")
   .text("Distribution of classes");
 
 // set the dimensions and margins of the graph
@@ -41,7 +42,7 @@ const titleInputView = d3.select("#inputViewTitle")
   .append("text")
   .style("font-size", "16px")
   .style("font-weight", 700)
-  .style("font-family", "Arial, Helvetica, sans-serif")
+  .style("font-family", "Arial")
   .text("Input Distribution View");
 
 // append the svg object to the body of the page
@@ -58,6 +59,7 @@ const titlePerformanceView = d3.select("#performanceViewTitle")
   .append("text")
   .style("font-size", "16px")
   .style("font-weight", 700)
+  .style("font-family", "Arial")
   .text("Performance View ");
 
 // var performance = d3.select("#performanceView")
@@ -172,6 +174,7 @@ const titleImageView = d3.select("#imageViewTitle")
   .append("text")
   .style("font-size", "16px")
   .style("font-weight", 700)
+  .style("font-family", "Arial")
   .text("Image View");
 
 // Use the separate divs to hold the images
@@ -183,14 +186,15 @@ var domain2_images = d3.select("#imgDomain2")
 
 // Setup for activation view
 
-var margin_of_activation = { top: 30, right: 30, bottom: 50, left: 60 },
+var margin_of_activation = { top: 30, right: 30, bottom: 25, left: 60 },
   activationWidth = 430 - margin_of_activation.left - margin_of_activation.right,
-  activationHeight = 420 - margin_of_activation.top - margin_of_activation.bottom;
+  activationHeight = 330 - margin_of_activation.top - margin_of_activation.bottom;
 
 const titleModelView = d3.select("#modelViewTitle")
   .append("text")
   .style("font-size", "16px")
   .style("font-weight", 700)
+  .style("font-family", "Arial")
   .text("Model View: Instance-level model activations");
 
 var activation_svg = d3.select("#activationsScatter")
@@ -228,6 +232,17 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
       // initialize some views
       svg.selectAll("*").remove();
       d3.select("#imgDatasetNames").selectAll("*").remove();
+      var currentSelectedDomain = d3.select("#domainMenu").property("value");
+
+      // determine the domain type and value
+      // if (currentSelectedDomain = "Real vs. Synthetic"){
+      //   currentTypeDomain = "Discrete"
+      // }
+      // else{
+      //   currentTypeDomain = "Continous"
+      //   continuousDomain = currentSelectedDomain
+      // }
+
       if (currentTypeDomain == "Discrete") {
         // after this 
         data = discreteData
@@ -246,7 +261,7 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
           .attr("font-size", "14").text("Synthia");
 
         // initialize the views
-        makeInputView(discreteData, "t-SNE", "Latent»");
+        makeInputView(discreteData, "t-SNE");
         makePerformanceView(data = discreteData)
         var currentViolinClass = "Road"
         makeClassDist(data = discreteData, filteredDataClass = 0, specifiedClassName = currentViolinClass, setDomainColors = setDomainColors);
@@ -298,15 +313,8 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
             noiseSelectedData = noiseDataOriginal;
           }
           // make input view (tsne->latent by default)
-          if (typeof embeddingMethodsText !== 'undefined') {
-            var embeddingMethodsParts = embeddingMethodsText.split('» ');
-            var Option = embeddingMethodsParts[1]
-            var optionParent = embeddingMethodsParts[0]
-            makeInputView(noiseSelectedData, Option, optionParent);
-          }
-          else {
-            makeInputView(noiseSelectedData, "t-SNE", "Latent»");
-          }
+          var selectedEmbeddingMethod = d3.select("#embeddingMethods").property("value");
+          makeInputView(noiseSelectedData, selectedEmbeddingMethod);
 
           // create the performance view and class distribution
           makePerformanceView(data = noiseSelectedData)
@@ -345,24 +353,43 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
       }
     }
 
-    // event listener for domain selection
-    var domainDropdown = d3.selectAll("#dropdown .child li");
-    domainDropdown.on("click", function () {
-      d3.event.stopPropagation();
-      const selectedDomain = d3.select(this).text().trim();
-      // TODO: make the text more complicated later
-      d3.select("#currentSelectedDomain").selectAll("*").remove();
-      d3.select("#currentSelectedDomain").append("text").text("Current domain type: " + selectedDomain);
-      if (selectedDomain == "Discrete") {
+    d3.select("#domainMenu").on("click", function(d) {
+      // recover the option that has been chosen
+      // run the updateChart function with this selected option
+      var selectedDomain = d3.select("#domainMenu").property("value");
+      if (selectedDomain == "Real vs. Synthetic") {
         currentTypeDomain = "Discrete"
         initializeViews()
       }
       else {
         currentTypeDomain = "Continuous"
+        continuousDomain = selectedDomain
         initializeViews()
-        // current domain is the specific value?
       }
-    })
+    }) 
+
+
+    // event listener for domain selection
+    // var domainDropdown = d3.selectAll("#dropdown .child li");
+    // domainDropdown.on("click", function () {
+    //   d3.event.stopPropagation();
+    //   const selectedDomain = d3.select(this).text().trim();
+    //   // TODO: make the text more complicated later
+    //   // d3.select("#currentSelectedDomain").selectAll("*").remove();
+    //   // d3.select("#currentSelectedDomain")
+    //   //     .append("text")
+    //   //     .text("Current domain type: " + selectedDomain)
+    //   //     .style("font-family", "Arial") // Set the font-family to Arial;
+    //   if (selectedDomain == "Discrete") {
+    //     currentTypeDomain = "Discrete"
+    //     initializeViews()
+    //   }
+    //   else {
+    //     currentTypeDomain = "Continuous"
+    //     initializeViews()
+    //     // current domain is the specific value?
+    //   }
+    // })
 
     // event listener for slider
     // think about: combining this with domainDropdown or not?
@@ -382,29 +409,34 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
     });
 
     // event listener for class dist
-    var classDropdown = d3.selectAll("#classDropdown .child li");
-    classDropdown.on("click", function () {
-      const selectedOption = d3.select(this).text().trim();
-      makeClassDist(data = data, filteredDataClass = 0, specifiedClassName = selectedOption, setDomainColors = setDomainColors)
-    })
+    d3.select("#classMenu").on("click", function(d) {
+        // recover the option that has been chosen
+        var selectedOption = d3.select(this).property("value")
+        makeClassDist(data = data, filteredDataClass = 0, specifiedClassName = selectedOption, setDomainColors = setDomainColors)
+    }) 
 
-    const embeddingMethodsItems = d3.selectAll('#embeddingMethods .child li');
+    // const embeddingMethodsItems = d3.selectAll('#embeddingMethods .child li');
+    d3.select("#embeddingMethods").on("click", function(d) {
+      // recover the option that has been chosen
+      // d3.event.stopPropagation();
+      var selectedOption = d3.select(this).property("value")
+      makeInputView(data, selectedOption);
+    }) 
+    // // embeddingMethods: Add click event listener to each menu item
+    // embeddingMethodsItems.on('click', function () {
+    //   // Get the selected option using D3
+    //   d3.event.stopPropagation();
+    //   const selectedOption = d3.select(this).text().trim();
+    //   // Get the parent element and its text
+    //   // const parentElement = d3.select(this).node().parentNode.parentNode.parentNode;
+    //   const parentElement = d3.select(this).node().parentNode.parentNode;
+    //   const parentText = d3.select(parentElement).select("a").text().trim();
 
-    // embeddingMethods: Add click event listener to each menu item
-    embeddingMethodsItems.on('click', function () {
-      // Get the selected option using D3
-      d3.event.stopPropagation();
-      const selectedOption = d3.select(this).text().trim();
-      // Get the parent element and its text
-      // const parentElement = d3.select(this).node().parentNode.parentNode.parentNode;
-      const parentElement = d3.select(this).node().parentNode.parentNode;
-      const parentText = d3.select(parentElement).select("a").text().trim();
+    //   svg.selectAll("*").remove();
+    //   makeInputView(data, selectedOption, parentText);
+    // });
 
-      svg.selectAll("*").remove();
-      makeInputView(data, selectedOption, parentText);
-    });
-
-    function makeInputView(data, Option, optionParent) {
+    function makeInputView(data, Option) {
       // remove the previous text and add new text
       svg.selectAll("*").remove();
 
@@ -414,68 +446,55 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
       //   svg.call(brush.move, null);
       // }
 
-      d3.select("#currentEmbeddingMethod").selectAll("*").remove();
-      embeddingMethodsText = optionParent + "» " + Option
-      d3.select("#currentEmbeddingMethod").append("text")
-        .text(embeddingMethodsText);
+      // d3.select("#currentEmbeddingMethod").selectAll("*").remove();
+      // embeddingMethodsText = optionParent + "» " + Option
+      // d3.select("#currentEmbeddingMethod").append("text")
+      //   .text(embeddingMethodsText);
 
       // Convert the strings in the "tsne_1" and "tsne_2" column to numbers
-      if (optionParent.includes("Direct")) {
-        if (Option == "t-SNE") {
-          data.forEach(function (d) {
-            d.embedding_1 = +d.simple_tsne_1;
-            d.embedding_2 = +d.simple_tsne_2
-          });
-          // for range calculation
-          originalData.forEach(function (d) {
-            d.embedding_1 = +d.simple_tsne_1;
-            d.embedding_2 = +d.simple_tsne_2
-          });
-        }
-        else if (Option == "PCA") {
-          data.forEach(function (d) {
-            d.embedding_1 = +d.pca_1; //TODO: change the tsne_1 to something else
-            d.embedding_2 = +d.pca_2;
-          });
-          // for range calculation
-          originalData.forEach(function (d) {
-            d.embedding_1 = +d.pca_1; //TODO: change the tsne_1 to something else
-            d.embedding_2 = +d.pca_2;
-          });
-        }
-        else if (Option == "UMAP") {
-          data.forEach(function (d) {
-            d.embedding_1 = +d.umap_1; //TODO: change the tsne_1 to something else
-            d.embedding_2 = +d.umap_2;
-          });
-          // for range calculation
-          originalData.forEach(function (d) {
-            d.embedding_1 = +d.umap_1; //TODO: change the tsne_1 to something else
-            d.embedding_2 = +d.umap_2;
-          });
-        }
-        else {
-          console.warn("Please select one specific embedding method (not just Latent/Direct)")
-        }
+      
+      if (Option == "t-SNE") {
+        data.forEach(function (d) {
+          d.embedding_1 = +d.simple_tsne_1;
+          d.embedding_2 = +d.simple_tsne_2
+        });
+        // for range calculation
+        originalData.forEach(function (d) {
+          d.embedding_1 = +d.simple_tsne_1;
+          d.embedding_2 = +d.simple_tsne_2
+        });
       }
-      else if (optionParent.includes("Latent")) {
-        if (Option == "t-SNE") {
-          data.forEach(function (d) {
-            d.embedding_1 = +d.meaningful_tsne_1;
-            d.embedding_2 = +d.meaningful_tsne_2;
-          });
-          originalData.forEach(function (d) {
-            d.embedding_1 = +d.meaningful_tsne_1;
-            d.embedding_2 = +d.meaningful_tsne_2;
-          });
-        }
-        else {
-          console.warn("Please select one specific embedding method (not just Latent/Direct)")
-        }
+      else if (Option == "PCA") {
+        data.forEach(function (d) {
+          d.embedding_1 = +d.pca_1; //TODO: change the tsne_1 to something else
+          d.embedding_2 = +d.pca_2;
+        });
+        // for range calculation
+        originalData.forEach(function (d) {
+          d.embedding_1 = +d.pca_1; //TODO: change the tsne_1 to something else
+          d.embedding_2 = +d.pca_2;
+        });
       }
-      else {
-        console.log("Current Selection: ", Option);
-        console.warn("Error with selection!!");
+      else if (Option == "UMAP") {
+        data.forEach(function (d) {
+          d.embedding_1 = +d.umap_1; //TODO: change the tsne_1 to something else
+          d.embedding_2 = +d.umap_2;
+        });
+        // for range calculation
+        originalData.forEach(function (d) {
+          d.embedding_1 = +d.umap_1; //TODO: change the tsne_1 to something else
+          d.embedding_2 = +d.umap_2;
+        });
+      }
+      else if (Option == "Latent t-SNE") {
+        data.forEach(function (d) {
+          d.embedding_1 = +d.meaningful_tsne_1;
+          d.embedding_2 = +d.meaningful_tsne_2;
+        });
+        originalData.forEach(function (d) {
+          d.embedding_1 = +d.meaningful_tsne_1;
+          d.embedding_2 = +d.meaningful_tsne_2;
+        });
       }
       // console.log(data)
       // console.log("data\n",JSON.parse(JSON.stringify(data)));
@@ -638,13 +657,13 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
         updateImages(filteredData)
         updateActivations(filteredData)
         makePerformanceView(data, filteredData)
-        var currentClassViolin = d3.select("#classNameText").text();
+        var currentClassViolin = d3.select("#classMenu").property("value");
         makeClassDist(data = data, filteredDataClass = filteredData, specifiedClassName = currentClassViolin, setDomainColors = setDomainColors)
-        var classDropdown = d3.selectAll("#classDropdown .child li");
-        classDropdown.on("click", function () {
-          const selectedOption = d3.select(this).text().trim();
-          makeClassDist(data = data, filteredDataClass = filteredData, specifiedClassName = selectedOption, setDomainColors = setDomainColors)
-        })
+        d3.select("#classMenu").on("click", function(d) {
+          // recover the option that has been chosen
+          var selectedOption = d3.select(this).property("value")
+          makeClassDist(data = data, filteredDataClass = 0, specifiedClassName = selectedOption, setDomainColors = setDomainColors)
+        }) 
         // allow clicking images after adding all the images to image view
         // (the listeners have to be added after the images have been appended to the DOM)
         clickImage()
@@ -1092,7 +1111,6 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
           // recover the option that has been chosen
           var selectedOption = d3.select(this).property("value")
           // run the updateChart function with this selected option
-          var selectedActivationsDR = d3.select("#modelSpaceDRMethod").property("value");
           instanceActivations(selectedInstance,selectedOption)
       })
       }
@@ -1181,6 +1199,7 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
         .attr('y', -5)
         .attr('text-anchor', 'middle')
         .attr('font-size', '10px')
+        .style("font-family", "Arial")
         .style("fill", setDomainColors(instance)); 
 
       if (currentTypeDomain == "Discrete" || continuousValue != 0) {
@@ -1202,6 +1221,7 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
           .attr('y', -5)
           .attr('text-anchor', 'middle')
           .attr('font-size', '10px')
+          .style("font-family", "Arial")
           .style("fill", setDomainColors(second_instance));
       }else{
         second_mask=0
@@ -1306,7 +1326,7 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
             // .style("fill", "red") // maybe adjust the color
             // .style("opacity", 0.5);
             .style("fill", "white")
-            .style("opacity", 0.3);
+            .style("opacity", 0.5);
             // .style("opacity", 0); // opacity 0 does not work because of the black "others" class
         });
 
@@ -1317,9 +1337,9 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
             .attr("y", region.y)
             .attr("width", region.width)
             .attr("height", region.height)
-            .style("fill", "black") // maybe adjust the color
-            .style("opacity", 0.3);
-            // .style("opacity", 0);
+            // .style("fill", "white") // maybe adjust the color
+            // .style("opacity", 0.5);
+            .style("opacity", 0);
         });
 
         if (second_mask!=0){
@@ -1713,10 +1733,6 @@ function makePerformanceView(data, filteredData) {
 
 function makeClassDist(data, filteredDataClass, specifiedClassName, setDomainColors) {
   d3.select("#classDistPlot").selectAll("*").remove();
-  d3.select("#classNameText").selectAll("*").remove();
-
-  d3.select("#classNameText").append("text")
-    .text(specifiedClassName);
 
   var violinPlot = d3.select("#classDistPlot")
     .append("svg")
@@ -1783,6 +1799,9 @@ function makeClassDist(data, filteredDataClass, specifiedClassName, setDomainCol
     }
   });
 
+  console.log("filteredDataClass")
+  console.log(filteredDataClass)
+
   if (filteredDataClass) {
     let selectedData = JSON.parse(JSON.stringify(filteredDataClass)) // deepcopy the filterData
     selectedData.forEach(function (d) {
@@ -1794,6 +1813,8 @@ function makeClassDist(data, filteredDataClass, specifiedClassName, setDomainCol
     var violinData = data;
   }
 
+  // note: synthetic vs real: have violinData generated, but no sumstat
+
   // sumstat has the calculated distribution for ratio values in each interval
   var sumstat = d3.nest()  // nest function allows to group the calculation per level of a factor
     .key(function (d) { return d.group; })
@@ -1803,7 +1824,7 @@ function makeClassDist(data, filteredDataClass, specifiedClassName, setDomainCol
       return (bins)
     })
     .entries(violinData)
-
+  
   // What is the biggest number of value in a bin for each group?
   // maxNum is the dictionary for maximum bandwith for each violin, and the range of each violin is defined by the plus and minus of the corresponding max number
   var maxNum = {};
@@ -1821,6 +1842,7 @@ function makeClassDist(data, filteredDataClass, specifiedClassName, setDomainCol
       .domain([-maxNum[key], maxNum[key]])
     return xNum(length);
   }
+  
 
   // Add the shape to this svg!
   violinPlot
@@ -1869,10 +1891,10 @@ function getDataScope(key) {
       }
     }
   }
-  // this is for discrete domain for now
-  else if (key == "Selected") {
-    return key + " " + dataScope
-  }
+  // // this is for discrete domain for now
+  // else if (key == "Selected") {
+  //   return key + " " + dataScope
+  // }
   else {
     var dataScope = "(Overall)"
     if (currentTypeDomain == "Discrete") {

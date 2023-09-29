@@ -12,8 +12,14 @@
         <b>Select / update the current domain</b>
       </text>
       <br><br>
-      <div id="dropdown">
-        <ul id="menu">
+      <div id="domainDropdown">
+        <select id="domainMenu">
+          <option value="Noise">Noise</option>
+          <option value="Real vs. Synthetic">Real vs. Synthetic</option>
+        </select>
+      </div>
+      <!-- <div id="dropdown"> -->
+        <!-- <ul id="menu">
           <li class="parent"><a href="#">Domains</a>
             <ul class="child">
                 <li><a href="#">Discrete</a></li>
@@ -23,9 +29,9 @@
                     </ul></li>
             </ul>
           </li>
-        </ul>
-        <div id="currentSelectedDomain"></div>
-      </div>
+        </ul> -->
+        <!-- <div id="currentSelectedDomain"></div> -->
+      <!-- </div> -->
       <!-- <br><br> -->
       <div id="slider">
         <input type="range" name="noise_slider" id=mySlider min="0" max="5" step = "1" value="0" oninput="this.nextElementSibling.value = this.value" class="slider">
@@ -36,20 +42,15 @@
       <div id="classDistTitle"></div>
       <div id="classSelection">
         <div id="classDropdown">
-          <ul id="classMenu">
-            <li class="parent"><a href="#">Classes</a>
-              <ul class="child">
-                  <li><a href="#">Road</a></li>
-                  <li><a href="#">Sidewalk</a></li>
-                  <li><a href="#">Vegetation</a></li>
-                  <li><a href="#">Sky</a></li>
-                  <li><a href="#">Car</a></li>
-                  <li><a href="#">Other</a></li>
-              </ul>
-            </li>
-          </ul>
+          <select id="classMenu">
+            <option value="Road">Road</option>
+            <option value="Sidewalk">Sidewalk</option>
+            <option value="Vegetation">Vegetation</option>
+            <option value="Sky">Sky</option>
+            <option value="Car">Car</option>
+            <option value="Other">Other</option>
+          </select>
         </div>
-        <div id ="classNameText"></div>
       </div>
       <div id="classDistPlot"></div>
       
@@ -65,27 +66,12 @@
     <div id="inputView">
       <div id="inputViewTitle"></div>
       <div id = "selectionEmbedding">
-        <ul id="embeddingMethods">
-          <li class="parent"><a href="#">Embedding approach:</a>
-            <ul class="child">
-                <li class="parent"><a href="#">Direct<span class="expand">»</span></a>
-                  <ul class="child">
-                    <li><a href="#">PCA + t-SNE</a></li>
-                    <li><a href="#">PCA</a></li>
-                  </ul>
-                </li>
-                <li class="parent"><a href="#">Latent<span class="expand">»</span></a>
-                  <ul class="child">
-                    <li><a href="#">t-SNE</a></li>
-                  </ul>
-                </li>
-                <!-- <li><a href="#">Direct PCA + t-SNE</a></li>
-                <li><a href="#">Classifier embedding</a></li>
-                <li><a href="#">Direct PCA</a></li> -->
-            </ul>
-          </li>
-        </ul>
-        <div id="currentEmbeddingMethod"></div>
+        <select id="embeddingMethods">
+          <option value="Latent t-SNE">Latent t-SNE</option>
+          <option value="t-SNE">t-SNE</option>
+          <option value="PCA">PCA</option>
+          <option value="UMAP">UMAP</option>
+        </select>
       </div>
       <div id="inputScatterPlot"></div>
     </div>
@@ -122,7 +108,14 @@
     <div id="modelView">
       <div id="modelViewTitle"></div>
       <div id="modelViewContainer">
-        <div id = "activationsScatter"></div>
+        <div id = "activationsScatter">
+          <div id="modelDropdown">
+            <select id="modelSpaceDRMethod">
+              <option value="t-SNE">t-SNE</option>
+              <option value="PCA">PCA</option>
+            </select>
+          </div>
+        </div>
         <div id = "maskSimilarity"></div>
       </div>
     </div>
