@@ -214,7 +214,7 @@ var activation_svg = d3.select("#activationsScatter")
 
 //Read the data
 // d3.csv("system_df_v3.csv", function (discreteData) {
-d3.csv("system_df_small_sample.csv", function (discreteData) {
+d3.csv("discreted_data_v6.csv", function (discreteData) {
   // d3.csv("noise_df.csv", function (noiseData) {
   d3.csv("noisy_data_sample_200.csv", function (noiseData) {
     // create global variables
@@ -234,7 +234,7 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
       d3.select("#imgDatasetNames").selectAll("*").remove();
       var currentSelectedDomain = d3.select("#domainMenu").property("value");
 
-      // determine the domain type and value
+      // // determine the domain type and value
       // if (currentSelectedDomain = "Real vs. Synthetic"){
       //   currentTypeDomain = "Discrete"
       // }
@@ -655,7 +655,7 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
     function updateMultipleViews(filteredData) {
       if (filteredData.length > 0) {
         updateImages(filteredData)
-        updateActivations(filteredData)
+        // updateActivations(filteredData)
         makePerformanceView(data, filteredData)
         var currentClassViolin = d3.select("#classMenu").property("value");
         makeClassDist(data = data, filteredDataClass = filteredData, specifiedClassName = currentClassViolin, setDomainColors = setDomainColors)
@@ -1117,11 +1117,14 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
     }
 
     function instanceActivations(instance,activationDR) {
+      // var reductionMethod = d3.select("#modelSpaceDRMethod").property("value");
       if (currentTypeDomain == "Discrete") {
         var second_instance_path = instance.similar_image_paths;
+        console.log(second_instance_path)
         var second_instance = data.find(function (d) {
           return d.image_path === second_instance_path;
         });
+        console.log(second_instance)
       }
       else {
         if (continuousDomain == "Noise") {
@@ -1150,10 +1153,10 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
       // var instance_type, second_instance_type = 
       let x,y
       if (second_instance) {
-        [x,y]=activation_list_to_graph(instance, second_instance,activationDR)
+        [x,y]=activationListToGraph(instance, second_instance,activationDR)
       }
       else {
-        [x,y]=activation_list_to_graph(instance,0,activationDR)
+        [x,y]=activationListToGraph(instance,0,activationDR)
         // giving 0 to second_instance because otherwise the activationsDR will be recognized as second_instance
       }
       // measuere the height of a div
@@ -1232,7 +1235,9 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
         d3.brush()                 // Add the brush feature using the d3.brush function
           .extent([[0, 0], [activationWidth, activationHeight]]) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
           .on("brush end", function () {
-            highlightPatches(x,y,mask,second_mask,d3.event.selection,imageSize)
+            if (d3.event.selection){
+              highlightPatches(x,y,mask,second_mask,d3.event.selection,imageSize)
+            }
             // var filteredActivations = data.filter(function (d) { return isBrushed(extent, x(d.tsne_1), y(d.tsne_2)) })
             // highlightPatches()
           }),
@@ -1240,16 +1245,19 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
       )
     }
 
-    function highlightPatches(x,y,mask,second_mask,extentActivation,imageSize){
+    function highlightPatches(x,y,mask,second_mask,extentActivation,imageSize,brushActivations){
       // repeat the definition for x and y (which is the same as the model activations graph)
       // this is useful for checking the brushed points.
       // TODO: for domain adaptation model, sends differnet height and width instead of imageSize
 
       // find all of the points that are brushed
-      var brushedActivations = combinedList.filter(function (d) { 
-        return isBrushed(extentActivation, x(d[0]), y(d[1])) }
-      )
+      // var brushedActivations = combinedList.filter(function (d) { 
+      //   return isBrushed(extentActivation, x(d[0]), y(d[1])) }
+      // )
       // check for if there is anything being brushed
+      var brushedActivations = combinedList.filter(function (d) { 
+          return isBrushed(extentActivation, x(d[0]), y(d[1])) }
+      )
       if (brushedActivations.length<=0){
         mask.selectAll("rect").remove();
         if (second_mask!=0){
@@ -1369,7 +1377,7 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
               .attr("width", region.width)
               .attr("height", region.height)
               .style("fill", "white")
-              .style("opacity", 0.3);
+              .style("opacity", 0.5);
           });
           nonHighlightedRegionsSecond.forEach(function(region) {
             second_mask.append("rect")
@@ -1377,9 +1385,9 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
               .attr("y", region.y)
               .attr("width", region.width)
               .attr("height", region.height)
-              .style("fill", "black") // maybe adjust the color
-              .style("opacity", 0.3);
-              // .style("opacity", 0);
+              // .style("fill", "black") // maybe adjust the color
+              // .style("opacity", 0.3);
+              .style("opacity", 0);
           });
         }
       }
@@ -1394,7 +1402,7 @@ d3.csv("system_df_small_sample.csv", function (discreteData) {
       return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;    // This return TRUE or FALSE depending on if the points is in the selected area
     }
 
-    function activation_list_to_graph(instance, second_instance, activationsDR) {
+    function activationListToGraph(instance, second_instance, activationsDR) {
       dataset_types = ["Cityscapes", "Synthia" ];
       if (activationsDR == "t-SNE"){
         instance.bottleneck_activations_embedding = instance.bottleneck_tsne_embedding
@@ -1748,6 +1756,7 @@ function makeClassDist(data, filteredDataClass, specifiedClassName, setDomainCol
     return +d[className]; // need the "+" to make it number
   })
 
+  // set y scale
   var y = d3.scaleLinear()
     .domain([0, maxClassRatio])          // Y scale is set manually (here it's [0,1] because of the ratio of classes)
     .range([violinHeight, 0])
@@ -1799,8 +1808,8 @@ function makeClassDist(data, filteredDataClass, specifiedClassName, setDomainCol
     }
   });
 
-  console.log("filteredDataClass")
-  console.log(filteredDataClass)
+  // console.log("filteredDataClass")
+  // console.log(filteredDataClass)
 
   if (filteredDataClass) {
     let selectedData = JSON.parse(JSON.stringify(filteredDataClass)) // deepcopy the filterData
@@ -1889,6 +1898,13 @@ function getDataScope(key) {
       else if (key == "Selected") {
         return key + " " + dataScope
       }
+    }
+    // just return the whole selected region for discrete domain
+    else{
+      let dataScope = "(Partial)"
+      console.log(key + " " + dataScope)
+      // console.log("Discreted Domain:", key + " " + dataScope)
+      return key + " " + dataScope
     }
   }
   // // this is for discrete domain for now
