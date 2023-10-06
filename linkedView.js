@@ -105,69 +105,9 @@ var tooltip = d3.select("#performanceTooltip")
 var legendWidth = 0.8 * heatmapWidth;
 var legendHeight = 20;
 // color scale
-const heatmapColor = d3.scaleSequential()
-  .domain([0, 1]) // Range of values for the color scale
-  .interpolator(d3.interpolateGreys); // Color interpolation function (interpolate* is sequential single hue)
-
-var legendContainer = d3.select("#heatmapLegend")
-  .append("svg")
-  .attr("width", legendWidth)
-  .attr("height", legendHeight);
-
-// Add color stops to the gradient
-const numColorStops = 10; // Number of color stops (could be tuned)
-const colorStops = d3.range(numColorStops).map((d) => d / (numColorStops - 1));
-
-// Define the gradient
-var gradient = legendContainer.append("defs")
-  .append("linearGradient")
-  .attr("id", "gradient")
-  .attr("x1", "0%")
-  .attr("y1", "0%")
-  .attr("x2", "100%")
-  .attr("y2", "0%");
-
-gradient.selectAll("stop")
-  .data(colorStops)
-  .enter()
-  .append("stop")
-  .attr("offset", (d, i) => {
-    return (i * 10) + "%"
-  })
-  .attr("stop-color", (d) => {
-    return heatmapColor(d);
-  });
-
-// Add color rectangle
-legendContainer.append("rect")
-  .attr("x", 0)
-  .attr("y", 0)
-  .attr("width", legendWidth)
-  .attr("height", legendHeight)
-  .style("fill", "url(#gradient)")
-  .style("stroke", "black") // Add the stroke property (because outline does not work for "rect")
-  .style("stroke-width", "1px"); // Specify the width of the stroke
-
-// number for the legend
-var legendText = d3.select("#heatmapLegend")
-  .append("svg")
-  .attr("width", legendWidth)
-  .attr("height", legendHeight)
-  .style("margin-top", "10px");
-
-// Add text labels to the left and right ends
-legendText.append("text")
-  .attr("x", 0)
-  .attr("y", legendHeight / 2)
-  .attr("text-anchor", "start")
-  .text("0");
-
-legendText.append("text")
-  .attr("x", legendWidth)
-  .attr("y", legendHeight / 2)
-  .attr("text-anchor", "end")
-  .text("1");
-
+// const heatmapColor = d3.scaleSequential()
+//   .domain([0, 1]) // Range of values for the color scale
+//   .interpolator(d3.interpolateGreys); // Color interpolation function (interpolate* is sequential single hue)
 // Setup for image view
 
 const titleImageView = d3.select("#imageViewTitle")
@@ -214,7 +154,7 @@ var activation_svg = d3.select("#activationsScatter")
 
 //Read the data
 // d3.csv("system_df_v3.csv", function (discreteData) {
-d3.csv("discreted_data_v6.csv", function (discreteData) {
+d3.csv("discreted_data_v12.csv", function (discreteData) {
   // d3.csv("noise_df.csv", function (noiseData) {
   d3.csv("noisy_data_sample_200.csv", function (noiseData) {
     // create global variables
@@ -261,7 +201,7 @@ d3.csv("discreted_data_v6.csv", function (discreteData) {
           .attr("font-size", "14").text("Synthia");
 
         // initialize the views
-        makeInputView(discreteData, "t-SNE");
+        makeInputView(discreteData, "Latent t-SNE");
         makePerformanceView(data = discreteData)
         var currentViolinClass = "Road"
         makeClassDist(data = discreteData, filteredDataClass = 0, specifiedClassName = currentViolinClass, setDomainColors = setDomainColors);
@@ -655,7 +595,7 @@ d3.csv("discreted_data_v6.csv", function (discreteData) {
     function updateMultipleViews(filteredData) {
       if (filteredData.length > 0) {
         updateImages(filteredData)
-        // updateActivations(filteredData)
+        updateActivations(filteredData)
         makePerformanceView(data, filteredData)
         var currentClassViolin = d3.select("#classMenu").property("value");
         makeClassDist(data = data, filteredDataClass = filteredData, specifiedClassName = currentClassViolin, setDomainColors = setDomainColors)
@@ -1120,11 +1060,11 @@ d3.csv("discreted_data_v6.csv", function (discreteData) {
       // var reductionMethod = d3.select("#modelSpaceDRMethod").property("value");
       if (currentTypeDomain == "Discrete") {
         var second_instance_path = instance.similar_image_paths;
-        console.log(second_instance_path)
+        // console.log(second_instance_path)
         var second_instance = data.find(function (d) {
           return d.image_path === second_instance_path;
         });
-        console.log(second_instance)
+        // console.log(second_instance)
       }
       else {
         if (continuousDomain == "Noise") {
@@ -1161,10 +1101,30 @@ d3.csv("discreted_data_v6.csv", function (discreteData) {
       }
       // measuere the height of a div
       // var offsetHeight = document.getElementById('maskSimilarity').offsetHeight;
-
-      var imageSize = 150;
+      // var imageSize = 200; // this is the actual size in the system
       var spacing = 20;
       var showType;
+      // var imageWidth = imageSize;
+      if (instance.image_path.includes("domain_adaptation")){
+        var imageWidth = 200
+        var cityscapesWHRatio = 1024/2048;
+        var synthiaWHRatio = 760/1280;
+        if (instance.dataset == "Cityscapes"){
+          var WidthHeightRatioFirst = cityscapesWHRatio;
+          var WidthHeightRatioSecond = synthiaWHRatio;
+        }
+        else{
+          var WidthHeightRatioFirst = synthiaWHRatio;
+          var WidthHeightRatioSecond = cityscapesWHRatio;
+        }
+        var imageHeightFirst = imageWidth * WidthHeightRatioFirst;
+        var imageHeightSecond = imageWidth * WidthHeightRatioSecond;
+      }
+      else{
+        var imageWidth = 150;
+        var imageHeightFirst = imageWidth;
+        var imageHeightSecond = imageWidth;
+      }
 
       if (currentTypeDomain=="Discrete") {
         showType = "label"
@@ -1181,8 +1141,8 @@ d3.csv("discreted_data_v6.csv", function (discreteData) {
       
 
       var mask = d3.select("#maskSimilarity").append("svg")
-        .attr("width", imageSize)
-        .attr("height", imageSize + spacing)
+        .attr("width", imageWidth)
+        .attr("height", imageHeightFirst + spacing)
         .attr("outline", "1px solid white")
         .append('g') // Create a group element to contain the image and title
         .attr("transform", "translate(0, " + spacing + ")"); // Adjust the y-coordinate for spacing
@@ -1193,12 +1153,12 @@ d3.csv("discreted_data_v6.csv", function (discreteData) {
 
       mask.append('image')
         .attr('xlink:href', instance.show_path)
-        .attr('width', imageSize)
-        .attr('height', imageSize);
+        .attr('width', imageWidth)
+        .attr('height', imageHeightFirst);
 
       mask.append('text') // Add title text
         .text("Current "+showType+": (" + instance_type + ")")
-        .attr('x', imageSize / 2) //center it horizontally within the container
+        .attr('x', imageWidth / 2) //center it horizontally within the container
         .attr('y', -5)
         .attr('text-anchor', 'middle')
         .attr('font-size', '10px')
@@ -1207,20 +1167,20 @@ d3.csv("discreted_data_v6.csv", function (discreteData) {
 
       if (currentTypeDomain == "Discrete" || continuousValue != 0) {
         var second_mask = d3.select("#maskSimilarity").append("svg")
-          .attr("width", imageSize)
-          .attr("height", imageSize + spacing)
+          .attr("width", imageWidth)
+          .attr("height", imageHeightSecond + spacing)
           .attr("outline", "1px solid white")
           .append('g') // Create a group element to contain the image and title
           .attr("transform", "translate(0, " + spacing + ")"); // Adjust the y-coordinate for spacing
 
         second_mask.append('image')
           .attr('xlink:href', second_instance.show_path)
-          .attr('width', imageSize)
-          .attr('height', imageSize);
+          .attr('width', imageWidth)
+          .attr('height', imageHeightSecond);
 
         second_mask.append('text') // Add title text
           .text("Corresponding "+showType+": (" + second_instance_type + ")")
-          .attr('x', imageSize / 2) //center it horizontally within the container
+          .attr('x', imageWidth / 2) //center it horizontally within the container
           .attr('y', -5)
           .attr('text-anchor', 'middle')
           .attr('font-size', '10px')
@@ -1236,7 +1196,7 @@ d3.csv("discreted_data_v6.csv", function (discreteData) {
           .extent([[0, 0], [activationWidth, activationHeight]]) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
           .on("brush end", function () {
             if (d3.event.selection){
-              highlightPatches(x,y,mask,second_mask,d3.event.selection,imageSize)
+              highlightPatches(x,y,mask,second_mask,d3.event.selection,imageWidth,imageHeightFirst,imageHeightSecond)
             }
             // var filteredActivations = data.filter(function (d) { return isBrushed(extent, x(d.tsne_1), y(d.tsne_2)) })
             // highlightPatches()
@@ -1245,7 +1205,7 @@ d3.csv("discreted_data_v6.csv", function (discreteData) {
       )
     }
 
-    function highlightPatches(x,y,mask,second_mask,extentActivation,imageSize,brushActivations){
+    function highlightPatches(x,y,mask,second_mask,extentActivation,imageWidth,imageHeightFirst,imageHeightSecond){
       // repeat the definition for x and y (which is the same as the model activations graph)
       // this is useful for checking the brushed points.
       // TODO: for domain adaptation model, sends differnet height and width instead of imageSize
@@ -1268,31 +1228,32 @@ d3.csv("discreted_data_v6.csv", function (discreteData) {
         var brushedActivations = combinedList.filter(function (d) { 
           return isBrushed(extentActivation, x(d[0]), y(d[1])) }
         )
-        activationListLength = first_activations_parsed.length
+        activationListLengthFirst = first_activations_parsed.length
+        if (second_mask!=0){
+          activationListLengthSecond = second_activations_parsed.length
+        }
 
         // this means that height = 1 * width
-        var numOfPatchesWidth=Math.sqrt(activationListLength)
-        var numOfPatchesHeight = numOfPatchesWidth
+        // todo: change how this works
+        var numOfPatchesWidthFirst=Math.sqrt(activationListLengthFirst*imageWidth/imageHeightFirst)
+        var numOfPatchesHeightFirst = activationListLengthFirst/numOfPatchesWidthFirst
+        // console.log("numOfPatchesWidthFirst:\n",numOfPatchesWidthFirst) //32
+        // console.log("numOfPatchesHeightFirst:\n",numOfPatchesHeightFirst) //16
         
-        var patchWidth = imageSize/numOfPatchesWidth
-        var patchHeight = imageSize/numOfPatchesHeight
+        // todo: also change from imageSize to width and height
+        var patchWidthFirst = imageWidth/numOfPatchesWidthFirst;
+        var patchHeightFirst = imageHeightFirst/numOfPatchesHeightFirst;
 
         // Create an array of all patch indices (assuming a linear index)
-        var allPatchIndicesFirst = Array.from({ length: numOfPatchesWidth * numOfPatchesHeight }, (_, i) => i);
-        var allPatchIndicesSecond = Array.from({ length: numOfPatchesWidth * numOfPatchesHeight }, 
-                                               (_, i) => allPatchIndicesFirst.length+i);
+        var allPatchIndicesFirst = Array.from({ length: numOfPatchesWidthFirst*numOfPatchesHeightFirst}, (_, i) => i);
 
         // for brushed points, find corresponding indices in the image 
         var brushedIndices = brushedActivations.map(function(d){return combinedList.indexOf(d)})
-        var brushIndicesFirst = brushedIndices.filter(function(d){return d<activationListLength})
-        var brushIndicesSecond = brushedIndices.filter(function(d){return d>=activationListLength})
+        var brushIndicesFirst = brushedIndices.filter(function(d){return d<activationListLengthFirst}) 
 
         // Find the indices of non-highlighted patches by finding the difference
         var nonHighlightedIndicesFirst = allPatchIndicesFirst.filter(function (index) {
           return brushIndicesFirst.indexOf(index) === -1;
-        });
-        var nonHighlightedIndicesSecond = allPatchIndicesSecond.filter(function (index) {
-          return brushIndicesSecond.indexOf(index) === -1;
         });
         
         mask.selectAll("rect").remove();
@@ -1300,19 +1261,19 @@ d3.csv("discreted_data_v6.csv", function (discreteData) {
         // find the regions to highlight, and save them as dictionary
         var regionsToHighlightDictFirst = brushIndicesFirst.map(function(d){
           let object = {}
-          object.x = (d%numOfPatchesWidth)*patchWidth
-          object.y = (Math.floor(d/numOfPatchesHeight))*patchHeight
-          object.width = patchWidth
-          object.height = patchHeight
+          object.x = (d%numOfPatchesWidthFirst)*patchWidthFirst
+          object.y = (Math.floor(d/numOfPatchesWidthFirst))*patchHeightFirst
+          object.width = patchWidthFirst
+          object.height = patchHeightFirst
           return object
         })
         // not highlighted regions:
         var nonHighlightedRegionsFirst = nonHighlightedIndicesFirst.map(function(d){
           let object = {}
-          object.x = (d%numOfPatchesWidth)*patchWidth
-          object.y = (Math.floor(d/numOfPatchesHeight))*patchHeight
-          object.width = patchWidth
-          object.height = patchHeight
+          object.x = (d%numOfPatchesWidthFirst)*patchWidthFirst
+          object.y = (Math.floor(d/numOfPatchesWidthFirst))*patchHeightFirst
+          object.width = patchWidthFirst
+          object.height = patchHeightFirst
           return object
         })
         
@@ -1345,27 +1306,41 @@ d3.csv("discreted_data_v6.csv", function (discreteData) {
             .attr("y", region.y)
             .attr("width", region.width)
             .attr("height", region.height)
-            // .style("fill", "white") // maybe adjust the color
-            // .style("opacity", 0.5);
+            // .style("fill", "black") // maybe adjust the color
+            // .style("opacity", 0.3);
             .style("opacity", 0);
         });
 
         if (second_mask!=0){
           second_mask.selectAll("rect").remove();
+          var numOfPatchesWidthSecond=Math.sqrt(activationListLengthSecond*imageWidth/imageHeightSecond)
+          var numOfPatchesHeightSecond = activationListLengthSecond/numOfPatchesWidthSecond
+
+          var patchWidthSecond = imageWidth/numOfPatchesWidthSecond;
+          var patchHeightSecond = imageHeightSecond/numOfPatchesHeightSecond;
+
+          var allPatchIndicesSecond = Array.from({ length: numOfPatchesWidthSecond*numOfPatchesHeightSecond}, 
+                                                (_, i) => allPatchIndicesFirst.length+i);
+
+          var brushIndicesSecond = brushedIndices.filter(function(d){return d>=activationListLengthFirst})
+          var nonHighlightedIndicesSecond = allPatchIndicesSecond.filter(function (index) {
+            return brushIndicesSecond.indexOf(index) === -1;
+          });
+
           var regionsToHighlightDictSecond = brushIndicesSecond.map(function(d){
             let object = {}
-            object.x = ((d-activationListLength)%numOfPatchesWidth)*patchWidth
-            object.y = (Math.floor((d-activationListLength)/numOfPatchesHeight))*patchHeight
-            object.width = patchWidth
-            object.height = patchHeight
+            object.x = ((d-activationListLengthFirst)%numOfPatchesWidthSecond)*patchWidthSecond
+            object.y = (Math.floor((d-activationListLengthFirst)/numOfPatchesWidthSecond))*patchHeightSecond
+            object.width = patchWidthSecond
+            object.height = patchHeightSecond
             return object
           })
           var nonHighlightedRegionsSecond = nonHighlightedIndicesSecond.map(function(d){
             let object = {}
-            object.x = ((d-activationListLength)%numOfPatchesWidth)*patchWidth
-            object.y = (Math.floor((d-activationListLength)/numOfPatchesHeight))*patchHeight
-            object.width = patchWidth
-            object.height = patchHeight
+            object.x = ((d-activationListLengthFirst)%numOfPatchesWidthSecond)*patchWidthSecond
+            object.y = (Math.floor((d-activationListLengthFirst)/numOfPatchesWidthSecond))*patchHeightSecond
+            object.width = patchWidthSecond
+            object.height = patchHeightSecond
             return object
           })
 
@@ -1556,7 +1531,7 @@ function makePerformanceView(data, filteredData) {
 
   // get the domain list for Vertical Vars
   if (currentTypeDomain == "Discrete") {
-    var domainNameList = ["Cityscapes (Overall)", "Synthia (Overall)", "Selected (Partial)"]
+    var domainNameList = ["Synthia (Overall)","Cityscapes (Overall)","Selected (Partial)"]
   }
   else {
     if (continuousDomain == "Noise") {
@@ -1566,6 +1541,10 @@ function makePerformanceView(data, filteredData) {
       var domain1_partial = "Noise: 0 " + "(Partial)"
       var domain2_partial = "Noise: " + continuousValue.toString() + " " + "(Partial)"
       // create a list
+      // domainNameList = [domain1, domain2, domain1_partial, domain2_partial]
+      // this does not work for changing the noise 0 from two names to 4 names, 
+      // because there would just be overlapping names
+
       if (continuousValue != 0) {
         var domainNameList = [domain1, domain2, domain1_partial, domain2_partial]
       }
@@ -1718,6 +1697,19 @@ function makePerformanceView(data, filteredData) {
       .style("stroke", "none")
       .style("opacity", 0.8)
   }
+  const values = transformedData.map(item => item.value);
+
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+
+  // console.log("Min Value:\n", minValue);
+  // console.log("Max Value:\n", maxValue);
+
+  const heatmapColor = d3.scaleSequential()
+  .domain([minValue, maxValue]) // Range of values for the color scale
+  .interpolator(d3.interpolateGreys); // Color interpolation function (interpolate* is sequential single hue)
+
+  createHeatmapLegend(minValue,maxValue)
 
   // add the squares
   heatmap_svg.selectAll()
@@ -1764,7 +1756,7 @@ function makeClassDist(data, filteredDataClass, specifiedClassName, setDomainCol
 
   // get the list of domains to put on the axis
   if (currentTypeDomain == "Discrete") {
-    var domainNameList = ["Cityscapes (Overall)", "Synthia (Overall)", "Selected (Partial)"]
+    var domainNameList = ["Synthia (Overall)","Cityscapes (Overall)", "Selected (Partial)"]
   }
   else {
     if (continuousDomain == "Noise") {
@@ -1808,8 +1800,6 @@ function makeClassDist(data, filteredDataClass, specifiedClassName, setDomainCol
     }
   });
 
-  // console.log("filteredDataClass")
-  // console.log(filteredDataClass)
 
   if (filteredDataClass) {
     let selectedData = JSON.parse(JSON.stringify(filteredDataClass)) // deepcopy the filterData
@@ -1902,8 +1892,6 @@ function getDataScope(key) {
     // just return the whole selected region for discrete domain
     else{
       let dataScope = "(Partial)"
-      console.log(key + " " + dataScope)
-      // console.log("Discreted Domain:", key + " " + dataScope)
       return key + " " + dataScope
     }
   }
@@ -1922,5 +1910,75 @@ function getDataScope(key) {
       }
     }
   }
+}
+
+function createHeatmapLegend(minValue,maxValue){
+  d3.select("#heatmapLegend").selectAll("*").remove()
+
+  const heatmapSliderColor = d3.scaleSequential()
+  .domain([minValue, maxValue]) // Range of values for the color scale
+  .interpolator(d3.interpolateGreys); // Color interpolation function (interpolate* is sequential single hue)
+
+  legendContainer = d3.select("#heatmapLegend")
+  .append("svg")
+  .attr("width", legendWidth)
+  .attr("height", legendHeight);
+
+  // Add color stops to the gradient
+  const numColorStops = 10; // Number of color stops (could be tuned)
+  const colorStops = d3.range(numColorStops).map((d) => d / (numColorStops - 1));
+
+  // Define the gradient
+  gradient = legendContainer.append("defs")
+    .append("linearGradient")
+    .attr("id", "gradient")
+    .attr("x1", "0%")
+    .attr("y1", "0%")
+    .attr("x2", "100%")
+    .attr("y2", "0%");
+
+  gradient.selectAll("stop")
+    .data(colorStops)
+    .enter()
+    .append("stop")
+    .attr("offset", (d, i) => {
+      return (i * 10) + "%"
+    })
+    .attr("stop-color", (d) => {
+      return heatmapSliderColor(d);
+    });
+
+  // Add color rectangle
+  legendContainer.append("rect")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", legendWidth)
+    .attr("height", legendHeight)
+    .style("fill", "url(#gradient)")
+    .style("stroke", "black") // Add the stroke property (because outline does not work for "rect")
+    .style("stroke-width", "1px") // Specify the width of the stroke
+    // .style("margin-bottom", "px");
+
+  // number for the legend
+  legendText = d3.select("#heatmapLegend")
+    .append("svg")
+    .attr("width", legendWidth)
+    .attr("height", legendHeight)
+    .style("margin-top", "2px");
+
+  // Add text labels to the left and right ends
+  legendText.append("text")
+    .attr("x", 0)
+    .attr("y", legendHeight / 2)
+    .attr("text-anchor", "start")
+    .attr("font-size","12px")
+    .text(minValue.toFixed(2).toString());
+
+  legendText.append("text")
+    .attr("x", legendWidth)
+    .attr("y", legendHeight / 2)
+    .attr("text-anchor", "end")
+    .attr("font-size","12px")
+    .text(maxValue.toFixed(2).toString());
 }
 
