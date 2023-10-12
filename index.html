@@ -18,21 +18,6 @@
           <option value="Real vs. Synthetic">Real vs. Synthetic</option>
         </select>
       </div>
-      <!-- <div id="dropdown"> -->
-        <!-- <ul id="menu">
-          <li class="parent"><a href="#">Domains</a>
-            <ul class="child">
-                <li><a href="#">Discrete</a></li>
-                <li class="parent"><a href="#">Continuous<span class="expand">»</span></a>
-                    <ul class="child">
-                        <li><a href="#">Noise</a></li>
-                    </ul></li>
-            </ul>
-          </li>
-        </ul> -->
-        <!-- <div id="currentSelectedDomain"></div> -->
-      <!-- </div> -->
-      <!-- <br><br> -->
       <div id="slider">
         <input type="range" name="noise_slider" id=mySlider min="0" max="5" step = "1" value="0" oninput="this.nextElementSibling.value = this.value" class="slider">
         <output>0</output>
@@ -90,14 +75,6 @@
       </div>
       <div id="imgViewContainer">
         <div id="imgDatasetNames">
-          <!-- <svg width="49%" height="25">
-            <circle cx="30" cy="10" r="6" fill="#003f5c"></circle>
-            <text x="50%" y="15" text-anchor="middle" font-size="14">Cityscapes</text>
-          </svg>
-          <svg width="49%" height="25">
-            <circle cx="30" cy="10" r="6" fill="#ffa600"></circle>
-            <text x="50%" y="15" text-anchor="middle" font-size="14">Synthia</text>
-          </svg> -->
         </div>
         <div id="imgContainer">
           <div id = "imgDomain1"></div>
@@ -114,7 +91,11 @@
               <option value="t-SNE">t-SNE</option>
               <option value="PCA">PCA</option>
             </select>
+            <input type="checkbox" name="similarityByClass">
+            <label for="similarityByClass">Class similarity</label>
           </div>
+          <!-- <div id="similarClass">
+          </div> -->
         </div>
         <div id = "maskSimilarity"></div>
       </div>

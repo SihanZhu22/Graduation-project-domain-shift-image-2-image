@@ -4,6 +4,8 @@ var discreteDomainColor = d3.scaleOrdinal()
   .domain(["Selected", "Cityscapes", "Synthia"])
   .range(["#D6D6D6", "#1f78b4", "#b2df8a"])
 
+const colorSelectedInstances = "red";
+
 // setup for selection of domains
 
 // class distributions
@@ -15,7 +17,7 @@ const titleClassDist = d3.select("#classDistTitle")
   .style("font-size", "16px")
   .style("font-weight", 700)
   .style("font-family", "Arial")
-  .text("Distribution of classes");
+  .text("Class Ratio View");
 
 // set the dimensions and margins of the graph
 var violinMargin = { top: 10, right: 30, bottom: 30, left: 30 },
@@ -436,10 +438,6 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
           d.embedding_2 = +d.meaningful_tsne_2;
         });
       }
-      // console.log(data)
-      // console.log("data\n",JSON.parse(JSON.stringify(data)));
-      // console.log(originalData)
-      // console.log("originalData\n",JSON.parse(JSON.stringify(originalData)));
 
       // input view: range for each dimension
       const min_dim_1 = d3.min(originalData, function (d) { return d.embedding_1; });
@@ -506,11 +504,21 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
 
         // classify the previous instance image to either viewedSelectedImage or viewedNotSelectedImage
         var original_id = d3.select(".instanceImage").attr("id").split("-")[1];
-        var original_instance = data.filter(function (d) { return d.id == original_id; })[0];
+        var original_instance = originalData.filter(function (d) { return d.id == original_id;})[0];
+        if (currentTypeDomain == "Discrete"){
+          var original_corresponding_instance = originalData.filter(function(d){return d.image_path == original_instance.similar_image_paths})
+          var original_corresponding_id = original_corresponding_instance[0].id
+        }
+        // console.log("original instance:\n",JSON.parse(JSON.stringify(original_instance)))
+        // console.log("original corresponding instance:\n",JSON.parse(JSON.stringify(original_corresponding_instance)))
+        // console.log("original corresponding instance id:\n", JSON.parse(JSON.stringify(original_corresponding_id)))
+        // Get the ID of the clicked image
+        var id = d3.select(this).attr("id").split("-")[1];
 
-        // check and change the selected image
+        // check and change the original image
         if (original_instance.selected == true) {
           d3.selectAll(".instanceImage").classed("viewedSelectedImage", true)
+          // changing the original selected instance to classify as other instances
           d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function (d) {
             return d.id === original_id
           });
@@ -521,14 +529,29 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
             return d.id === original_id
           });
         }
+        if (currentTypeDomain == "Discrete"){
+          // check for the original corresponding image and change
+          if (original_corresponding_instance.selected == true) {
+            // changing the original selected instance to classify as other instances
+            d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function (d) {
+              // console.log("selected points")
+              return d.id === original_corresponding_id
+            });
+          }
+          else {
+            d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function (d) {
+              return d.id === original_corresponding_id
+            });
+          }
+        }
         // stop highlighting the previous instance image 
         d3.selectAll(".instanceImage").classed("instanceImage", false);
 
-        // Get the ID of the clicked image
-        var id = d3.select(this).attr("id").split("-")[1];
-
         // Find the corresponding data in your dataset
         var instance = data.filter(function (d) { return d.id == id; })[0];
+        if (currentTypeDomain == "Discrete"){
+          var second_clicked_instance = data.filter(function (d) { return d.image_path == instance.similar_image_paths; })[0];
+        }
 
         // if only one checkbox is selected, meaning that there are multiple instances:
         if (countCheckbox == 1) {
@@ -546,9 +569,6 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
         var selectedActivationsDR = d3.select("#modelSpaceDRMethod").property("value");
         instanceActivations(instance,selectedActivationsDR)
 
-        // d3.s(".points").classed("instance-point", function(d) {
-        //   return d.tsne_1 === instance.tsne_1 && d.tsne_2 === instance.tsne_2 
-        // });
         var filteredPoint = d3.selectAll(".points")
           .filter(function (d) {
             return d.id === id;
@@ -556,6 +576,15 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
         filteredPoint.classed("viewed-selected-points", false)
         filteredPoint.classed("viewed-not-selected-points", false)
         filteredPoint.classed("instance-point", true)
+        if (currentTypeDomain == "Discrete"){
+          var filteredCorrespondingPoint = d3.selectAll(".points")
+          .filter(function (d) {
+            return d.id == second_clicked_instance.id;
+          });
+          filteredCorrespondingPoint.classed("viewed-selected-points", false)
+          filteredCorrespondingPoint.classed("viewed-not-selected-points", false)
+          filteredCorrespondingPoint.classed("instance-point", true)
+        }
       })
     }
 
@@ -690,7 +719,20 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
     function modifyFiltered(filteredData) {
       // console.log("filteredData\n",JSON.parse(JSON.stringify(filteredData)));
       if (currentTypeDomain == "Discrete") {
-        filteredData.map(function (d) { d["selected"] = true });
+        var indexToMove  = filteredData.findIndex(function(d){
+          return d.image_path == filteredData[0].similar_image_paths;
+        });
+        if (indexToMove !==-1) {
+          // Remove the item from its current position
+          var itemToMove = filteredData.splice(indexToMove, 1)[0];
+          // Insert the removed item at the desired position (e.g., second position)
+          filteredData.splice(1, 0, itemToMove);
+          filteredData.map(function (d) { d["selected"] = true });
+          return filteredData
+        }
+        else{
+          filteredData.map(function (d) { d["selected"] = true });
+        }
         return filteredData
       }
       else {
@@ -762,14 +804,53 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
       filteredDataImageView = filteredData
       // find the first one of the filteredData
       var first_index = filteredData.findIndex(function (d) { return d.selected == true })
-      // no selected when changing noise from a noise level
-      // console.log("filteredData[first_index]\n",JSON.parse(JSON.stringify(filteredData[first_index])))
-      // console.log("filteredData-updateImages\n",JSON.parse(JSON.stringify(filteredData)))
-      // const points = d3.selectAll(".points");
-      // console.log("points\n",JSON.parse(JSON.stringify(points)))
-      d3.selectAll(".points").classed("instance-point", function (d) {
-        return d.embedding_1 === filteredData[first_index].embedding_1 && d.embedding_2 === filteredData[first_index].embedding_2
+      // corresponding image for discrete domains
+      if (filteredData.length>1 && filteredData[0].similar_image_paths==filteredData[1].image_path){
+        // second_index = filteredData.findIndex(function (d) { return filteredData[1].image_path == filteredData[0].similar_image_paths})
+        second_index = 1
+      }
+      else if (filteredData.length>1 && filteredData[0].name == filteredData[1].name){
+        if (first_index == 1){
+          second_index = 0
+        }
+        else{
+          second_index = 1
+        }
+        
+      }
+      else{
+        second_index = -1
+      }
+
+      // d3.selectAll(".points").classed("instance-point", function (d) {
+      //   return d.embedding_1 === filteredData[first_index].embedding_1 && d.embedding_2 === filteredData[first_index].embedding_2
+      // });
+      // the instance that corresponds to the first instance in the filter data (most similar mask for discrete domain)
+      var correspondingInstance = originalData.find(function (d) {
+        if (currentTypeDomain == "Discrete") {
+          return d.image_path === filteredData[first_index].similar_image_paths;
+        }
+        else {
+          // noise domain
+          if (filteredData[first_index].noise_level == 0) {
+            return d.noise_level === continuousValue && d.name === filteredData[first_index].name;
+          }
+          else {
+            return d.noise_level === 0 && d.name === filteredData[first_index].name;
+          }
+        }
       });
+      // console.log("correspondingInstance:\n",JSON.parse(JSON.stringify(correspondingInstance)))
+      // console.log("correspondingInstance embeddings :\n",JSON.parse(JSON.stringify(correspondingInstance.embedding_1)))
+      // console.log("filteredData[0] embeddings :\n",JSON.parse(JSON.stringify(filteredData[0].embedding_1)))
+      // console.log("filteredData[1] embeddings :\n",JSON.parse(JSON.stringify(filteredData[1].embedding_1)))
+      d3.selectAll(".points").classed("instance-point", function (d) {
+        return (d.embedding_1 === correspondingInstance.embedding_1 && d.embedding_2 === correspondingInstance.embedding_2)
+         || (d.embedding_1 === filteredData[first_index].embedding_1 && d.embedding_2 === filteredData[first_index].embedding_2)
+      });
+      // d3.selectAll(".points").classed("instance-point", function (d) {
+      //   return d.embedding_1 === filteredData[first_index].embedding_1 && d.embedding_2 === filteredData[first_index].embedding_2
+      // });
       // first turn off the not-used-points class before adding new ones
       d3.selectAll(".not-used-points").classed("not-used-points", false);
 
@@ -822,7 +903,7 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
           if (filteredData.length <= i || (numDomain1 >= 4 && numDomain2 >= 4)) {
             break
           }
-          if (i == first_index) {
+          if (i == first_index||i==second_index) {
             current_class = "instanceImage"
           }
           else {
@@ -836,6 +917,7 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
           }
           // either discrete cityscapes, or continuous with noise level=0
           if ((filteredData[i].dataset == "Cityscapes" && currentTypeDomain == "Discrete") || filteredData[i].noise_level == 0) {
+            // var heightPercentCityscpaes = ((1024/2048)*100).toString()+"%";
             if (numDomain1 < 3) {
               var current_image = domain1_images.append("svg")
                 .classed("image", true)
@@ -845,14 +927,15 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
                 .attr('xlink:href', filteredData[i].path)
                 .attr('width', '100%')
                 .attr('height', '100%')
+                // .attr('height', heightPercentCityscpaes.toString())
                 .attr('preserveAspectRatio', 'xMinYMin meet');
 
-              if (i != first_index && filteredData[i].selected == true) {
+              if (i != first_index && i!= second_index && filteredData[i].selected == true) {
                 d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function (d) {
                   return d.embedding_1 === filteredData[i].embedding_1 && d.embedding_2 === filteredData[i].embedding_2
                 });
               }
-              else if (i != first_index && filteredData[i].selected == false) {
+              else if (i != first_index && i!= second_index && filteredData[i].selected == false) {
                 d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function (d) {
                   return d.embedding_1 === filteredData[i].embedding_1 && d.embedding_2 === filteredData[i].embedding_2
                 });
@@ -868,6 +951,7 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
           }
           // either discrete synthia, or continuous with noise level the same as the current value
           else if ((filteredData[i].dataset == "Synthia" && currentTypeDomain == "Discrete") || filteredData[i].noise_level == continuousValue) {
+            // var heightPercentSynthia = ((760/1280)*100).toString()+"%";
             if (numDomain2 < 3) {
               var current_image = domain2_images.append("svg")
                 .classed("image", true)
@@ -877,14 +961,15 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
                 .attr('xlink:href', filteredData[i].path)
                 .attr('width', '100%')
                 .attr('height', '100%')
+                // .attr('height', heightPercentSynthia)
                 .attr('preserveAspectRatio', 'xMinYMin meet');
 
-              if (i != first_index && filteredData[i].selected == true) {
+              if (i != first_index && i!=second_index && filteredData[i].selected == true) {
                 d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function (d) {
                   return d.embedding_1 === filteredData[i].embedding_1 && d.embedding_2 === filteredData[i].embedding_2
                 });
               }
-              else if (i != first_index && filteredData[i].selected == false) {
+              else if (i != first_index && i!=second_index && filteredData[i].selected == false) {
                 d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function (d) {
                   return d.embedding_1 === filteredData[i].embedding_1 && d.embedding_2 === filteredData[i].embedding_2
                 });
@@ -927,7 +1012,7 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
         });
         if (domain1Data.length > 0) {
           instance = domain1Data[0]
-          if (instance == filteredData[first_index]) {
+          if (instance == filteredData[first_index]||instance == filteredData[second_index]) {
             current_class = "instanceImage"
           }
           else {
@@ -952,7 +1037,7 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
               .insert('image')
               .attr('xlink:href', instance.image_path)
               .attr('width', '100%') //TODO: need to change this if the image is larger
-              // .attr('height', "100%")
+              .attr('height', "100%")
               .attr('preserveAspectRatio', 'xMinYMin meet');
           }
           if (groundTruthValue) {
@@ -963,7 +1048,7 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
               .insert('image')
               .attr('xlink:href', instance.label_path)
               .attr('width', '100%')
-              // .attr('height', '100')
+              .attr('height', '100%')
               .attr('preserveAspectRatio', 'xMinYMin meet');
           }
           if (predictionValue) {
@@ -980,7 +1065,7 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
         }
         if (domain2Data.length > 0) {
           instance = domain2Data[0]
-          if (instance == filteredData[first_index]) {
+          if (instance == filteredData[first_index]||instance == filteredData[second_index]) {
             current_class = "instanceImage"
           }
           else {
@@ -1060,11 +1145,9 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
       // var reductionMethod = d3.select("#modelSpaceDRMethod").property("value");
       if (currentTypeDomain == "Discrete") {
         var second_instance_path = instance.similar_image_paths;
-        // console.log(second_instance_path)
         var second_instance = data.find(function (d) {
           return d.image_path === second_instance_path;
         });
-        // console.log(second_instance)
       }
       else {
         if (continuousDomain == "Noise") {
@@ -1156,6 +1239,16 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
         .attr('width', imageWidth)
         .attr('height', imageHeightFirst);
 
+      // mask.style("border", "1px solid " + colorSelectedInstances);
+      mask.append("rect")
+          .attr("x", 0)
+          .attr("y", 0)
+          .attr("width", imageWidth)
+          .attr("height", imageHeightFirst)
+          .style("stroke", colorSelectedInstances)
+          .style("fill", "none")
+          .style("stroke-width", 3);
+
       mask.append('text') // Add title text
         .text("Current "+showType+": (" + instance_type + ")")
         .attr('x', imageWidth / 2) //center it horizontally within the container
@@ -1177,6 +1270,15 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
           .attr('xlink:href', second_instance.show_path)
           .attr('width', imageWidth)
           .attr('height', imageHeightSecond);
+
+        second_mask.append("rect")
+          .attr("x", 0)
+          .attr("y", 0)
+          .attr("width", imageWidth)
+          .attr("height", imageHeightSecond)
+          .style("stroke", colorSelectedInstances)
+          .style("fill", "none")
+          .style("stroke-width", 3);
 
         second_mask.append('text') // Add title text
           .text("Corresponding "+showType+": (" + second_instance_type + ")")
@@ -1237,8 +1339,6 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
         // todo: change how this works
         var numOfPatchesWidthFirst=Math.sqrt(activationListLengthFirst*imageWidth/imageHeightFirst)
         var numOfPatchesHeightFirst = activationListLengthFirst/numOfPatchesWidthFirst
-        // console.log("numOfPatchesWidthFirst:\n",numOfPatchesWidthFirst) //32
-        // console.log("numOfPatchesHeightFirst:\n",numOfPatchesHeightFirst) //16
         
         // todo: also change from imageSize to width and height
         var patchWidthFirst = imageWidth/numOfPatchesWidthFirst;
@@ -1311,6 +1411,15 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
             .style("opacity", 0);
         });
 
+        mask.append("rect")
+          .attr("x", 0)
+          .attr("y", 0)
+          .attr("width", imageWidth)
+          .attr("height", imageHeightFirst)
+          .style("stroke", colorSelectedInstances)
+          .style("fill", "none")
+          .style("stroke-width", 3);
+
         if (second_mask!=0){
           second_mask.selectAll("rect").remove();
           var numOfPatchesWidthSecond=Math.sqrt(activationListLengthSecond*imageWidth/imageHeightSecond)
@@ -1364,6 +1473,14 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
               // .style("opacity", 0.3);
               .style("opacity", 0);
           });
+          second_mask.append("rect")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", imageWidth)
+            .attr("height", imageHeightSecond)
+            .style("stroke", colorSelectedInstances)
+            .style("fill", "none")
+            .style("stroke-width", 3);
         }
       }
     }
@@ -1452,8 +1569,11 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
         .attr("cx", function (d) { return x(d[0]) })
         .attr("cy", function (d) { return y(d[1]) })
         .attr("r", 3.5)
+        .style("stroke", colorSelectedInstances)
+        .style("stroke-width",1)
         .style("fill", setDomainColors(instance))
         .style("opacity",0.9)
+        
 
       //Add dots for the other dataset
       if (second_instance) {
@@ -1465,6 +1585,8 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
           .attr("cx", function (d) { return x(d[0]) })
           .attr("cy", function (d) { return y(d[1]) })
           .attr("r", 3.5)
+          .style("stroke", colorSelectedInstances)
+          .style("stroke-width",1)
           .style("fill", setDomainColors(second_instance))
           .style("opacity",0.9)
       }
@@ -1701,9 +1823,6 @@ function makePerformanceView(data, filteredData) {
 
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
-
-  // console.log("Min Value:\n", minValue);
-  // console.log("Max Value:\n", maxValue);
 
   const heatmapColor = d3.scaleSequential()
   .domain([minValue, maxValue]) // Range of values for the color scale

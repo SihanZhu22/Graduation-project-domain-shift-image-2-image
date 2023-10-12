@@ -382,6 +382,14 @@ li:hover {
   text-align: center;
 }
 
+#modelSpaceDRMethod{
+  margin-right: 10px;
+}
+
+/* #similarClass{
+  text-align: right;
+} */
+
 #modelViewContainer{
   display: flex;
 }
