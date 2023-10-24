@@ -7,25 +7,33 @@
     <!-- bootstrap css for drop-down specifically -->
   </head> 
   <body>
-    <div id="domainSelection">
-      <text>
-        <b>Select / update the current domain</b>
-      </text>
-      <br><br>
-      <div id="domainDropdown">
-        <select id="domainMenu">
-          <option value="Noise">Noise</option>
-          <option value="Real vs. Synthetic">Real vs. Synthetic</option>
-        </select>
+    <div id="topLeftDiv">
+      <div id="domainSelection">
+        <text>
+          <b>Select / update the current domain</b>
+        </text>
+        <br><br>
+        <div id="domainDropdown">
+          <select id="domainMenu">
+            <option value="Noise">Noise</option>
+            <option value="Real vs. Synthetic">Real vs. Synthetic</option>
+          </select>
+        </div>
+        <div id="slider">
+          <input type="range" name="noise_slider" id=mySlider min="0" max="5" step = "1" value="0" oninput="this.nextElementSibling.value = this.value" class="slider">
+          <output>0</output>
+        </div>
       </div>
-      <div id="slider">
-        <input type="range" name="noise_slider" id=mySlider min="0" max="5" step = "1" value="0" oninput="this.nextElementSibling.value = this.value" class="slider">
-        <output>0</output>
+      <div id="classColormap">
+        <svg id="classColorLegend" height=110 width=150></svg>
       </div>
     </div>
     <div id="classDist">
       <div id="classDistTitle"></div>
       <div id="classSelection">
+        <div id="classCurrentColor">
+          <!-- <svg><circle cx="10" cy="10" r="6" fill="#ffc473"></circle></svg> -->
+        </div>
         <div id="classDropdown">
           <select id="classMenu">
             <option value="Road">Road</option>
@@ -105,6 +113,7 @@
     <script src="https://d3js.org/d3.v4.js"></script>
     <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
     <script src='https://cdn.plot.ly/plotly-2.20.0.min.js'></script>
+    <script src="https://d3js.org/colorbrewer.v1.min.js"></script>
     <script src="linkedView.js"></script>
   </body> 
 </html> 

@@ -2,9 +2,52 @@
 var discreteDomains = ["Cityscapes", "Synthia"]
 var discreteDomainColor = d3.scaleOrdinal()
   .domain(["Selected", "Cityscapes", "Synthia"])
-  .range(["#D6D6D6", "#1f78b4", "#b2df8a"])
+  // .range(["#D6D6D6", "#1f78b4", "#b2df8a"])
+  .range(["#D6D6D6","#b3cde3","#ccebc5"])
 
 const colorSelectedInstances = "red";
+
+var classKeys = ["others","road","sidewalk","vegetation","sky","car"]
+var classColors = d3.scaleOrdinal()
+    .domain(classKeys)
+    // .range(["#decbe4", "#fed9a6","#ffffcc","#e5d8bd","#fddaec","#fbb4ae"]);
+    .range(["#d29de3","#ffc473","#ffff99","#e6ca91","#fca7d3","#f08278"])
+
+var classColorLegend = d3.select("#classColorLegend")
+
+classColorLegend.append("text")
+  .attr("x",10)
+  .attr("y",15)
+  .text("Class colormap")
+  .attr("text-anchor", "right")
+  .style("font-size", "14px")
+
+// Add one dot in the legend for each name.
+classColorLegend.selectAll("mydots")
+  .data(classKeys)
+  .enter()
+  .append("circle")
+    .attr("cx", 30)
+    .attr("cy", function(d,i){ return 30 + i*15}) // 100 is where the first dot appears. 25 is the distance between dots
+    .attr("r", 5)
+    .style("fill", function(d){ return classColors(d)})
+
+classColorLegend.selectAll("mylabels")
+  .data(classKeys)
+  .enter()
+  .append("text")
+    .attr("x", 45)
+    .attr("y", function(d,i){ return 30 + i*15}) // 100 is where the first dot appears. 25 is the distance between dots
+    // .style("fill", function(d){ return classColors(d)})
+    .text(function(d){ return d})
+    .attr("text-anchor", "left")
+    .style("alignment-baseline", "middle")
+    .style("font-size", "10px")
+
+// var classColorlegend = d3.legendColor()
+//   .scale(classColors);
+// var colormapContainer = d3.select("#classColormap");
+// colormapContainer.call(classColorlegend);
 
 // setup for selection of domains
 
@@ -36,7 +79,7 @@ var violinPlot = d3.select("#classDistPlot")
 // setup for input view
 
 // set the dimensions and margins of the graph
-const margin_of_input = { top: 10, right: 10, bottom: 15, left:15},
+const margin_of_input = { top: 10, right: 10, bottom: 35, left:15},
   inputWidth = 460 - margin_of_input.left - margin_of_input.right,
   inputHeight = 400 - margin_of_input.top - margin_of_input.bottom;
 
@@ -73,9 +116,9 @@ const titlePerformanceView = d3.select("#performanceViewTitle")
 //   .attr("width", "100%")
 //   .attr("height","100%");
 // setup for heatmap view
-var heatmapMargin = { top: 15, right: 25, bottom: 30, left: 110 },
+var heatmapMargin = { top: 15, right: 25, bottom: 20, left: 110 },
   heatmapWidth = 550 - heatmapMargin.left - heatmapMargin.right,
-  heatmapHeight = 250 - heatmapMargin.top - heatmapMargin.bottom;
+  heatmapHeight = 220 - heatmapMargin.top - heatmapMargin.bottom;
 
 // append the svg object to the body of the page
 var heatmap_svg = d3.select("#performancePlot")
@@ -128,9 +171,9 @@ var domain2_images = d3.select("#imgDomain2")
 
 // Setup for activation view
 
-var margin_of_activation = { top: 30, right: 30, bottom: 25, left: 60 },
+var margin_of_activation = { top: 30, right: 30, bottom: 35, left: 60 },
   activationWidth = 430 - margin_of_activation.left - margin_of_activation.right,
-  activationHeight = 330 - margin_of_activation.top - margin_of_activation.bottom;
+  activationHeight = 400 - margin_of_activation.top - margin_of_activation.bottom;
 
 const titleModelView = d3.select("#modelViewTitle")
   .append("text")
@@ -156,9 +199,9 @@ var activation_svg = d3.select("#activationsScatter")
 
 //Read the data
 // d3.csv("system_df_v3.csv", function (discreteData) {
-d3.csv("discreted_data_v12.csv", function (discreteData) {
+d3.csv("discreted_data_v16.csv", function (discreteData) {
   // d3.csv("noise_df.csv", function (noiseData) {
-  d3.csv("noisy_data_sample_200.csv", function (noiseData) {
+  d3.csv("noise_data_sample_200_v3.csv", function (noiseData) {
     // create global variables
     currentTypeDomain = "Continuous"
     continuousDomain = "Noise"
@@ -220,9 +263,14 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
           let colorStart = "#c7e9c0";  // Start color (e.g., drak blue)
           let colorEnd = "#006d2c";    // End color (e.g., light blue)
 
-          continuousDomainColor = d3.scaleSequential()
-              .domain([0, 5])
-              .interpolator(d3.interpolateHcl("blue", "pink")); 
+          // continuousDomainColor = d3.scaleSequential()
+          //     .domain([0, 5])
+          //     // .interpolator(d3.interpolateHcl("blue", "pink")); 
+          //     .interpolator(d3.interpolateHcl("#ece2f0", "#feb24c"));
+          continuousDomainColor = d3.scaleOrdinal()
+              .domain([0,1,2,3,4,5])
+              .range(["#c6dbef","#9ecae1","#6baed6","#4292c6","#2171b5","#084594"]);
+
 
           // continuousDomainColor = d3.scaleLinear()
           //   .domain([noiseMin, noiseMax])
@@ -506,9 +554,33 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
         var original_id = d3.select(".instanceImage").attr("id").split("-")[1];
         var original_instance = originalData.filter(function (d) { return d.id == original_id;})[0];
         if (currentTypeDomain == "Discrete"){
-          var original_corresponding_instance = originalData.filter(function(d){return d.image_path == original_instance.similar_image_paths})
-          var original_corresponding_id = original_corresponding_instance[0].id
+          // make sure to use the right previous corresponding path
+          var similarClassCheckbox = d3.select('input[name="similarityByClass"]').node();
+          var imageValue = similarClassCheckbox.checked ? 1 : 0;
+          if (imageValue==0){
+            var original_corresponding_instance = originalData.filter(function(d){return d.image_path == original_instance.similar_image_paths})
+            // var original_corresponding_id = original_corresponding_instance[0].id
+          }
+          else{
+            var currentClass = d3.select("#classMenu").property("value")
+            var second_instance_path_column = "similar_image_paths_"+currentClass.toLowerCase()
+            var original_corresponding_instance = originalData.filter(function(d){return d.image_path == original_instance[second_instance_path_column]})
+            // var original_corresponding_id = original_corresponding_instance[0].id
+          }
         }
+        else{
+          if (continuousValue!=0){
+            var original_corresponding_instance = originalData.filter(function(d){
+                                          return (d.name == original_instance.name &&
+                                        d.noise_level == 0)})
+          }else{
+            var original_corresponding_instance = originalData.filter(function(d){
+              return (d.name == original_instance.name &&
+            d.noise_level == continuousValue)})
+          }
+        }
+        console.log("original_corresponding_instance",original_corresponding_instance)
+        var original_corresponding_id = original_corresponding_instance[0].id
         // console.log("original instance:\n",JSON.parse(JSON.stringify(original_instance)))
         // console.log("original corresponding instance:\n",JSON.parse(JSON.stringify(original_corresponding_instance)))
         // console.log("original corresponding instance id:\n", JSON.parse(JSON.stringify(original_corresponding_id)))
@@ -529,28 +601,41 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
             return d.id === original_id
           });
         }
-        if (currentTypeDomain == "Discrete"){
+        // if (currentTypeDomain == "Discrete"){
           // check for the original corresponding image and change
-          if (original_corresponding_instance.selected == true) {
-            // changing the original selected instance to classify as other instances
-            d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function (d) {
-              // console.log("selected points")
-              return d.id === original_corresponding_id
-            });
-          }
-          else {
-            d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function (d) {
-              return d.id === original_corresponding_id
-            });
-          }
+        if (original_corresponding_instance.selected == true) {
+          // changing the original selected instance to classify as other instances
+          d3.selectAll(".selected-points:not(.viewed-selected-points)").classed("viewed-selected-points", function (d) {
+            // console.log("selected points")
+            return d.id === original_corresponding_id
+          });
         }
+        else {
+          d3.selectAll(".points:not(.viewed-not-selected-points)").classed("viewed-not-selected-points", function (d) {
+            return d.id === original_corresponding_id
+          });
+        }
+        // }
         // stop highlighting the previous instance image 
         d3.selectAll(".instanceImage").classed("instanceImage", false);
 
         // Find the corresponding data in your dataset
         var instance = data.filter(function (d) { return d.id == id; })[0];
         if (currentTypeDomain == "Discrete"){
-          var second_clicked_instance = data.filter(function (d) { return d.image_path == instance.similar_image_paths; })[0];
+          if (imageValue==0){ // if similarity is not based on class
+            // find corresonding image by similar image class
+            var second_clicked_instance = data.filter(function (d) { 
+                        return d.image_path == instance.similar_image_paths; 
+                      })[0];
+          }
+          else{ // if similarity is based on class
+            // find corresonding image by original class
+            var currentClass = d3.select("#classMenu").property("value")
+            var second_instance_path_column = "similar_image_paths_"+currentClass.toLowerCase()
+            var second_clicked_instance = data.filter(function (d) { 
+              return d.image_path == instance[second_instance_path_column]; 
+            })[0];
+          }
         }
 
         // if only one checkbox is selected, meaning that there are multiple instances:
@@ -632,7 +717,17 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
           // recover the option that has been chosen
           var selectedOption = d3.select(this).property("value")
           makeClassDist(data = data, filteredDataClass = 0, specifiedClassName = selectedOption, setDomainColors = setDomainColors)
+          // other views change correspondingly, if similarity is determined by class
+          console.log("event listener triggered")
+          var similarClassCheckbox = d3.select('input[name="similarityByClass"]').node();
+          var imageValue = similarClassCheckbox.checked ? 1 : 0;
+          console.log("imageValue:\n",imageValue)
+          if (imageValue==1 && currentTypeDomain=="Discrete"){
+            console.log("checkbox selected")
+            updateMultipleViews(filteredData)
+        }
         }) 
+        
         // allow clicking images after adding all the images to image view
         // (the listeners have to be added after the images have been appended to the DOM)
         clickImage()
@@ -644,6 +739,12 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
         checkboxes.on("change", function () {
           updateMultipleViews(filteredData)
         }); // this function(){} is necessary to have, otherwise the updateMultipleViews will be immediately called
+
+        // event listener for the checkbox of determine image similarity (by class or not) here:
+        var similarityClassCheck = d3.select('input[name="similarityByClass"]');
+        similarityClassCheck.on("change", function () {
+          updateMultipleViews(filteredData)
+        });
 
         // Image View: next button: 
         var nextButton = d3.select("#imageCheckBox button"); // name of div + button
@@ -804,8 +905,23 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
       filteredDataImageView = filteredData
       // find the first one of the filteredData
       var first_index = filteredData.findIndex(function (d) { return d.selected == true })
+      // find the right similar image paths and scores
+      var similarClassCheckbox = d3.select('input[name="similarityByClass"]').node();
+      var imageValue = similarClassCheckbox.checked ? 1 : 0;
+      if (currentTypeDomain == "Discrete" && imageValue ==1) {
+        var currentClass = d3.select("#classMenu").property("value")
+        // var instance = filteredData[first_index];
+        var second_instance_path_column = "similar_image_paths_"+currentClass.toLowerCase()
+        filteredData[first_index].similar_image_paths_selected = filteredData[first_index][second_instance_path_column]
+        // var second_instance_score_column = "similar_IoU_score_"+currentClass.toLowerCase()
+        // instance.similar_IoU_score_selected =+instance[second_instance_score_column]
+      }
+      else if (currentTypeDomain == "Discrete" && imageValue ==0){
+        filteredData[first_index].similar_image_paths_selected = filteredData[first_index].similar_image_paths
+        // instance.similar_IoU_score_selected =instance.similar_IoU_score
+      }
       // corresponding image for discrete domains
-      if (filteredData.length>1 && filteredData[0].similar_image_paths==filteredData[1].image_path){
+      if (filteredData.length>1 && filteredData[0].similar_image_paths_selected==filteredData[1].image_path){
         // second_index = filteredData.findIndex(function (d) { return filteredData[1].image_path == filteredData[0].similar_image_paths})
         second_index = 1
       }
@@ -828,7 +944,7 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
       // the instance that corresponds to the first instance in the filter data (most similar mask for discrete domain)
       var correspondingInstance = originalData.find(function (d) {
         if (currentTypeDomain == "Discrete") {
-          return d.image_path === filteredData[first_index].similar_image_paths;
+          return d.image_path === filteredData[first_index].similar_image_paths_selected;
         }
         else {
           // noise domain
@@ -1144,7 +1260,20 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
     function instanceActivations(instance,activationDR) {
       // var reductionMethod = d3.select("#modelSpaceDRMethod").property("value");
       if (currentTypeDomain == "Discrete") {
-        var second_instance_path = instance.similar_image_paths;
+        var similarClassCheckbox = d3.select('input[name="similarityByClass"]').node();
+        var imageValue = similarClassCheckbox.checked ? 1 : 0;
+        if (imageValue==0){
+          var second_instance_path = instance.similar_image_paths;
+          similar_IoU_score = +instance.similar_IoU_score;
+        }
+        else{
+          var currentClass = d3.select("#classMenu").property("value")
+          var second_instance_path_column = "similar_image_paths_"+currentClass.toLowerCase()
+          var second_instance_path = instance[second_instance_path_column]
+
+          var second_instance_score_column = "similar_IoU_score_"+currentClass.toLowerCase()
+          similar_IoU_score = +instance[second_instance_score_column]
+        }
         var second_instance = data.find(function (d) {
           return d.image_path === second_instance_path;
         });
@@ -1167,25 +1296,25 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
             });
             second_instance_path = second_instance.image_path
           }
+          similar_IoU_score = -1
         }
       }
-
       d3.select("#maskSimilarity").selectAll("*").remove();
       activation_svg.selectAll("*").remove();
       // clear the existing mask for the previous image, to make way for printing new masks
       // var instance_type, second_instance_type = 
       let x,y
       if (second_instance) {
-        [x,y]=activationListToGraph(instance, second_instance,activationDR)
+        [x,y]=activationListToGraph(instance, second_instance,activationDR,similar_IoU_score)
       }
       else {
-        [x,y]=activationListToGraph(instance,0,activationDR)
+        [x,y]=activationListToGraph(instance,0,activationDR,similar_IoU_score)
         // giving 0 to second_instance because otherwise the activationsDR will be recognized as second_instance
       }
       // measuere the height of a div
       // var offsetHeight = document.getElementById('maskSimilarity').offsetHeight;
       // var imageSize = 200; // this is the actual size in the system
-      var spacing = 20;
+      var spacing = 35;
       var showType;
       // var imageWidth = imageSize;
       if (instance.image_path.includes("domain_adaptation")){
@@ -1221,7 +1350,6 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
           second_instance.show_path = second_instance.label_path
         }
       }
-      
 
       var mask = d3.select("#maskSimilarity").append("svg")
         .attr("width", imageWidth)
@@ -1256,9 +1384,15 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
         .attr('text-anchor', 'middle')
         .attr('font-size', '10px')
         .style("font-family", "Arial")
-        .style("fill", setDomainColors(instance)); 
+        // .style("fill", setDomainColors(instance)); 
+        .style("fill","black")
 
       if (currentTypeDomain == "Discrete" || continuousValue != 0) {
+        // var blankSpace = d3.select("#maskSimilarity")
+        //       .append("svg")
+        //       .attr("width", 20) // Adjust the width to set the desired space
+        //       .attr("height", 30) // Match the height of the SVG
+        //       .style("fill", "white"); // Set the fill to none to make it transparen
         var second_mask = d3.select("#maskSimilarity").append("svg")
           .attr("width", imageWidth)
           .attr("height", imageHeightSecond + spacing)
@@ -1287,7 +1421,8 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
           .attr('text-anchor', 'middle')
           .attr('font-size', '10px')
           .style("font-family", "Arial")
-          .style("fill", setDomainColors(second_instance));
+          // .style("fill", setDomainColors(second_instance));
+          .style("fill","black")
       }else{
         second_mask=0
       }
@@ -1494,7 +1629,7 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
       return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;    // This return TRUE or FALSE depending on if the points is in the selected area
     }
 
-    function activationListToGraph(instance, second_instance, activationsDR) {
+    function activationListToGraph(instance, second_instance, activationsDR,similar_IoU_score) {
       dataset_types = ["Cityscapes", "Synthia" ];
       if (activationsDR == "t-SNE"){
         instance.bottleneck_activations_embedding = instance.bottleneck_tsne_embedding
@@ -1513,9 +1648,9 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
       if (currentTypeDomain == "Discrete") {
         instance_type = instance.dataset
         second_instance_type = second_instance.dataset
-        instance.similar_IoU_score = +instance.similar_IoU_score
+        // instance.similar_IoU_score = +instance.similar_IoU_score
         activation_svg.append("text")
-          .text("Similarity score for masks:" + instance.similar_IoU_score.toFixed(3))
+          .text("Similarity score for masks:" + similar_IoU_score.toFixed(3))
           .style("font-size", "15px")
           // fill it with black color to actually see it
           .style("fill", "black");
@@ -1570,9 +1705,9 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
         .attr("cy", function (d) { return y(d[1]) })
         .attr("r", 3.5)
         .style("stroke", colorSelectedInstances)
-        .style("stroke-width",1)
+        .style("stroke-width",0.5)
         .style("fill", setDomainColors(instance))
-        .style("opacity",0.9)
+        .style("opacity",0.7) // changed from 0.9 to 0.7 to make the graph more appealing, but doesn't change much
         
 
       //Add dots for the other dataset
@@ -1588,7 +1723,7 @@ d3.csv("discreted_data_v12.csv", function (discreteData) {
           .style("stroke", colorSelectedInstances)
           .style("stroke-width",1)
           .style("fill", setDomainColors(second_instance))
-          .style("opacity",0.9)
+          .style("opacity",0.7)
       }
 
       // this removes the x and y axis from the scatter plot
@@ -1729,13 +1864,15 @@ function makePerformanceView(data, filteredData) {
     meanObj.domainKey = group.key;
 
     // Calculate mean for each column
-    meanObj.overall = d3.mean(group.values, d => d.overall_iou);
-    meanObj.other = d3.mean(group.values, d => d.other_iou);
-    meanObj.road = d3.mean(group.values, d => d.road_iou);
-    meanObj.sidewalk = d3.mean(group.values, d => d.sidewalk_iou);
-    meanObj.vegetation = d3.mean(group.values, d => d.vegetation_iou);
-    meanObj.sky = d3.mean(group.values, d => d.sky_iou);
-    meanObj.car = d3.mean(group.values, d => d.car_iou);
+    // ignore the images with no corresponding classes when calculating the average (this did not seem to change the results)
+    meanObj.overall = d3.mean(group.values.filter(d => d.overall_iou !== 0), d => d.overall_iou);
+    meanObj.other = d3.mean(group.values.filter(d => d.other_iou !== 0), d => d.other_iou);
+    meanObj.road = d3.mean(group.values.filter(d => d.road_iou !== 0), d => d.road_iou);
+    meanObj.sidewalk = d3.mean(group.values.filter(d => d.sidewalk_iou !== 0), d => d.sidewalk_iou);
+    meanObj.vegetation = d3.mean(group.values.filter(d => d.vegetation_iou !== 0), d => d.vegetation_iou);
+    meanObj.sky = d3.mean(group.values.filter(d => d.sky_iou !== 0), d => d.sky_iou);
+    meanObj.car = d3.mean(group.values.filter(d => d.car_iou !== 0), d => d.car_iou);
+
 
     meanValues.set(group.key, meanObj);
 
@@ -1852,6 +1989,17 @@ function makePerformanceView(data, filteredData) {
 
 function makeClassDist(data, filteredDataClass, specifiedClassName, setDomainColors) {
   d3.select("#classDistPlot").selectAll("*").remove();
+  d3.select("#classCurrentColor").selectAll("*").remove();
+
+  d3.select("#classCurrentColor")
+    .append("svg") // need svg so that the circle could exist
+    .attr("width", 20)
+    .attr("height", 13)
+    .append("circle") //center x-coordinate
+    .attr("cx", "10") //center y-coordinate
+    .attr("cy", "7")
+    .attr("r", "5")
+    .attr("fill", classColors(specifiedClassName.toLowerCase()));
 
   var violinPlot = d3.select("#classDistPlot")
     .append("svg")
