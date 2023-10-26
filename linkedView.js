@@ -199,7 +199,7 @@ var activation_svg = d3.select("#activationsScatter")
 
 //Read the data
 // d3.csv("system_df_v3.csv", function (discreteData) {
-d3.csv("discreted_data_v16.csv", function (discreteData) {
+d3.csv("discreted_data_v18.csv", function (discreteData) {
   // d3.csv("noise_df.csv", function (noiseData) {
   d3.csv("noise_data_sample_200_v3.csv", function (noiseData) {
     // create global variables
@@ -1707,7 +1707,7 @@ d3.csv("discreted_data_v16.csv", function (discreteData) {
         .style("stroke", colorSelectedInstances)
         .style("stroke-width",0.5)
         .style("fill", setDomainColors(instance))
-        .style("opacity",0.7) // changed from 0.9 to 0.7 to make the graph more appealing, but doesn't change much
+        .style("opacity",0.8) // changed from 0.9 to 0.7 to make the graph more appealing, but doesn't change much
         
 
       //Add dots for the other dataset
@@ -1723,7 +1723,7 @@ d3.csv("discreted_data_v16.csv", function (discreteData) {
           .style("stroke", colorSelectedInstances)
           .style("stroke-width",1)
           .style("fill", setDomainColors(second_instance))
-          .style("opacity",0.7)
+          .style("opacity",0.8)
       }
 
       // this removes the x and y axis from the scatter plot
