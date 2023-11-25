@@ -716,7 +716,7 @@ d3.csv("discreted_data_v18.csv", function (discreteData) {
         d3.select("#classMenu").on("click", function(d) {
           // recover the option that has been chosen
           var selectedOption = d3.select(this).property("value")
-          makeClassDist(data = data, filteredDataClass = 0, specifiedClassName = selectedOption, setDomainColors = setDomainColors)
+          makeClassDist(data = data, filteredDataClass = filteredData, specifiedClassName = selectedOption, setDomainColors = setDomainColors)
           // other views change correspondingly, if similarity is determined by class
           console.log("event listener triggered")
           var similarClassCheckbox = d3.select('input[name="similarityByClass"]').node();
